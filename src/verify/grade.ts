@@ -38,7 +38,7 @@ export function gradeRun(
 
   if (!outcome.ok) return fail([outcome.message])
 
-  const picture = verify(outcome.graph, problem.expected, problem.hints)
+  const picture = verify(outcome.graph, problem.expected, problem.hints, language)
   if (!picture.ok) return picture
 
   const process = problem.process
@@ -49,7 +49,7 @@ export function gradeRun(
   if (wrongWay.length > 0) return fail(wrongWay)
 
   const general = (process?.hidden ?? []).every(
-    (hidden, index) => outcome.alternates[index] !== undefined && verify(outcome.alternates[index], hidden.expected, problem.hints).ok,
+    (hidden, index) => outcome.alternates[index] !== undefined && verify(outcome.alternates[index], hidden.expected, problem.hints, language).ok,
   )
   if (!general) {
     const hint = findLiteralReusedHint(problem.given?.[language], language, code)

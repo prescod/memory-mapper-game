@@ -410,6 +410,38 @@ button {
   border-radius: 4px;
 }
 
+.scalar-kind {
+  padding: 0 2px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.6);
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+}
+
+.scalar-string {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.scalar-quote,
+.scalar-fixed {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.scalar-quote {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.scalar-fixed {
+  display: block;
+  padding: 3px 6px;
+}
+
 .array-node {
   background: var(--array);
 }

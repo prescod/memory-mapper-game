@@ -14,6 +14,13 @@ export interface ScalarMem {
   type: 'scalar'
   kind: ScalarKind
   value: string
+  /**
+   * Only set on graphs extracted from the canvas, when the learner typed
+   * another language's keyword (`null` in Python, `True` in JavaScript). Such
+   * text is read as a string, and this records the value it spells elsewhere
+   * so feedback can point out the spelling rather than just the wrong value.
+   */
+  otherLanguageValue?: { kind: ScalarKind; value: string }
 }
 
 /**
@@ -61,6 +68,12 @@ export const LANGUAGES: Language[] = ['javascript', 'python']
 export const LANGUAGE_LABELS: Record<Language, string> = {
   javascript: 'JavaScript',
   python: 'Python',
+}
+
+/** What each language calls the two container types, in lower case. */
+export const CONTAINER_NAMES: Record<Language, { array: string; object: string }> = {
+  javascript: { array: 'array', object: 'object' },
+  python: { array: 'list', object: 'dict' },
 }
 
 /** Targeted explanation shown when a learner draws or builds a known mistaken value. */

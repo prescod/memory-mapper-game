@@ -1,4 +1,3 @@
-import { describeScalar } from '../model/scalar'
 import type { MemNode, MemoryGraph, NodeId, Slot } from '../model/types'
 import {
   TARGET_HANDLE,
@@ -14,9 +13,11 @@ const ROW_GAP = 28
 const TITLE_HEIGHT = 36
 const ROW_HEIGHT = 34
 const SIMPLE_HEIGHT = 48
+const SCALAR_HEIGHT = TITLE_HEIGHT + ROW_HEIGHT
 
 function heightOf(node: MemNode | undefined): number {
-  if (!node || node.type === 'scalar') return SIMPLE_HEIGHT
+  if (!node) return SIMPLE_HEIGHT
+  if (node.type === 'scalar') return SCALAR_HEIGHT
   const rows = node.type === 'array' ? node.slots.length : node.entries.length
   return TITLE_HEIGHT + Math.max(rows, 1) * ROW_HEIGHT
 }
@@ -91,7 +92,8 @@ export function toFlow(memory: MemoryGraph): { nodes: MemFlowNode[]; edges: MemF
     const node = memory.nodes[id]
     const position = place(column.get(id)!, heightOf(node))
     if (node.type === 'scalar') {
-      nodes.push({ id, type: 'scalar', position, data: { text: describeScalar(node) } })
+      const text = node.kind === 'null' ? '' : node.value
+      nodes.push({ id, type: 'scalar', position, data: { kind: node.kind, text } })
     } else if (node.type === 'array') {
       const slots = node.slots.map((_, index) => ({ id: `${id}:s${index}` }))
       nodes.push({ id, type: 'array', position, data: { slots } })

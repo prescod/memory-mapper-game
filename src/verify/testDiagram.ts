@@ -5,6 +5,7 @@ import {
   slotHandle,
   type MemFlowEdge,
   type MemFlowNode,
+  type ScalarData,
 } from '../canvas/types'
 
 /** Small builder for canvas diagrams used by tests, with caller-chosen ids. */
@@ -22,8 +23,8 @@ export class Diagram {
     return this
   }
 
-  scalar(id: string, text: string): this {
-    this.nodes.push({ id, type: 'scalar', position: this.place(), data: { text } })
+  scalar(id: string, text: string, kind: ScalarData['kind'] = 'auto'): this {
+    this.nodes.push({ id, type: 'scalar', position: this.place(), data: { kind, text } })
     return this
   }
 

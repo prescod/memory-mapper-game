@@ -1,32 +1,55 @@
-import type { ScalarMem } from './types'
+import { LANGUAGES, type Language, type ScalarKind, type ScalarMem } from './types'
 
 const NUMBER_PATTERN = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/
 
+const KEYWORDS: Record<Language, { true: string; false: string; null: string }> = {
+  javascript: { true: 'true', false: 'false', null: 'null' },
+  python: { true: 'True', false: 'False', null: 'None' },
+}
+
+const KIND_NAMES: Record<Language, Record<ScalarKind, string>> = {
+  javascript: { number: 'number', string: 'string', boolean: 'boolean', null: 'null' },
+  python: { number: 'number', string: 'str', boolean: 'bool', null: 'NoneType' },
+}
+
+/** The canonical text of a number, or `undefined` when `text` is not one. */
+export function canonicalNumber(text: string): string | undefined {
+  const trimmed = text.trim()
+  return NUMBER_PATTERN.test(trimmed) ? String(Number(trimmed)) : undefined
+}
+
+function keywordValue(text: string, language: Language): ScalarMem | undefined {
+  const words = KEYWORDS[language]
+  if (text === words.null) return { type: 'scalar', kind: 'null', value: 'null' }
+  if (text === words.true) return { type: 'scalar', kind: 'boolean', value: 'true' }
+  if (text === words.false) return { type: 'scalar', kind: 'boolean', value: 'false' }
+  return undefined
+}
+
 /**
- * Interprets text typed into a Scalar node. Quoted text is always a string;
- * unquoted text is read as a number, boolean or null where it looks like one,
- * and as a string otherwise.
+ * Interprets free text typed into a Scalar node. Quoted text is always a
+ * string; unquoted text is read as a number, or as `language`'s spelling of a
+ * boolean or null, and as a string otherwise.
  */
-export function parseScalar(raw: string): ScalarMem {
+export function parseScalar(raw: string, language: Language): ScalarMem {
   const text = raw.trim()
 
   const quoted = /^(['"`])(.*)\1$/s.exec(text)
   if (quoted) {
     return { type: 'scalar', kind: 'string', value: quoted[2] }
   }
-  if (text === 'null' || text === 'None') {
-    return { type: 'scalar', kind: 'null', value: 'null' }
-  }
-  if (text === 'true' || text === 'True') {
-    return { type: 'scalar', kind: 'boolean', value: 'true' }
-  }
-  if (text === 'false' || text === 'False') {
-    return { type: 'scalar', kind: 'boolean', value: 'false' }
-  }
-  if (NUMBER_PATTERN.test(text)) {
-    return { type: 'scalar', kind: 'number', value: String(Number(text)) }
-  }
-  return { type: 'scalar', kind: 'string', value: text }
+  const keyword = keywordValue(text, language)
+  if (keyword) return keyword
+
+  const number = canonicalNumber(text)
+  if (number !== undefined) return { type: 'scalar', kind: 'number', value: number }
+
+  const foreign = LANGUAGES.filter((other) => other !== language)
+    .map((other) => keywordValue(text, other))
+    .find((value) => value !== undefined)
+  return foreign
+    ? { type: 'scalar', kind: 'string', value: text, otherLanguageValue: { kind: foreign.kind, value: foreign.value } }
+    : { type: 'scalar', kind: 'string', value: text }
 }
 
 export function scalarFromJs(value: number | string | boolean | null): ScalarMem {
@@ -36,6 +59,31 @@ export function scalarFromJs(value: number | string | boolean | null): ScalarMem
   return { type: 'scalar', kind: 'string', value }
 }
 
-export function describeScalar(scalar: ScalarMem): string {
-  return scalar.kind === 'string' ? JSON.stringify(scalar.value) : scalar.value
+/** Writes a scalar the way `language` would display it, e.g. `None` and `'hi'` in Python. */
+export function formatScalar(scalar: { kind: ScalarKind; value: string }, language: Language): string {
+  switch (scalar.kind) {
+    case 'null':
+      return KEYWORDS[language].null
+    case 'boolean':
+      return scalar.value === 'true' ? KEYWORDS[language].true : KEYWORDS[language].false
+    case 'number':
+      return scalar.value
+    case 'string':
+      return language === 'python' ? pythonRepr(scalar.value) : JSON.stringify(scalar.value)
+  }
+}
+
+/** Python's `repr` of a str: single quotes unless only double quotes avoid escaping. */
+function pythonRepr(value: string): string {
+  const escaped = value.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/\t/g, '\\t')
+  if (value.includes("'") && !value.includes('"')) return `"${escaped}"`
+  return `'${escaped.replace(/'/g, "\\'")}'`
+}
+
+export function scalarKindName(kind: ScalarKind, language: Language): string {
+  return KIND_NAMES[language][kind]
+}
+
+export function stringQuote(language: Language): string {
+  return language === 'python' ? "'" : '"'
 }

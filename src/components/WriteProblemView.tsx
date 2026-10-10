@@ -111,6 +111,7 @@ export function WriteProblemView({
           setNodes={() => {}}
           setEdges={setEdges}
           feedback={emptyFeedback}
+          language={language}
         />
         <div className="editor-panel">
           {given !== '' && (

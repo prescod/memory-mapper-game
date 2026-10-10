@@ -1,7 +1,13 @@
 import type { Edge, Node } from '@xyflow/react'
+import type { ScalarKind } from '../model/types'
 
 export type VariableData = { name: string }
-export type ScalarData = { text: string }
+/**
+ * With kind `'auto'`, `text` is whatever the learner typed and the kind is read
+ * from it. With an explicit kind, `text` holds the value itself: unquoted
+ * string content, a number, or `true`/`false`; it is unused for null.
+ */
+export type ScalarData = { kind: ScalarKind | 'auto'; text: string }
 export type ArrayData = { slots: { id: string }[] }
 export type ObjectData = { entries: { id: string; key: string }[] }
 
@@ -33,7 +39,7 @@ export function createNode(type: MemNodeType, position: { x: number; y: number }
     case 'variable':
       return { id, type, position, data: { name: '' } }
     case 'scalar':
-      return { id, type, position, data: { text: '' } }
+      return { id, type, position, data: { kind: 'auto', text: '' } }
     case 'array':
       return { id, type, position, data: { slots: [{ id: newId() }] } }
     case 'object':

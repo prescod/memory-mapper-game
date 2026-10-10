@@ -6,8 +6,10 @@ import {
   useUpdateNodeInternals,
   type NodeProps,
 } from '@xyflow/react'
+import { CONTAINER_NAMES } from '../../model/types'
 import { removeEdgesFromHandle } from '../connections'
 import { handleKey, useFeedback } from '../FeedbackContext'
+import { useLanguage } from '../LanguageContext'
 import { useReadOnly } from '../ReadOnlyContext'
 import {
   TARGET_HANDLE,
@@ -24,6 +26,7 @@ export function ArrayNode({ id, data, selected }: NodeProps<ArrayFlowNode>) {
   const feedback = useFeedback()
   const flagged = feedback.nodeIds.has(id)
   const readOnly = useReadOnly()
+  const language = useLanguage()
 
   const slotKey = data.slots.map((slot) => slot.id).join(',')
   useEffect(() => {
@@ -47,7 +50,7 @@ export function ArrayNode({ id, data, selected }: NodeProps<ArrayFlowNode>) {
       className={`mem-node array-node${selected ? ' selected' : ''}${flagged ? ' flagged' : ''}`}
     >
       <Handle id={TARGET_HANDLE} type="target" position={Position.Left} />
-      <div className="mem-node-title">Array</div>
+      <div className="mem-node-title">{CONTAINER_NAMES[language].array}</div>
       {data.slots.length === 0 && <div className="mem-empty">empty</div>}
       {data.slots.map((slot, index) => {
         const handle = slotHandle(slot.id)

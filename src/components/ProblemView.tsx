@@ -98,7 +98,7 @@ export function ProblemView({
 
   const check = () => {
     if (isAnswerRevealed) return
-    const outcome = verify(toGraph(nodes, edges), problem.expected, problem.hints)
+    const outcome = verify(toGraph(nodes, edges, language), problem.expected, problem.hints, language)
     setResult(outcome)
     if (outcome.ok) markCompleted(key)
   }
@@ -158,6 +158,7 @@ export function ProblemView({
           setNodes={setNodes}
           setEdges={setEdges}
           feedback={feedback}
+          language={language}
         />
         <CheckBar
           problemId={problem.id}

@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { Diagram } from '../verify/testDiagram'
-import { toPersistableDraft } from './draft'
+import { toPersistableDraft, withScalarKinds } from './draft'
+
+describe('withScalarKinds', () => {
+  it('reads scalars saved without a kind as auto, keeping their text', () => {
+    const d = new Diagram().variable('v', 'x', 's').scalar('s', 'None')
+    const old = d.nodes.map((node) => (node.type === 'scalar' ? { ...node, data: { text: node.data.text } } : node))
+    const [upgraded] = Object.values(withScalarKinds({ k: { nodes: old as typeof d.nodes, edges: d.edges } }))
+    expect(upgraded.nodes[1].data).toEqual({ kind: 'auto', text: 'None' })
+    expect(upgraded.nodes[0]).toBe(d.nodes[0])
+  })
+})
 
 describe('toPersistableDraft', () => {
   it('drops transient React Flow state but keeps content', () => {

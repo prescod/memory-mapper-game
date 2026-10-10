@@ -5,14 +5,15 @@ import {
   type MemFlowEdge,
   type MemFlowNode,
 } from '../canvas/types'
-import { parseScalar } from '../model/scalar'
-import type { MemNode, MemoryGraph, Slot, VariableEntry } from '../model/types'
+import { scalarFromData } from '../canvas/scalarData'
+import type { Language, MemNode, MemoryGraph, Slot, VariableEntry } from '../model/types'
 
 /**
  * Extracts the topology of the learner's diagram. Layout, node selection and
- * every other presentation detail is dropped on purpose.
+ * every other presentation detail is dropped on purpose. `language` decides how
+ * typed keywords such as `None` or `null` are read.
  */
-export function toGraph(nodes: MemFlowNode[], edges: MemFlowEdge[]): MemoryGraph {
+export function toGraph(nodes: MemFlowNode[], edges: MemFlowEdge[], language: Language): MemoryGraph {
   const nodeIds = new Set(nodes.map((node) => node.id))
   const targetBySource = new Map<string, string>()
   for (const edge of edges) {
@@ -39,7 +40,7 @@ export function toGraph(nodes: MemFlowNode[], edges: MemFlowEdge[]): MemoryGraph
         })
         break
       case 'scalar':
-        memory[node.id] = parseScalar(node.data.text)
+        memory[node.id] = scalarFromData(node.data, language)
         break
       case 'array':
         memory[node.id] = {

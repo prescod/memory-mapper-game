@@ -1,5 +1,16 @@
-import { describeScalar } from '../model/scalar'
-import type { DiagnosticHint, MemoryGraph, NodeId, Slot, VerifyError, VerifyResult } from '../model/types'
+import { formatScalar } from '../model/scalar'
+import {
+  CONTAINER_NAMES,
+  LANGUAGE_LABELS,
+  type DiagnosticHint,
+  type Language,
+  type MemNode,
+  type MemoryGraph,
+  type NodeId,
+  type Slot,
+  type VerifyError,
+  type VerifyResult,
+} from '../model/types'
 
 /** The place a reference starts from, used to attach feedback to the right edge. */
 interface Origin {
@@ -20,10 +31,19 @@ export const CANNOT_REFER_TO_VARIABLES =
  * Only arrays and objects have identity. Scalars are immutable, so a program
  * cannot distinguish a copied value from a shared one and either diagram is
  * accepted; only the scalar's type and value are compared.
+ *
+ * `language` only affects wording: values and containers are named the way
+ * that language names them.
  */
-export function verify(user: MemoryGraph, expected: MemoryGraph, hints?: DiagnosticHint[]): VerifyResult {
+export function verify(
+  user: MemoryGraph,
+  expected: MemoryGraph,
+  hints?: DiagnosticHint[],
+  language: Language = 'javascript',
+): VerifyResult {
   const errors: VerifyError[] = []
   const report = (message: string, origin: Origin = {}) => errors.push({ message, ...origin })
+  const name = (type: MemNode['type']) => (type === 'scalar' ? 'scalar' : CONTAINER_NAMES[language][type])
 
   const isVariableTarget = (target: NodeId | null): boolean => {
     if (target === null) return false
@@ -89,7 +109,7 @@ export function verify(user: MemoryGraph, expected: MemoryGraph, hints?: Diagnos
     }
 
     if (userNode.type !== expectedNode.type) {
-      report(`This should point to ${article(expectedNode.type)}, not ${article(userNode.type)}.`, origin)
+      report(`This should point to ${article(name(expectedNode.type))}, not ${article(name(userNode.type))}.`, origin)
       return
     }
 
@@ -97,11 +117,11 @@ export function verify(user: MemoryGraph, expected: MemoryGraph, hints?: Diagnos
       const mappedExpected = userToExpected.get(userId)
       const mappedUser = expectedToUser.get(expectedId)
       if (mappedExpected !== undefined && mappedExpected !== expectedId) {
-        report(`These references should point to different ${userNode.type}s, but they share one.`, origin)
+        report(`These references should point to different ${name(userNode.type)}s, but they share one.`, origin)
         return
       }
       if (mappedUser !== undefined && mappedUser !== userId) {
-        report(`These references should share one ${userNode.type}, but they point to different ones.`, origin)
+        report(`These references should share one ${name(userNode.type)}, but they point to different ones.`, origin)
         return
       }
       if (mappedExpected === expectedId) return
@@ -118,6 +138,14 @@ export function verify(user: MemoryGraph, expected: MemoryGraph, hints?: Diagnos
 
     if (userNode.type === 'scalar' && expectedNode.type === 'scalar') {
       if (userNode.kind !== expectedNode.kind || userNode.value !== expectedNode.value) {
+        const meant = userNode.otherLanguageValue
+        if (meant && meant.kind === expectedNode.kind && meant.value === expectedNode.value) {
+          report(
+            `In ${LANGUAGE_LABELS[language]}, write ${formatScalar(expectedNode, language)}, not ${userNode.value}.`,
+            { nodeId: userId },
+          )
+          return
+        }
         const hint = hints?.find((candidate) => {
           if (variableName && candidate.variable !== variableName) return false
           if (Array.isArray(candidate.value)) {
@@ -128,7 +156,7 @@ export function verify(user: MemoryGraph, expected: MemoryGraph, hints?: Diagnos
         if (hint) {
           report(hint.message, { nodeId: userId })
         } else {
-          report(`The value ${describeScalar(userNode)} is not correct here.`, { nodeId: userId })
+          report(`The value ${formatScalar(userNode, language)} is not correct here.`, { nodeId: userId })
         }
       }
       return
@@ -137,7 +165,7 @@ export function verify(user: MemoryGraph, expected: MemoryGraph, hints?: Diagnos
     if (userNode.type === 'array' && expectedNode.type === 'array') {
       if (userNode.slots.length !== expectedNode.slots.length) {
         report(
-          `This array has ${plural(userNode.slots.length, 'slot')} but should have ${expectedNode.slots.length}.`,
+          `This ${name('array')} has ${plural(userNode.slots.length, 'slot')} but should have ${expectedNode.slots.length}.`,
           { nodeId: userId },
         )
         return
@@ -163,7 +191,7 @@ export function verify(user: MemoryGraph, expected: MemoryGraph, hints?: Diagnos
 
       for (const entry of userNode.entries) {
         if (!expectedNode.entries.some((candidate) => candidate.key === entry.key)) {
-          report(`The key "${entry.key}" does not belong in this object.`, {
+          report(`The key "${entry.key}" does not belong in this ${name('object')}.`, {
             nodeId: userId,
             handle: entry.slot.handle,
           })
@@ -173,7 +201,7 @@ export function verify(user: MemoryGraph, expected: MemoryGraph, hints?: Diagnos
       for (const expectedEntry of expectedNode.entries) {
         const entry = userNode.entries.find((candidate) => candidate.key === expectedEntry.key)
         if (!entry) {
-          report(`This object is missing the key "${expectedEntry.key}".`, { nodeId: userId })
+          report(`This ${name('object')} is missing the key "${expectedEntry.key}".`, { nodeId: userId })
           continue
         }
         checkTarget(
@@ -221,8 +249,8 @@ export function verify(user: MemoryGraph, expected: MemoryGraph, hints?: Diagnos
   return { ok: errors.length === 0, errors }
 }
 
-function article(type: string): string {
-  return `${type === 'array' ? 'an' : 'a'} ${type}`
+function article(noun: string): string {
+  return `${/^[aeiou]/.test(noun) ? 'an' : 'a'} ${noun}`
 }
 
 function plural(count: number, noun: string): string {

@@ -6,8 +6,10 @@ import {
   useUpdateNodeInternals,
   type NodeProps,
 } from '@xyflow/react'
+import { CONTAINER_NAMES } from '../../model/types'
 import { removeEdgesFromHandle } from '../connections'
 import { handleKey, useFeedback } from '../FeedbackContext'
+import { useLanguage } from '../LanguageContext'
 import { useReadOnly } from '../ReadOnlyContext'
 import {
   TARGET_HANDLE,
@@ -24,6 +26,7 @@ export function ObjectNode({ id, data, selected }: NodeProps<ObjectFlowNode>) {
   const feedback = useFeedback()
   const flagged = feedback.nodeIds.has(id)
   const readOnly = useReadOnly()
+  const language = useLanguage()
 
   const entryKey = data.entries.map((entry) => entry.id).join(',')
   useEffect(() => {
@@ -54,7 +57,7 @@ export function ObjectNode({ id, data, selected }: NodeProps<ObjectFlowNode>) {
       className={`mem-node object-node${selected ? ' selected' : ''}${flagged ? ' flagged' : ''}`}
     >
       <Handle id={TARGET_HANDLE} type="target" position={Position.Left} />
-      <div className="mem-node-title">Object</div>
+      <div className="mem-node-title">{CONTAINER_NAMES[language].object}</div>
       {data.entries.length === 0 && <div className="mem-empty">empty</div>}
       {data.entries.map((entry) => {
         const handle = entryHandle(entry.id)

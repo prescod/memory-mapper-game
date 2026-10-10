@@ -16,6 +16,8 @@ import '@xyflow/react/dist/style.css'
 import { useCallback, useEffect, useMemo, useRef, type Dispatch, type DragEvent, type SetStateAction } from 'react'
 import { connectReplacing, isValidConnection } from './connections'
 import { FeedbackContext, handleKey, type Feedback } from './FeedbackContext'
+import type { Language } from '../model/types'
+import { LanguageContext } from './LanguageContext'
 import { nodeTypes } from './nodes'
 import { ReadOnlyContext } from './ReadOnlyContext'
 import { Toolbar, DRAG_MIME } from './Toolbar'
@@ -29,6 +31,7 @@ export interface CanvasProps {
   setNodes: Dispatch<SetStateAction<MemFlowNode[]>>
   setEdges: Dispatch<SetStateAction<MemFlowEdge[]>>
   feedback: Feedback
+  language: Language
   /** Shows the diagram as a fixed picture: no toolbar, connecting, editing or deleting. */
   readOnly?: boolean
 }
@@ -43,6 +46,7 @@ function CanvasInner({
   setNodes,
   setEdges,
   feedback,
+  language,
   readOnly = false,
 }: CanvasProps) {
   const wrapper = useRef<HTMLDivElement>(null)
@@ -123,35 +127,37 @@ function CanvasInner({
 
   return (
     <FeedbackContext.Provider value={feedback}>
-      <ReadOnlyContext.Provider value={readOnly}>
-        <div className="canvas" ref={wrapper}>
-          <ReactFlow<MemFlowNode, MemFlowEdge>
-            nodes={nodes}
-            edges={displayedEdges}
-            nodeTypes={nodeTypes}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            isValidConnection={checkConnection}
-            onDragOver={onDragOver}
-            onDrop={onDrop}
-            defaultEdgeOptions={defaultEdgeOptions}
-            deleteKeyCode={readOnly ? null : ['Backspace', 'Delete']}
-            nodesConnectable={!readOnly}
-            minZoom={0.3}
-            fitView
-            fitViewOptions={{ maxZoom: 1 }}
-          >
-            <Background />
-            <Controls showInteractive={false} />
-            {!readOnly && (
-              <Panel position="top-left">
-                <Toolbar onAdd={addAtCenter} />
-              </Panel>
-            )}
-          </ReactFlow>
-        </div>
-      </ReadOnlyContext.Provider>
+      <LanguageContext.Provider value={language}>
+        <ReadOnlyContext.Provider value={readOnly}>
+          <div className="canvas" ref={wrapper}>
+            <ReactFlow<MemFlowNode, MemFlowEdge>
+              nodes={nodes}
+              edges={displayedEdges}
+              nodeTypes={nodeTypes}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              isValidConnection={checkConnection}
+              onDragOver={onDragOver}
+              onDrop={onDrop}
+              defaultEdgeOptions={defaultEdgeOptions}
+              deleteKeyCode={readOnly ? null : ['Backspace', 'Delete']}
+              nodesConnectable={!readOnly}
+              minZoom={0.3}
+              fitView
+              fitViewOptions={{ maxZoom: 1 }}
+            >
+              <Background />
+              <Controls showInteractive={false} />
+              {!readOnly && (
+                <Panel position="top-left">
+                  <Toolbar language={language} onAdd={addAtCenter} />
+                </Panel>
+              )}
+            </ReactFlow>
+          </div>
+        </ReadOnlyContext.Provider>
+      </LanguageContext.Provider>
     </FeedbackContext.Provider>
   )
 }

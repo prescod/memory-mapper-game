@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import type { Language } from '../model/types'
-import { toPersistableDraft, type Draft } from './draft'
+import { toPersistableDraft, withScalarKinds, type Draft } from './draft'
 
 export interface AppState {
   language: Language
@@ -20,7 +20,7 @@ export interface AppState {
 }
 
 export const STORAGE_KEY = 'memory-model-visualizer'
-const STORAGE_VERSION = 4
+const STORAGE_VERSION = 5
 
 export const progressKey = (problemId: string, language: Language) => `${problemId}:${language}`
 
@@ -58,10 +58,12 @@ export const useAppStore = create<AppState>()(
       // Version 1 keyed progress by level id, and those levels no longer exist.
       // Version 2 predates written-code drafts but its progress is still valid.
       // Version 3 also stored a hints setting, which no longer exists.
+      // Version 4 scalar nodes had no kind.
       migrate: (persisted, version) => {
         if (version < 2) return initialState
-        const { hints: _hints, ...kept } = persisted as Partial<typeof initialState> & { hints?: boolean }
-        return { ...initialState, ...kept }
+        const { hints: _hints, ...kept } = persisted as Partial<AppState> & { hints?: boolean }
+        const drafts = version < 5 && kept.drafts ? withScalarKinds(kept.drafts) : kept.drafts
+        return { ...initialState, ...kept, ...(drafts && { drafts }) }
       },
     },
   ),
