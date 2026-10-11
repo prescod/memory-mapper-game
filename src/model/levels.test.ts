@@ -370,14 +370,14 @@ describe('shortcuts that match the picture but miss the point', () => {
       'mutating-objects-10',
       'q = { n: 1, m: 3 };\np = { n: 2 };',
       'q = {"n": 1, "m": 3}\np = {"n": 2}',
-      /"q" afterward should be the same object as "p" at the start/,
+      /"q" afterward should be the same container as "p" at the start/,
     ],
     ['mutating-objects-12', 'p = { a: 2, b: 1 };', 'p = {"a": 2, "b": 1}', KEEP('p')],
     [
       'mutating-objects-15',
       'b = { score: 0, done: true };\na = { score: 5 };',
       'b = {"score": 0, "done": True}\na = {"score": 5}',
-      /"b" afterward should be the same object as "a" at the start/,
+      /"b" afterward should be the same container as "a" at the start/,
     ],
 
     ['copies-6', 'let q = { n: 1, m: 2 };', 'q = {"n": 1, "m": 2}', /by copying "p"/],
@@ -404,7 +404,7 @@ describe('shortcuts that match the picture but miss the point', () => {
       /by calling s\.(toLowerCase|lower)\(\)/,
     ],
     ['rebinding-8', 'b = [1, 2, 3, 4];', 'b = [1, 2, 3, 4]', /Build "b" with "b(\.concat\(\[\.\.\.\]\)| \+ \[\.\.\.\])"/],
-    ['rebinding-9', 'a = [9];\nb = [1, 2];', 'a = [9]\nb = [1, 2]', /"b" afterward should be the same object as "a" at the start/],
+    ['rebinding-9', 'a = [9];\nb = [1, 2];', 'a = [9]\nb = [1, 2]', /"b" afterward should be the same container as "a" at the start/],
     [
       'rebinding-10',
       'let a = [];\nlet b = [];\na.push(0);\na.push(0);\nb.push(0);',
@@ -474,10 +474,24 @@ describe('on-demand hints', () => {
     }
   })
 
-  it('does not have hints for levels past the first two', () => {
-    const remainingLevels = levels.slice(2)
+  it('provides hints for every arrays problem in both languages', () => {
+    const arraysLevel = levels.find((level) => level.id === 'arrays')
+    expect(arraysLevel).toBeDefined()
+    for (const problem of arraysLevel!.problems) {
+      for (const language of LANGUAGES) {
+        const hint = problemHint(problem, language)
+        expect(typeof hint).toBe('string')
+        expect(hint!.trim().length).toBeGreaterThan(0)
+      }
+    }
+  })
+
+  it('does not have hints for levels past arrays', () => {
+    const extraHints = new Set(['rebinding-2', 'rebinding-8'])
+    const remainingLevels = levels.slice(3)
     for (const lvl of remainingLevels) {
       for (const problem of lvl.problems) {
+        if (extraHints.has(problem.id)) continue
         expect(problem.hint).toBeUndefined()
         for (const language of LANGUAGES) {
           expect(problemHint(problem, language)).toBeUndefined()

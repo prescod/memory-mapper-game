@@ -489,36 +489,51 @@ export const levels: Level[] = [
         js: 'let nums = [1, 2, 3];',
         py: 'nums = [1, 2, 3]',
         expected: graph({ nums: ref('nums') }, { nums: list(1, 2, 3) }),
+        hint: 'Create variable nums and a list with slots 1, 2, and 3, then connect nums to that list.',
       }),
       write({
         title: 'A list of strings',
         js: 'let colors = ["red", "green"];',
         py: 'colors = ["red", "green"]',
         expected: graph({ colors: ref('colors') }, { colors: list('red', 'green') }),
+        hint: {
+          js: 'Declare colors and assign it a list literal containing "red" and "green".',
+          py: 'Assign colors a list literal containing "red" and "green".',
+        },
       }),
       draw({
         title: 'An empty list',
         js: 'let items = [];',
         py: 'items = []',
         expected: graph({ items: ref('items') }, { items: list() }),
+        hint: 'Create variable items and an empty list node with no slots, then connect them.',
       }),
       draw({
         title: 'Mixed values',
         js: 'let mixed = [1, "two", true];',
         py: 'mixed = [1, "two", True]',
         expected: graph({ mixed: ref('mixed') }, { mixed: list(1, 'two', true) }),
+        hint: {
+          js: 'One list holds a number, the string "two", and true in three slots.',
+          py: 'One list holds a number, the string "two", and True in three slots.',
+        },
       }),
       write({
         title: 'Null and None in a list',
         js: 'let cells = [null, 0, null];',
         py: 'cells = [None, 0, None]',
         expected: graph({ cells: ref('cells') }, { cells: list(null, 0, null) }),
+        hint: {
+          js: 'Declare cells as a three-slot list: null, 0, null.',
+          py: 'Assign cells a three-slot list: None, 0, None.',
+        },
       }),
       draw({
         title: 'Two names, one list',
         js: lines('let a = [7];', 'let b = a;'),
         py: lines('a = [7]', 'b = a'),
         expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: list(7) }),
+        hint: 'Assigning b = a makes both names refer to the same list, not a second copy.',
       }),
       write({
         title: 'Three names, one list',
@@ -528,18 +543,24 @@ export const levels: Level[] = [
           { a: ref('shared'), b: ref('shared'), c: ref('shared') },
           { shared: list('x') },
         ),
+        hint: 'Each assignment from a adds another name for the same list object.',
       }),
       draw({
         title: 'Equal but separate',
         js: lines('let a = [1, 2];', 'let b = [1, 2];'),
         py: lines('a = [1, 2]', 'b = [1, 2]'),
         expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1, 2), b: list(1, 2) }),
+        hint: 'Two list literals with the same contents are still two separate list objects in memory.',
       }),
       write({
         title: 'Two empty lists',
         js: lines('let p = [];', 'let q = [];'),
         py: lines('p = []', 'q = []'),
         expected: graph({ p: ref('p'), q: ref('q') }, { p: list(), q: list() }),
+        hint: {
+          js: 'Declare two variables, each with its own empty list literal.',
+          py: 'Create two variables, each with its own empty list literal.',
+        },
       }),
       write({
         title: 'Two share, one doesn\'t',
@@ -549,6 +570,7 @@ export const levels: Level[] = [
           { a: ref('shared'), b: ref('shared'), c: ref('alone') },
           { shared: list(1), alone: list(1) },
         ),
+        hint: 'b = a shares one list; c = [1] creates a second list with the same value in slot 0.',
       }),
     ],
     [
@@ -560,6 +582,10 @@ export const levels: Level[] = [
           { empty: ref('empty'), full: ref('full') },
           { empty: list(), full: list(1, '1', true, null) },
         ),
+        hint: {
+          js: 'Declare empty as [] and full with one slot each for 1, "1", true, and null.',
+          py: 'Assign empty as [] and full with one slot each for 1, "1", True, and None.',
+        },
       }),
       draw({
         title: 'Copying the copy',
@@ -569,6 +595,7 @@ export const levels: Level[] = [
           { a: ref('shared'), b: ref('shared'), c: ref('shared') },
           { shared: list() },
         ),
+        hint: 'Chaining assignments still leaves every name pointing at one shared list.',
       }),
       write({
         title: 'One shared, one empty',
@@ -578,6 +605,7 @@ export const levels: Level[] = [
           { x: ref('shared'), y: ref('shared'), z: ref('empty') },
           { shared: list('a', 'b'), empty: list() },
         ),
+        hint: 'y = x shares the ["a", "b"] list; z = [] is a separate empty list.',
       }),
       draw({
         title: 'Two pairs',
@@ -587,6 +615,10 @@ export const levels: Level[] = [
           { a: ref('first'), b: ref('first'), c: ref('second'), d: ref('second') },
           { first: list(true), second: list(true) },
         ),
+        hint: {
+          js: 'a and b share one list; c and d share a different list, even though both hold true.',
+          py: 'a and b share one list; c and d share a different list, even though both hold True.',
+        },
       }),
       draw({
         title: 'The alias is the one that matters',
@@ -596,6 +628,7 @@ export const levels: Level[] = [
           { a: ref('shared'), b: ref('alone'), c: ref('shared') },
           { shared: list(0, 0), alone: list(0, 0) },
         ),
+        hint: 'c = a joins c with a\'s list; b keeps its own list with the same slot values.',
       }),
     ],
   ),
@@ -720,7 +753,7 @@ export const levels: Level[] = [
 
   level(
     'mutating-arrays',
-    'Changing Arrays',
+    'Changing Arrays and Lists',
     'Adding, removing or overwriting an item changes the list or array itself, so every variable that refers to it sees the change. Assigning a new list or array to a variable is different: it repoints only that variable and leaves the previous one as it was.',
     [
       draw({
@@ -1384,7 +1417,7 @@ export const levels: Level[] = [
   level(
     'rebinding',
     'Rebinding and Functions',
-    'Assigning to a variable only changes what that variable refers to; the object it referred to before is untouched. A function parameter is a new variable referring to the caller\'s object, so the function can change that object but cannot repoint the caller\'s variable.',
+    'Assigning to a variable only changes what that variable refers to; the container it referred to before is untouched. Growing a list with append or push changes it in place; combining with concat or + builds a new list and leaves the old one alone. A function parameter is a new variable referring to the caller\'s container, so the function can change that container but cannot repoint the caller\'s variable.',
     [
       draw({
         title: 'Strings never change',
@@ -1416,6 +1449,10 @@ export const levels: Level[] = [
         js: lines('let a = [1];', 'let b = a;', 'a = a.concat([2]);'),
         py: lines('a = [1]', 'b = a', 'a = a + [2]'),
         expected: graph({ a: ref('new'), b: ref('old') }, { old: list(1), new: list(1, 2) }),
+        hint: {
+          js: 'After a = a.concat([2]), a points at a new list while b still refers to [1].',
+          py: 'After a = a + [2], a points at a new list while b still refers to [1].',
+        },
       }),
       draw({
         title: 'Dropping a reference',
@@ -1448,6 +1485,10 @@ export const levels: Level[] = [
               expected: graph({ a: ref('a'), b: ref('b') }, { a: list(5), b: list(5, 3, 4) }),
             },
           ],
+        },
+        hint: {
+          js: 'Use b = b.concat([3, 4]) so b gets a new list and a keeps [1, 2].',
+          py: 'Use b = b + [3, 4] so b gets a new list and a keeps [1, 2].',
         },
       }),
       write({

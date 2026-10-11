@@ -61,7 +61,7 @@ export function sameObject(a: HeapLocation, b: HeapLocation, message?: string): 
     relation: 'same',
     a,
     b,
-    message: message ?? `${capitalize(second)} should be the same object as ${first}.`,
+    message: message ?? `${capitalize(second)} should be the same container as ${first}.`,
   }
 }
 
@@ -71,7 +71,7 @@ export function differentObject(a: HeapLocation, b: HeapLocation, message?: stri
     relation: 'different',
     a,
     b,
-    message: message ?? `${capitalize(when(b))} should be a different object from ${when(a)}.`,
+    message: message ?? `${capitalize(when(b))} should be a different container from ${when(a)}.`,
   }
 }
 
