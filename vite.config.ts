@@ -2,6 +2,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
+  base: './',
   plugins: [react()],
   // The Python engine is loaded with a dynamic import inside the worker, which needs a module worker bundle.
   worker: { format: 'es' },
