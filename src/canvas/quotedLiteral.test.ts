@@ -10,12 +10,14 @@ describe('quotedLiteralFieldError', () => {
 
   it('allows a quoted literal', () => {
     expect(quotedLiteralFieldError('"Ada"', 'javascript')).toBeUndefined()
+    expect(quotedLiteralFieldError("'Ada'", 'javascript')).toBeUndefined()
+    expect(quotedLiteralFieldError('"Ada"', 'python')).toBeUndefined()
     expect(quotedLiteralFieldError("'Ada'", 'python')).toBeUndefined()
   })
 
   it('rejects bare text', () => {
     expect(quotedLiteralFieldError('Ada', 'javascript')).toMatch(/Surround the value with " quotes/)
-    expect(quotedLiteralFieldError('Ada', 'python')).toMatch(/Surround the value with ' quotes/)
+    expect(quotedLiteralFieldError('Ada', 'python')).toMatch(/Surround the value with " quotes/)
   })
 })
 

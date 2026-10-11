@@ -54,7 +54,7 @@ export function Dashboard({ onOpen }: { onOpen: (problemId: string) => void }) {
 
   return (
     <div className="dashboard">
-      <h1>The Data Game</h1>
+      <h1>Memory Mapper</h1>
       <p className="dashboard-intro">
         Read a snippet, then build the diagram of variables, values, lists or arrays, and objects
         or dictionaries that exists in memory once it has run. Some problems go the other way: you

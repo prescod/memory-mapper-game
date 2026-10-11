@@ -235,7 +235,7 @@ describe('scalars', () => {
 
   it('formats wrong values in the language being drawn', () => {
     const d = new Diagram().variable('vx', 'x', 'a').variable('vy', 'y', 'b').scalar('a', '10').scalar('b', 'hi')
-    expect(check('primitives', d, 'python').errors[0].message).toBe("The value 'hi' is not correct here.")
+    expect(check('primitives', d, 'python').errors[0].message).toBe('The value "hi" is not correct here.')
     expect(check('primitives', d, 'javascript').errors[0].message).toBe('The value "hi" is not correct here.')
   })
 
@@ -257,7 +257,7 @@ describe('scalars', () => {
 
   it.each([
     [{ kind: 'string', value: "it's" }, `"it's"`],
-    [{ kind: 'string', value: 'a\\b' }, `'a\\\\b'`],
+    [{ kind: 'string', value: 'a\\b' }, `"a\\\\b"`],
     [{ kind: 'boolean', value: 'false' }, 'False'],
     [{ kind: 'null', value: 'null' }, 'None'],
   ] as const)('formats %o for Python as %s', (scalar, text) => {
@@ -272,7 +272,7 @@ describe('changeKind', () => {
     [{ kind: 'auto', text: 'true' }, 'boolean', { kind: 'boolean', text: 'true' }],
     [{ kind: 'auto', text: "'hi'" }, 'string', { kind: 'string', text: "'hi'" }],
     [{ kind: 'boolean', text: 'false' }, 'string', { kind: 'string', text: 'False' }],
-    [{ kind: 'string', text: 'hi' }, 'auto', { kind: 'auto', text: "'hi'" }],
+    [{ kind: 'string', text: 'hi' }, 'auto', { kind: 'auto', text: '"hi"' }],
     [{ kind: 'number', text: '3' }, 'null', { kind: 'null', text: '' }],
   ] as const)('turns %o into %s in Python', (data, kind, result) => {
     expect(changeKind(data, kind, 'python')).toEqual(result)

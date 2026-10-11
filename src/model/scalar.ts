@@ -59,7 +59,7 @@ export function scalarFromJs(value: number | string | boolean | null): ScalarMem
   return { type: 'scalar', kind: 'string', value }
 }
 
-/** Writes a scalar the way `language` would display it, e.g. `None` and `'hi'` in Python. */
+/** Writes a scalar the way `language` would display it, e.g. `None` in Python and `null` in JS. */
 export function formatScalar(scalar: { kind: ScalarKind; value: string }, language: Language): string {
   switch (scalar.kind) {
     case 'null':
@@ -69,23 +69,16 @@ export function formatScalar(scalar: { kind: ScalarKind; value: string }, langua
     case 'number':
       return scalar.value
     case 'string':
-      return language === 'python' ? pythonRepr(scalar.value) : JSON.stringify(scalar.value)
+      return JSON.stringify(scalar.value)
   }
-}
-
-/** Python's `repr` of a str: single quotes unless only double quotes avoid escaping. */
-function pythonRepr(value: string): string {
-  const escaped = value.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/\t/g, '\\t')
-  if (value.includes("'") && !value.includes('"')) return `"${escaped}"`
-  return `'${escaped.replace(/'/g, "\\'")}'`
 }
 
 export function scalarKindName(kind: ScalarKind, language: Language): string {
   return KIND_NAMES[language][kind]
 }
 
-export function stringQuote(language: Language): string {
-  return language === 'python' ? "'" : '"'
+export function stringQuote(_language?: Language): string {
+  return '"'
 }
 
 /** Inner text when `raw` is wrapped in matching quotes; otherwise `raw` trimmed. */
