@@ -13,12 +13,14 @@ export type ContainerSpec =
   | { kind: 'array'; items: Value[] }
   | { kind: 'object'; entries: Record<string, Value> }
   | { kind: 'pet'; label: string }
+  | { kind: 'scalar'; value: number | string | boolean | null }
 
 export const ref = (id: string): Ref => ({ ref: id })
 export const list = (...items: Value[]): ContainerSpec => ({ kind: 'array', items })
 export const dict = (entries: Record<string, Value>): ContainerSpec => ({ kind: 'object', entries })
 /** An opaque `Pet` instance named `label` (e.g. a pet's name), for the identity level. */
 export const pet = (label: string): ContainerSpec => ({ kind: 'pet', label })
+export const scalar = (value: number | string | boolean | null): ContainerSpec => ({ kind: 'scalar', value })
 
 const isRef = (value: Value): value is Ref => typeof value === 'object' && value !== null
 
@@ -50,6 +52,8 @@ export function graph(
   for (const [name, spec] of Object.entries(containers)) {
     if (spec.kind === 'pet') {
       nodes[`container:${name}`] = { type: 'instance', className: 'Pet', label: spec.label }
+    } else if (spec.kind === 'scalar') {
+      nodes[`container:${name}`] = scalarFromJs(spec.value)
     } else if (spec.kind === 'array') {
       nodes[`container:${name}`] = {
         type: 'array',
@@ -73,4 +77,17 @@ export function graph(
     })),
     nodes,
   }
+}
+
+export function withGarbage(
+  base: MemoryGraph,
+  ...values: (number | string | boolean | null)[]
+): MemoryGraph {
+  const nodes = { ...base.nodes }
+  let index = 0
+  for (const value of values) {
+    while (`garbage:${index}` in nodes) index++
+    nodes[`garbage:${index}`] = scalarFromJs(value)
+  }
+  return { ...base, nodes }
 }

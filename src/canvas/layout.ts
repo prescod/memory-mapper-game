@@ -53,6 +53,19 @@ export function toFlow(memory: MemoryGraph): { nodes: MemFlowNode[]; edges: MemF
     targetsOf(memory.nodes[id]).forEach((target) => reach(target, depth + 1))
   }
 
+  const maxCol = Math.max(0, ...column.values())
+  const finalCol = maxCol > 0 ? maxCol + 1 : 1
+  for (const id of Object.keys(memory.nodes)) {
+    if (!column.has(id)) {
+      reach(id, finalCol)
+      while (queue.length > 0) {
+        const nextId = queue.shift()!
+        const depth = column.get(nextId)!
+        targetsOf(memory.nodes[nextId]).forEach((target) => reach(target, depth + 1))
+      }
+    }
+  }
+
   const nextY = new Map<number, number>()
   const place = (col: number, height: number) => {
     const y = nextY.get(col) ?? 0

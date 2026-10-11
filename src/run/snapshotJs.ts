@@ -40,7 +40,13 @@ export function snapshotJavaScript(code: string, names: string[]): Snapshot {
  * from look-alikes the learner builds. Throws `UserCodeError` for anything the
  * learner can fix; other errors from the code itself propagate unchanged.
  */
-export function runJavaScript(given: string, code: string, names: string[], checks?: RuntimeChecks): Snapshot {
+export function runJavaScript(
+  given: string,
+  code: string,
+  names: string[],
+  checks?: RuntimeChecks,
+  then?: string,
+): Snapshot {
   const readable = [...new Set([...names, ...(checks ? rootsOf(checks) : [])])]
   const readers = `{ ${readable.map((name) => `${JSON.stringify(name)}: () => ${name}`).join(', ')} }`
 
@@ -52,7 +58,7 @@ export function runJavaScript(given: string, code: string, names: string[], chec
       ...functionsOf(checks).map((fn) => `${fn} = __dt.spy(${JSON.stringify(fn)}, ${fn});`),
     ].join(' ')
 
-  const { source } = joinProgram(given, code, checkpoint)
+  const { source } = joinProgram(given, code, checkpoint, then)
   const run = new Function('__dt', `${source}\nreturn ${readers};`)
   const read = run(tracker) as Record<string, Reader>
 

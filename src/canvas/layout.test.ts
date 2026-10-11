@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { graph } from '../model/builders'
+import { graph, withGarbage } from '../model/builders'
 import { problems } from '../model/levels'
 import { LANGUAGES } from '../model/types'
 import { verify } from '../verify/verify'
@@ -28,7 +28,7 @@ describe('toFlow', () => {
   })
 
   it('places every node once, with unique ids, even when references form a cycle', () => {
-    const cyclic = problems.find((problem) => problem.id === 'cycles-8')!
+    const cyclic = problems.find((problem) => problem.id === 'nesting-12')!
     const { nodes } = toFlow(cyclic.expected)
     const ids = nodes.map((node) => node.id)
     expect(new Set(ids).size).toBe(ids.length)
@@ -40,5 +40,16 @@ describe('toFlow', () => {
     const variable = nodes.find((node) => node.type === 'variable')!
     const array = nodes.find((node) => node.type === 'array')!
     expect(variable.position.x).toBeLessThan(array.position.x)
+  })
+
+  it('places unreached nodes in a column after the reachable ones', () => {
+    const memory = withGarbage(graph({ x: 7 }), 5)
+    const { nodes } = toFlow(memory)
+    const variable = nodes.find((node) => node.type === 'variable')!
+    const seven = nodes.find((node) => node.type === 'scalar' && node.data.text === '7')!
+    const five = nodes.find((node) => node.type === 'scalar' && node.data.text === '5')!
+    expect(variable.position.x).toBe(0)
+    expect(seven.position.x).toBe(280)
+    expect(five.position.x).toBe(560)
   })
 })

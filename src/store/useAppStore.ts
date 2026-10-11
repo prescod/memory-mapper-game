@@ -20,7 +20,7 @@ export interface AppState {
 }
 
 export const STORAGE_KEY = 'memory-model-visualizer'
-const STORAGE_VERSION = 8
+const STORAGE_VERSION = 9
 
 export const progressKey = (problemId: string, language: Language) => `${problemId}:${language}`
 

@@ -11,8 +11,10 @@ import { progressKey, useAppStore } from '../store/useAppStore'
 import { buildRunRequest, gradeRun } from '../verify/grade'
 import { CheckBar } from './CheckBar'
 import { CodeEditor } from './CodeEditor'
+import { DebriefView } from './DebriefView'
 import { ProblemHeader } from './ProblemHeader'
 import { ProblemPanel } from './ProblemPanel'
+import { useDebrief } from './useDebrief'
 
 interface WriteProblemViewProps {
   location: ProblemLocation<WriteProblem>
@@ -30,6 +32,7 @@ export function WriteProblemView({
   const { problem, level, index } = location
   const key = progressKey(problem.id, language)
   const given = problem.given?.[language] ?? ''
+  const then = problem.then?.[language] ?? ''
 
   const code = useAppStore((state) => state.codeDrafts[key] ?? '')
   const saveCodeDraft = useAppStore((state) => state.saveCodeDraft)
@@ -82,6 +85,11 @@ export function WriteProblemView({
   }
 
   const next = nextProblem(problem.id)
+  const {
+    isOpen: isDebriefOpen,
+    hasDebrief,
+    toggle: toggleDebrief,
+  } = useDebrief(problem, result, language)
 
   return (
     <div className="problem-screen">
@@ -96,29 +104,43 @@ export function WriteProblemView({
         focusHeading={focusProblemHeading}
       />
       <main className="workspace">
-        <Canvas
-          readOnly
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          setNodes={() => {}}
-          setEdges={setEdges}
-          feedback={emptyFeedback}
-          language={language}
-        />
-        <div className="editor-panel">
-          {given !== '' && (
-            <>
-              <p className="editor-caption">Already in place:</p>
-              <pre className="code-snippet given-code">
-                <code>{given}</code>
-              </pre>
-              <p className="editor-caption">Your code runs after it:</p>
-            </>
-          )}
-          <CodeEditor value={code} language={language} onChange={edit} />
-        </div>
+        {isDebriefOpen && problem.debrief ? (
+          <DebriefView debrief={problem.debrief} language={language} />
+        ) : (
+          <>
+            <Canvas
+              readOnly
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              setNodes={() => {}}
+              setEdges={setEdges}
+              feedback={emptyFeedback}
+              language={language}
+            />
+            <div className="editor-panel">
+              {given !== '' && (
+                <>
+                  <p className="editor-caption">Already in place:</p>
+                  <pre className="code-snippet given-code">
+                    <code>{given}</code>
+                  </pre>
+                  <p className="editor-caption">Your code runs after it:</p>
+                </>
+              )}
+              <CodeEditor value={code} language={language} onChange={edit} />
+              {then !== '' && (
+                <>
+                  <p className="editor-caption then-caption">Then this runs:</p>
+                  <pre className="code-snippet then-code">
+                    <code>{then}</code>
+                  </pre>
+                </>
+              )}
+            </div>
+          </>
+        )}
       </main>
       <CheckBar
         problemId={problem.id}
@@ -134,6 +156,11 @@ export function WriteProblemView({
         hint={problemHint(problem, language)}
         onRevealAnswer={() => setIsAnswerRevealed((prev) => !prev)}
         isAnswerRevealed={isAnswerRevealed}
+        debrief={
+          hasDebrief && result?.ok
+            ? { open: isDebriefOpen, onToggle: toggleDebrief }
+            : undefined
+        }
         revealedAnswer={
           isAnswerRevealed ? (
             <div className="check-result answer-box" role="status">

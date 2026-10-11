@@ -11,8 +11,10 @@ import { quotedLiteralErrors } from '../canvas/quotedLiteral'
 import { toGraph } from '../verify/toGraph'
 import { verify } from '../verify/verify'
 import { CheckBar } from './CheckBar'
+import { DebriefView } from './DebriefView'
 import { ProblemHeader } from './ProblemHeader'
 import { ProblemPanel } from './ProblemPanel'
+import { useDebrief } from './useDebrief'
 
 const AUTOSAVE_DELAY_MS = 300
 
@@ -139,6 +141,11 @@ export function ProblemView({
   }
 
   const next = nextProblem(problem.id)
+  const {
+    isOpen: isDebriefOpen,
+    hasDebrief,
+    toggle: toggleDebrief,
+  } = useDebrief(problem, result, language)
 
   return (
     <div className="problem-screen">
@@ -153,16 +160,20 @@ export function ProblemView({
         focusHeading={focusProblemHeading}
       />
       <main className="workspace">
-        <Canvas
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={handleNodesChange}
-          onEdgesChange={handleEdgesChange}
-          setNodes={setNodes}
-          setEdges={setEdges}
-          feedback={feedback}
-          language={language}
-        />
+        {isDebriefOpen && problem.debrief ? (
+          <DebriefView debrief={problem.debrief} language={language} />
+        ) : (
+          <Canvas
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={handleNodesChange}
+            onEdgesChange={handleEdgesChange}
+            setNodes={setNodes}
+            setEdges={setEdges}
+            feedback={feedback}
+            language={language}
+          />
+        )}
       </main>
       <CheckBar
         problemId={problem.id}
@@ -176,6 +187,11 @@ export function ProblemView({
         onRevealAnswer={handleRevealAnswer}
         isAnswerRevealed={isAnswerRevealed}
         disableCheck={isAnswerRevealed}
+        debrief={
+          hasDebrief && result?.ok
+            ? { open: isDebriefOpen, onToggle: toggleDebrief }
+            : undefined
+        }
         revealedAnswer={
           isAnswerRevealed ? (
             <div className="check-result answer-box" role="status">

@@ -53,6 +53,8 @@ export interface CanvasProps {
   language: Language
   /** Shows the diagram as a fixed picture: no toolbar, connecting, editing or deleting. */
   readOnly?: boolean
+  /** Compact diagram embedded in text: no controls, no panning/zooming, permits page scrolling. */
+  compact?: boolean
 }
 
 const defaultEdgeOptions = { markerEnd: { type: MarkerType.ArrowClosed } }
@@ -69,7 +71,9 @@ function CanvasInner({
   feedback,
   language,
   readOnly = false,
+  compact = false,
 }: CanvasProps) {
+  const isReadOnly = readOnly || compact
   const wrapper = useRef<HTMLDivElement>(null)
   const { screenToFlowPosition, fitView, deleteElements } = useReactFlow<MemFlowNode, MemFlowEdge>()
   const nodesMeasured = useNodesInitialized()
@@ -78,8 +82,8 @@ function CanvasInner({
 
   // The picture is wider than the learner's own diagrams, so fit it again once every node has its real size.
   useEffect(() => {
-    if (readOnly && nodesMeasured) void fitView({ maxZoom: 1 })
-  }, [readOnly, nodesMeasured, fitView])
+    if (isReadOnly && nodesMeasured) void fitView({ maxZoom: 1 })
+  }, [isReadOnly, nodesMeasured, fitView])
 
   const addNode = useCallback(
     (type: MemNodeType, position: { x: number; y: number }) => {
@@ -190,7 +194,7 @@ function CanvasInner({
   return (
     <FeedbackContext.Provider value={feedback}>
       <LanguageContext.Provider value={language}>
-        <ReadOnlyContext.Provider value={readOnly}>
+        <ReadOnlyContext.Provider value={isReadOnly}>
           <div className="canvas" ref={wrapper}>
             <ReactFlow<MemFlowNode, MemFlowEdge>
               nodes={displayedNodes}
@@ -199,28 +203,34 @@ function CanvasInner({
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
-              onNodeClick={readOnly ? undefined : onNodeClick}
-              onPaneClick={readOnly ? undefined : cancelTapConnection}
+              onNodeClick={isReadOnly ? undefined : onNodeClick}
+              onPaneClick={isReadOnly ? undefined : cancelTapConnection}
               isValidConnection={checkConnection}
               onDragOver={onDragOver}
               onDrop={onDrop}
               defaultEdgeOptions={defaultEdgeOptions}
-              deleteKeyCode={readOnly ? null : ['Backspace', 'Delete']}
-              nodesConnectable={!readOnly}
+              deleteKeyCode={isReadOnly ? null : ['Backspace', 'Delete']}
+              nodesConnectable={!isReadOnly}
+              nodesDraggable={!isReadOnly}
+              elementsSelectable={!isReadOnly}
+              panOnDrag={!compact}
+              zoomOnScroll={!compact}
+              zoomOnPinch={!compact}
+              preventScrolling={!compact}
               connectionRadius={40}
               zoomOnDoubleClick={false}
               minZoom={0.3}
-              fitView={readOnly}
-              fitViewOptions={readOnly ? { maxZoom: 1 } : undefined}
+              fitView={isReadOnly}
+              fitViewOptions={isReadOnly ? { maxZoom: 1 } : undefined}
             >
               <Background />
-              <Controls position="bottom-right" showInteractive={false} />
-              {!readOnly && (
+              {!compact && <Controls position="bottom-right" showInteractive={false} />}
+              {!isReadOnly && (
                 <Panel position="top-left" className="toolbar-panel">
                   <Toolbar language={language} onAdd={addInView} />
                 </Panel>
               )}
-              {!readOnly && pending && (
+              {!isReadOnly && pending && (
                 <Panel position="bottom-center">
                   <div className="connect-banner" role="status">
                     <span>Tap what this points to</span>
@@ -230,7 +240,7 @@ function CanvasInner({
                   </div>
                 </Panel>
               )}
-              {!readOnly && !pending && hasSelection && (
+              {!isReadOnly && !pending && hasSelection && (
                 <Panel position="bottom-left">
                   <button
                     type="button"

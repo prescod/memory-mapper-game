@@ -19,6 +19,10 @@ interface CheckBarProps {
   isAnswerRevealed?: boolean
   revealedAnswer?: ReactNode
   disableCheck?: boolean
+  debrief?: {
+    open: boolean
+    onToggle: () => void
+  }
 }
 
 /**
@@ -41,6 +45,7 @@ export function CheckBar({
   isAnswerRevealed = false,
   revealedAnswer,
   disableCheck = false,
+  debrief,
 }: CheckBarProps) {
   const [showHint, setShowHint] = useState(false)
   const [dismissed, setDismissed] = useState(false)
@@ -54,10 +59,11 @@ export function CheckBar({
     setDismissed(false)
   }, [result, showHint, isAnswerRevealed])
 
+  const isDebriefOpen = debrief?.open === true
   const passed = result?.ok === true
   const hintVisible = showHint && hint !== undefined
   const hasFeedback = hintVisible || revealedAnswer !== undefined || result !== null
-  const sheetOpen = hasFeedback && !dismissed
+  const sheetOpen = !isDebriefOpen && hasFeedback && !dismissed
 
   const bar = useRef<HTMLDivElement>(null)
   const inline = useMediaQuery('(min-width: 900px)')
@@ -123,48 +129,76 @@ export function CheckBar({
       )}
 
       <div className="action-row">
-        <button type="button" className="secondary-button" onClick={onReset} disabled={busy}>
-          Reset
-        </button>
-        {hint && (
-          <button
-            type="button"
-            className="secondary-button"
-            aria-pressed={showHint}
-            onClick={() => setShowHint((prev) => !prev)}
-            disabled={busy}
-          >
-            Hint
-          </button>
-        )}
-        {onRevealAnswer && (
-          <button
-            type="button"
-            className="secondary-button"
-            aria-pressed={isAnswerRevealed}
-            onClick={onRevealAnswer}
-            disabled={busy}
-          >
-            Answer
-          </button>
-        )}
-        {passed ? (
-          <button
-            type="button"
-            className="primary-button action-primary"
-            onClick={hasNext ? onNext : onBack}
-          >
-            {hasNext ? 'Next problem ›' : 'All problems'}
-          </button>
+        {isDebriefOpen ? (
+          <>
+            <button type="button" className="secondary-button" onClick={debrief.onToggle}>
+              Back to puzzle
+            </button>
+            <button
+              type="button"
+              className="primary-button action-primary"
+              onClick={hasNext ? onNext : onBack}
+            >
+              {hasNext ? 'Next problem ›' : 'All problems'}
+            </button>
+          </>
         ) : (
-          <button
-            type="button"
-            className="primary-button action-primary"
-            onClick={onCheck}
-            disabled={busy || disableCheck}
-          >
-            {busy ? 'Running…' : 'Check'}
-          </button>
+          <>
+            <button type="button" className="secondary-button" onClick={onReset} disabled={busy}>
+              Reset
+            </button>
+            {hint && (
+              <button
+                type="button"
+                className="secondary-button"
+                aria-pressed={showHint}
+                onClick={() => setShowHint((prev) => !prev)}
+                disabled={busy}
+              >
+                Hint
+              </button>
+            )}
+            {onRevealAnswer && (
+              <button
+                type="button"
+                className="secondary-button"
+                aria-pressed={isAnswerRevealed}
+                onClick={onRevealAnswer}
+                disabled={busy}
+              >
+                Answer
+              </button>
+            )}
+            {passed ? (
+              <>
+                {debrief && (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={debrief.onToggle}
+                  >
+                    Lesson
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="primary-button action-primary"
+                  onClick={hasNext ? onNext : onBack}
+                >
+                  {hasNext ? 'Next problem ›' : 'All problems'}
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="primary-button action-primary"
+                onClick={onCheck}
+                disabled={busy || disableCheck}
+              >
+                {busy ? 'Running…' : 'Check'}
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -109,6 +109,10 @@ export interface DiagnosticHint {
 
 export type Hint = string | Record<Language, string>
 
+export type DebriefBlock =
+  | { html: Hint }
+  | { diagram: MemoryGraph; caption: Hint; verdict?: 'correct' | 'incorrect' }
+
 /**
  * Code is shown and the learner draws the memory it leaves behind. The two
  * snippets are different spellings of the same program, so both are graded
@@ -124,6 +128,8 @@ export interface DrawProblem {
   expected: MemoryGraph
   hints?: DiagnosticHint[]
   hint?: Hint
+  about?: Hint
+  debrief?: DebriefBlock[]
   /**
    * Whether checking this puzzle runs the reference code with the hidden
    * `makeObject` / `make_object` helper defined. Learners only ever see calls
@@ -133,9 +139,36 @@ export interface DrawProblem {
 }
 
 /**
+ * A requirement on how the code is written that the picture cannot show,
+ * stated as an instruction from the learner's boss. Two variables holding the
+ * same number look identical whether one was assigned from the other or both
+ * were typed out, and only the purpose of the code decides which is right. A
+ * constraint states that purpose, so the choice reads as the learner's own
+ * design decision rather than a hidden rule of the checker.
+ *
+ * Each case reruns the learner's code after other starter code, standing in
+ * for another programmer editing the starting values.
+ */
+export interface Constraint {
+  rule: Hint
+  cases: ConstraintCase[]
+}
+
+export interface ConstraintCase {
+  /** The edit, worded to complete "If another programmer changes the code so that …", e.g. `a starts at 3`. */
+  change: string
+  given: Record<Language, string>
+  then?: Record<Language, string>
+  /** Names the same variables as the puzzle's own picture. */
+  expected: MemoryGraph
+}
+
+/**
  * The picture `expected` is shown and the learner writes code that produces it.
  * `given` is read-only code that runs first, so a puzzle can require changing
  * objects that already exist instead of retyping the result as literals.
+ * `then` is read-only code that runs afterward, so a puzzle can call a function
+ * the learner defined.
  * `solution` is a reference answer used only to prove the puzzle can be solved;
  * the interface never shows it.
  */
@@ -147,11 +180,15 @@ export interface WriteProblem {
   mystery: boolean
   expected: MemoryGraph
   given?: Record<Language, string>
+  then?: Record<Language, string>
   solution: Record<Language, string>
   /** What the picture alone cannot show: which objects were changed, what was called, how values were built. */
   process?: ProcessSpec
+  constraints?: Constraint[]
   hints?: DiagnosticHint[]
   hint?: Hint
+  about?: Hint
+  debrief?: DebriefBlock[]
   /** See `DrawProblem.opaquePrelude`. */
   opaquePrelude?: boolean
 }

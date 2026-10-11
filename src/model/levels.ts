@@ -1,4 +1,4 @@
-import { dict, graph, list, pet, ref } from './builders'
+import { dict, graph, list, pet, ref, scalar, withGarbage } from './builders'
 import {
   after,
   before,
@@ -14,7 +14,9 @@ import {
   type SourceRule,
 } from './process'
 import type {
+  DebriefBlock,
   DiagnosticHint,
+  Hint,
   Language,
   Level,
   LocalizedText,
@@ -29,11 +31,36 @@ const L = (javascript: string, python: string): LocalizedText => ({ javascript, 
 
 export type SpecHint = string | { js: string; py: string }
 
+export type SpecDebriefBlock =
+  | { html: SpecHint }
+  | { diagram: MemoryGraph; caption: SpecHint; verdict?: 'correct' | 'incorrect' }
+
 /** Problem titles that name language keywords are spelled per language. */
 export type SpecTitle = string | { js: string; py: string }
 
 const toTitle = (title: SpecTitle): string | LocalizedText =>
   typeof title === 'string' ? title : { javascript: title.js, python: title.py }
+
+export function localize(spec: SpecHint): Hint {
+  return typeof spec === 'string' ? spec : { javascript: spec.js, python: spec.py }
+}
+
+function toDebriefBlock(block: SpecDebriefBlock): DebriefBlock {
+  if ('html' in block) {
+    return { html: localize(block.html) }
+  }
+  return {
+    diagram: block.diagram,
+    caption: localize(block.caption),
+    ...(block.verdict !== undefined && { verdict: block.verdict }),
+  }
+}
+
+export const SHARING_LATER =
+  '<p>Later, you will work with values that have identity and can be changed in place, and then it will matter a great deal whether two variables share a value or not. For now, it does not.</p>'
+
+export const SHARING_REMINDER =
+  '<p>As before, sharing a number or keeping separate copies makes no difference yet.</p>'
 
 interface DrawSpec {
   kind: 'draw'
@@ -43,6 +70,8 @@ interface DrawSpec {
   expected: MemoryGraph
   hints?: DiagnosticHint[]
   hint?: SpecHint
+  about?: SpecHint
+  debrief?: SpecDebriefBlock[]
   opaquePrelude?: boolean
 }
 
@@ -51,14 +80,30 @@ interface WriteSpec {
   title: SpecTitle
   /** Read-only code that runs before the learner's. */
   given?: { js: string; py: string }
+  /** Read-only code that runs after the learner's. */
+  then?: { js: string; py: string }
   /** Reference answer, in the two languages. */
   js: string
   py: string
   expected: MemoryGraph
   process?: ProcessSpec
+  constraints?: ConstraintSpec[]
   hints?: DiagnosticHint[]
   hint?: SpecHint
+  about?: SpecHint
+  debrief?: SpecDebriefBlock[]
   opaquePrelude?: boolean
+}
+
+/** See `Constraint`. */
+interface ConstraintSpec {
+  rule: SpecHint
+  cases: {
+    change: string
+    given: { js: string; py: string }
+    then?: { js: string; py: string }
+    expected: MemoryGraph
+  }[]
 }
 
 /** Starter code that differs from `given`, with the picture the same answer must build from it. */
@@ -84,12 +129,9 @@ const draw = (spec: Omit<DrawSpec, 'kind'>): DrawSpec => ({ kind: 'draw', ...spe
 const write = (spec: Omit<WriteSpec, 'kind'>): WriteSpec => ({ kind: 'write', ...spec })
 
 function toProblem(spec: Spec, id: string, mystery: boolean): Problem {
-  const hint =
-    typeof spec.hint === 'string'
-      ? spec.hint
-      : spec.hint
-        ? { javascript: spec.hint.js, python: spec.hint.py }
-        : undefined
+  const hint = spec.hint ? localize(spec.hint) : undefined
+  const about = spec.about ? localize(spec.about) : undefined
+  const debrief = spec.debrief?.map(toDebriefBlock)
 
   if (spec.kind === 'draw') {
     return {
@@ -101,6 +143,8 @@ function toProblem(spec: Spec, id: string, mystery: boolean): Problem {
       expected: spec.expected,
       hints: spec.hints,
       hint,
+      about,
+      debrief,
       ...(spec.opaquePrelude !== undefined && { opaquePrelude: spec.opaquePrelude }),
     }
   }
@@ -111,6 +155,7 @@ function toProblem(spec: Spec, id: string, mystery: boolean): Problem {
     mystery,
     expected: spec.expected,
     given: spec.given && { javascript: spec.given.js, python: spec.given.py },
+    then: spec.then && { javascript: spec.then.js, python: spec.then.py },
     solution: { javascript: spec.js, python: spec.py },
     process: spec.process && {
       runtime: spec.process.runtime,
@@ -120,8 +165,21 @@ function toProblem(spec: Spec, id: string, mystery: boolean): Problem {
         expected,
       })),
     },
+    ...(spec.constraints && {
+      constraints: spec.constraints.map(({ rule, cases }) => ({
+        rule: localize(rule),
+        cases: cases.map(({ change, given, then, expected }) => ({
+          change,
+          given: { javascript: given.js, python: given.py },
+          ...(then && { then: { javascript: then.js, python: then.py } }),
+          expected,
+        })),
+      })),
+    }),
     hints: spec.hints,
     hint,
+    about,
+    debrief,
     ...(spec.opaquePrelude !== undefined && { opaquePrelude: spec.opaquePrelude }),
   }
 }
@@ -167,7 +225,25 @@ export const levels: Level[] = [
         js: 'let x = 10;',
         py: 'x = 10',
         expected: graph({ x: 10 }),
-        hint: 'Create a variable named x and a number node with value 10, then connect x to 10.',
+        hint: 'Create a variable named x and a scalar number node with value 10, then connect x to 10.',
+        about:
+          'A variable and its value are two separate things. Assigning creates the name x and points it at the value 10.',
+        debrief: [
+          {
+            html: {
+              js: '<p><code>let x = 10;</code> creates two things: a <strong>variable</strong> named <code>x</code> and a <strong>value</strong>, the number 10. The arrow means "x currently refers to 10."</p>',
+              py: '<p><code>x = 10</code> creates two things: a <strong>variable</strong> named <code>x</code> and a <strong>value</strong>, the number 10. The arrow means "x currently refers to 10."</p>',
+            },
+          },
+          {
+            html: '<p>Every diagram in this game is built from these pieces: names, values, and arrows from names to values. Where the boxes sit on the canvas does not matter, only what points to what.</p>',
+          },
+          {
+            diagram: graph({ x: 10 }),
+            caption: 'One name, one value, one arrow.',
+            verdict: 'correct',
+          },
+        ],
       }),
       draw({
         title: 'Reassignment',
@@ -175,6 +251,26 @@ export const levels: Level[] = [
         py: lines('x = 5', 'x = 7'),
         expected: graph({ x: 7 }),
         hint: 'Reassigning a variable replaces its previous value. In the final memory, x holds 7.',
+        about:
+          'Assigning to a variable that already exists moves its arrow to a new value. The variable keeps no memory of what it held before.',
+        debrief: [
+          {
+            html: "<p>The second line does not turn the 5 into a 7. It moves x's arrow to a new value, 7. After the code runs, x refers to 7 and nothing refers to 5.</p>",
+          },
+          {
+            diagram: graph({ x: 7 }),
+            caption: 'x after both lines.',
+            verdict: 'correct',
+          },
+          {
+            html: '<p><strong>Also correct:</strong> leaving the old 5 on the canvas with nothing pointing to it. A value that nothing refers to can never be used again, so the checker ignores it. The language reclaims that memory on its own, which is called garbage collection.</p>',
+          },
+          {
+            diagram: withGarbage(graph({ x: 7 }), 5),
+            caption: 'Also correct: the old 5 left behind with nothing pointing to it.',
+            verdict: 'correct',
+          },
+        ],
       }),
       draw({
         title: 'Assigning from a variable',
@@ -182,7 +278,42 @@ export const levels: Level[] = [
         py: lines('x = 10', 'y = x'),
         expected: graph({ x: 10, y: 10 }),
         hint:
-          'Assigning y from x gives y the value 10. Numbers cannot change in place, so one shared number node or two separate nodes with 10 are both correct.',
+          'Assigning y from x gives y the value 10. Numbers cannot change in place, so one shared scalar number node or two separate nodes with 10 are both correct.',
+        about:
+          'Assigning one variable from another gives the new variable the value the first one holds at that moment.',
+        debrief: [
+          {
+            html: {
+              js: '<p><code>let y = x;</code> does not point y at x. Variables never point to variables. It looks up the value x holds right now, 10, and points y at that value.</p>',
+              py: '<p><code>y = x</code> does not point y at x. Variables never point to variables. It looks up the value x holds right now, 10, and points y at that value.</p>',
+            },
+          },
+          {
+            html: '<p>There are two equally correct ways to draw this:</p>',
+          },
+          {
+            diagram: graph({ x: 10, y: 10 }),
+            caption: 'Two separate 10s.',
+            verdict: 'correct',
+          },
+          {
+            diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: scalar(10) }),
+            caption: 'One 10 shared by both.',
+            verdict: 'correct',
+          },
+          {
+            html: {
+              js: '<p>JavaScript describes <code>y = x</code> as copying the number into y, which matches the first picture.</p>',
+              py: '<p>In Python, y now refers to the very same 10 object as x, which matches the second picture.</p>',
+            },
+          },
+          {
+            html: '<p>Either way, a number can never be changed in place, so no program can tell the two pictures apart, and the checker accepts both.</p>',
+          },
+          {
+            html: SHARING_LATER,
+          },
+        ],
       }),
       write({
         title: 'Two equal values',
@@ -190,10 +321,46 @@ export const levels: Level[] = [
         js: 'let b = a;',
         py: 'b = a',
         expected: graph({ a: 8, b: 8 }),
+        constraints: [
+          {
+            rule: 'Your boss said that if another programmer updates the code so that a starts at a different number, b must also use that different number.',
+            cases: [
+              {
+                change: 'a starts at 3',
+                given: { js: 'let a = 3;', py: 'a = 3' },
+                expected: graph({ a: 3, b: 3 }),
+              },
+            ],
+          },
+        ],
         hint: {
           js: 'Declare b and assign it from a instead of typing 8 again.',
           py: 'Set b from a instead of typing 8 again.',
         },
+        about:
+          'Give b the value that a already holds. The special constraint says b must follow whatever number a starts at, so assign from a instead of typing the number again.',
+        debrief: [
+          {
+            html: {
+              js: '<p><code>let b = a;</code> gives b whatever value a holds at that moment: 8.</p>',
+              py: '<p><code>b = a</code> gives b whatever value a holds at that moment: 8.</p>',
+            },
+          },
+          {
+            html: {
+              js: '<p><strong>Not accepted:</strong> <code>let b = 8;</code> builds exactly the same picture, so the picture alone cannot tell the two apart. The special constraint can. If another programmer changes the first line to <code>let a = 3;</code>, then <code>let b = a;</code> gives b 3 as well, as your boss asked, but <code>let b = 8;</code> leaves b at 8.</p>',
+              py: '<p><strong>Not accepted:</strong> <code>b = 8</code> builds exactly the same picture, so the picture alone cannot tell the two apart. The special constraint can. If another programmer changes the first line to <code>a = 3</code>, then <code>b = a</code> gives b 3 as well, as your boss asked, but <code>b = 8</code> leaves b at 8.</p>',
+            },
+          },
+          {
+            diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: scalar(8) }),
+            caption: 'This picture, with one shared 8, shows the same memory as the one you matched.',
+            verdict: 'correct',
+          },
+          {
+            html: SHARING_LATER,
+          },
+        ],
       }),
       draw({
         title: 'Area after a change',
@@ -209,17 +376,71 @@ export const levels: Level[] = [
               'The value 15 is not correct here. Changing height later does not update area — variables hold static values, not live formulas.',
           },
         ],
+        about:
+          'An assignment calculates its value once, when that line runs. A variable is not a spreadsheet cell, so changing height later does not change area.',
+        debrief: [
+          {
+            html: '<p><code>width * height</code> multiplied 3 by 4 when that line ran, and area was pointed at the result, 12. The formula is not saved anywhere: area holds only the number.</p>',
+          },
+          {
+            html: "<p>When height is reassigned to 5 afterward, only height's arrow moves. area still refers to 12.</p>",
+          },
+          {
+            diagram: graph({ width: 3, height: 5, area: 12 }),
+            caption: 'Correct: area keeps 12.',
+            verdict: 'correct',
+          },
+          {
+            diagram: graph({ width: 3, height: 5, area: 15 }),
+            caption: 'Not correct: this is what a spreadsheet would show.',
+            verdict: 'incorrect',
+          },
+          {
+            html: '<p>Leaving the old 4 on the canvas with nothing pointing to it is fine too.</p>',
+          },
+        ],
       }),
       write({
-        title: 'Three variables',
-        given: { js: lines('let x = 1;', 'let y = 2;'), py: lines('x = 1', 'y = 2') },
-        js: 'let z = x;',
-        py: 'z = x',
-        expected: graph({ x: 1, y: 2, z: 1 }),
+        title: 'Two teams',
+        given: { js: 'let players = 2;', py: 'players = 2' },
+        js: 'let teams = 2;',
+        py: 'teams = 2',
+        expected: graph({ players: 2, teams: 2 }),
+        constraints: [
+          {
+            rule: 'Your boss said the game always has exactly 2 teams, no matter how many players there are. If another programmer updates the code so that players starts at a different number, teams must stay 2.',
+            cases: [
+              {
+                change: 'players starts at 6',
+                given: { js: 'let players = 6;', py: 'players = 6' },
+                expected: graph({ players: 6, teams: 2 }),
+              },
+            ],
+          },
+        ],
         hint: {
-          js: 'Declare z and assign it from x.',
-          py: 'Set z from x.',
+          js: 'Declare teams with the number 2 itself, not from players.',
+          py: 'Set teams to the number 2 itself, not from players.',
         },
+        about:
+          'Two variables can hold the same number for different reasons. Here teams is 2 on its own account, not because players happens to be 2, so the special constraint says it must not follow players.',
+        debrief: [
+          {
+            html: {
+              js: '<p><code>let teams = 2;</code> gives teams its own 2. If another programmer changes the first line to <code>let players = 6;</code>, teams is still 2, as your boss asked.</p>',
+              py: '<p><code>teams = 2</code> gives teams its own 2. If another programmer changes the first line to <code>players = 6</code>, teams is still 2, as your boss asked.</p>',
+            },
+          },
+          {
+            html: {
+              js: '<p><strong>Not accepted:</strong> <code>let teams = players;</code> builds the same picture today, but if players started at 6, teams would be 6 too.</p>',
+              py: '<p><strong>Not accepted:</strong> <code>teams = players</code> builds the same picture today, but if players started at 6, teams would be 6 too.</p>',
+            },
+          },
+          {
+            html: '<p>Compare this with Two equal values, where your boss asked for the opposite. Both pictures have the same shape: two variables holding the same number. The picture cannot tell you whether one value should follow the other. That depends on what the numbers mean, and deciding it is part of your job as the programmer.</p>',
+          },
+        ],
       }),
       draw({
         title: 'Reassigning the second variable',
@@ -227,6 +448,27 @@ export const levels: Level[] = [
         py: lines('a = 1', 'b = a', 'b = 2'),
         expected: graph({ a: 1, b: 2 }),
         hint: 'Changing b leaves a unchanged: a stays 1 while b becomes 2.',
+        about:
+          'Once two variables hold the same value, reassigning one of them moves only its own arrow. The other variable keeps its value.',
+        debrief: [
+          {
+            html: {
+              js: "<p>After <code>let b = a;</code> both variables refer to 1. Then <code>b = 2;</code> moves only b's arrow. Nothing happened to a, so a still refers to 1.</p>",
+              py: "<p>After <code>b = a</code> both variables refer to 1. Then <code>b = 2</code> moves only b's arrow. Nothing happened to a, so a still refers to 1.</p>",
+            },
+          },
+          {
+            diagram: graph({ a: 1, b: 2 }),
+            caption: 'a keeps 1. b now refers to 2.',
+            verdict: 'correct',
+          },
+          {
+            html: "<p>If you pictured a and b sharing one 1 after the second line, moving b's arrow leaves a pointing at that same 1. If you pictured two separate 1s, b's old 1 is left with nothing pointing to it. Both ways end at the same picture.</p>",
+          },
+          {
+            html: '<p>Reassigning a variable never changes any other variable. That stays true for every kind of value you will meet in this game.</p>',
+          },
+        ],
       }),
       write({
         title: 'Swapped',
@@ -234,7 +476,46 @@ export const levels: Level[] = [
         js: lines('let t = a;', 'a = b;', 'b = t;'),
         py: lines('t = a', 'a = b', 'b = t'),
         expected: graph({ a: 2, b: 1 }),
+        constraints: [
+          {
+            rule: 'Your boss said that if another programmer updates the code so that a and b start at different numbers, your code must still swap them.',
+            cases: [
+              {
+                change: 'a starts at 5 and b starts at 9',
+                given: { js: lines('let a = 5;', 'let b = 9;'), py: lines('a = 5', 'b = 9') },
+                expected: graph({ a: 9, b: 5 }),
+              },
+            ],
+          },
+        ],
         hint: 'It is okay for you to add a third variable.',
+        about:
+          'Exchange the values of two variables. Each assignment replaces a value, so one value has to be saved somewhere first.',
+        debrief: [
+          {
+            html: {
+              js: "<p><code>a = b; b = a;</code> does not work: after the first line both variables refer to 2, and the 1 is lost. Saving a's value in a third variable first keeps it reachable:</p><pre><code>let t = a;\na = b;\nb = t;</code></pre>",
+              py: "<p><code>a = b; b = a</code> does not work: after the first line both variables refer to 2, and the 1 is lost. Saving a's value in a third variable first keeps it reachable:</p><pre><code>t = a\na = b\nb = t</code></pre>",
+            },
+          },
+          {
+            html: {
+              js: '<p><strong>Also correct:</strong> JavaScript can swap in one line: <code>[a, b] = [b, a];</code>. The right side is calculated first and holds both old values before either variable is reassigned.</p>',
+              py: '<p><strong>Also correct:</strong> Python can swap in one line: <code>a, b = b, a</code>. The right side is calculated first and holds both old values before either name is reassigned.</p>',
+            },
+          },
+          {
+            html: {
+              js: '<p><strong>Not accepted:</strong> <code>a = 2; b = 1;</code> builds the same picture because you can see the numbers, but the special constraint asks for a real swap, one that works whatever the starting values are.</p>',
+              py: '<p><strong>Not accepted:</strong> <code>a = 2</code> and <code>b = 1</code> build the same picture because you can see the numbers, but the special constraint asks for a real swap, one that works whatever the starting values are.</p>',
+            },
+          },
+          {
+            diagram: graph({ a: 2, b: 1, t: 1 }),
+            caption:
+              'Memory after the swap with a temporary variable. t still refers to 1; the picture you matched shows only a and b.',
+          },
+        ],
       }),
       write({
         title: 'Only one changes',
@@ -243,6 +524,31 @@ export const levels: Level[] = [
         py: 'y = 9',
         expected: graph({ x: 4, y: 9 }),
         hint: 'Reassign only y to 9. The variable x will remain unchanged.',
+        about:
+          'Two variables can start out holding the same value. Reassign just one of them, and the other is left alone.',
+        debrief: [
+          {
+            html: {
+              js: "<p><code>y = 9;</code> moves only y's arrow. x still refers to 4, even though y first got its value from x.</p>",
+              py: "<p><code>y = 9</code> moves only y's arrow. x still refers to 4, even though y first got its value from x.</p>",
+            },
+          },
+          {
+            diagram: graph({ x: 4, y: 4 }),
+            caption: 'Before your line runs.',
+          },
+          {
+            diagram: graph({ x: 4, y: 9 }),
+            caption: 'After your line runs.',
+            verdict: 'correct',
+          },
+          {
+            html: {
+              js: '<p>There is no <code>let</code> here: <code>let</code> declares a new variable, and y already exists. <code>let y = 9;</code> stops with an error saying y has already been declared.</p>',
+              py: '<p>Python has no separate declaration step: <code>y = 9</code> is spelled the same whether y is new or already exists.</p>',
+            },
+          },
+        ],
       }),
       write({
         title: 'One of each',
@@ -253,6 +559,30 @@ export const levels: Level[] = [
           js: 'Declare four variables: name with "Bo", age with 7, member with true, and nickname with null.',
           py: 'Assign four variables: name with "Bo", age with 7, member with True, and nickname with None.',
         },
+        about: {
+          js: 'Numbers are not the only simple values. A string, a boolean, and null are values too, and a variable refers to each one with an arrow.',
+          py: 'Numbers are not the only simple values. A string, a boolean, and None are values too, and a variable refers to each one with an arrow.',
+        },
+        debrief: [
+          {
+            html: {
+              js: '<p>Each line points a new variable at a different kind of value: a string, a number, a boolean, and <code>null</code>. Like numbers, none of these can be changed in place.</p>',
+              py: '<p>Each line points a new variable at a different kind of value: a string, a number, a boolean, and <code>None</code>. Like numbers, none of these can be changed in place.</p>',
+            },
+          },
+          {
+            html: {
+              js: '<p><code>null</code> means "deliberately nothing," but it is still a value, so nickname gets a real arrow to it.</p>',
+              py: '<p><code>None</code> means "deliberately nothing," but it is still a value, so nickname gets a real arrow to it.</p>',
+            },
+          },
+          {
+            html: {
+              js: "<p><strong>Also correct:</strong> <code>'Bo'</code> in single quotes is the same string as <code>\"Bo\"</code>, and the four lines can come in any order. Leaving the value out, as in <code>let nickname;</code>, would not work: nickname would hold <code>undefined</code>, a different value from <code>null</code>.</p>",
+              py: "<p><strong>Also correct:</strong> <code>'Bo'</code> in single quotes is the same string as <code>\"Bo\"</code>, and the four lines can come in any order. Lower-case <code>true</code> or <code>none</code> would not work: Python spells them <code>True</code> and <code>None</code>.</p>",
+            },
+          },
+        ],
       }),
     ],
     [
@@ -262,13 +592,53 @@ export const levels: Level[] = [
         py: lines('a = 3', 'b = a', 'a = 8'),
         expected: graph({ a: 8, b: 3 }),
         hint: 'Assigning b from a gives b the value 3 at that moment. When a is reassigned to 8, b keeps 3.',
+        about:
+          'Reassigning the variable a value came from does not affect the variable that was assigned from it. b keeps the value it got.',
+        debrief: [
+          {
+            html: {
+              js: "<p><code>let b = a;</code> gave b the value 3. It did not link b to a. When a is reassigned to 8, only a's arrow moves, so b still refers to 3.</p>",
+              py: "<p><code>b = a</code> gave b the value 3. It did not link b to a. When a is reassigned to 8, only a's arrow moves, so b still refers to 3.</p>",
+            },
+          },
+          {
+            diagram: graph({ a: 8, b: 3 }),
+            caption: 'Correct: b keeps 3.',
+            verdict: 'correct',
+          },
+          {
+            diagram: graph({ a: 8, b: 8 }),
+            caption: 'Not correct: b does not follow a.',
+            verdict: 'incorrect',
+          },
+          {
+            html: "<p>If you pictured a and b sharing one 3, moving a's arrow to 8 leaves b pointing at that 3. If you pictured two separate 3s, a's old 3 is left with nothing pointing to it. Either way you end at the correct picture.</p>",
+          },
+          {
+            html: SHARING_REMINDER,
+          },
+        ],
       }),
       draw({
         title: 'A string',
         js: 'let name = "Ada";',
         py: 'name = "Ada"',
         expected: graph({ name: 'Ada' }),
-        hint: 'Create a variable named name and connect it to a string node with "Ada".',
+        hint: 'Create a variable named name and connect it to a string scalar node with "Ada".',
+        about: 'A string is a value just like a number: the variable refers to it with an arrow.',
+        debrief: [
+          {
+            html: '<p><code>"Ada"</code> is a single value, drawn as one block. The quotation marks tell the language where the text starts and ends; they are not part of the string\'s three letters.</p>',
+          },
+          {
+            diagram: graph({ name: 'Ada' }),
+            caption: 'One name, one string value.',
+            verdict: 'correct',
+          },
+          {
+            html: "<p><strong>Also correct:</strong> typing <code>'Ada'</code> with single quotes in the block. Both spell the same string.</p>",
+          },
+        ],
       }),
       draw({
         title: 'A chain of assignments',
@@ -276,6 +646,26 @@ export const levels: Level[] = [
         py: lines('a = 6', 'b = a', 'c = b', 'a = 0'),
         expected: graph({ a: 0, b: 6, c: 6 }),
         hint: 'Reassigning a to 0 does not change b or c — they still hold 6.',
+        about:
+          'Each assignment from a variable takes the value it holds at that moment. A chain of such assignments does not link the variables together.',
+        debrief: [
+          {
+            html: "<p>c got its value from b, and b got its value from a, but neither assignment linked the variables. Each one looked up a value, 6. Reassigning a to 0 moves only a's arrow, so b and c still refer to 6.</p>",
+          },
+          {
+            diagram: graph({ a: 0, b: 6, c: 6 }),
+            caption: 'Correct: b and c each refer to 6.',
+            verdict: 'correct',
+          },
+          {
+            diagram: graph({ a: 0, b: ref('shared'), c: ref('shared') }, { shared: scalar(6) }),
+            caption: 'Also correct: b and c sharing one 6.',
+            verdict: 'correct',
+          },
+          {
+            html: SHARING_REMINDER,
+          },
+        ],
       }),
       draw({
         title: 'Rotate left',
@@ -289,9 +679,24 @@ export const levels: Level[] = [
           'c = t;',
         ),
         py: lines('a = 1', 'b = 2', 'c = 3', 't = a', 'a = b', 'b = c', 'c = t'),
-        expected: graph({ a: 2, b: 3, c: 1 }),
+        expected: graph({ a: 2, b: 3, c: 1, t: 1 }),
         hint:
           'Use a temporary variable to hold a, then set a = b, b = c, and c to that saved value.',
+        about:
+          'Moving three values around needs one saved value, as a swap does, and the order of the assignments decides where each value ends up.',
+        debrief: [
+          {
+            html: "<p>Follow it one line at a time:</p><ol><li>t saves a's value: t is 1.</li><li>a takes b's value: a is 2.</li><li>b takes c's value: b is 3.</li><li>c takes the saved value: c is 1.</li></ol><p>Each value moves one place to the left, and the first one wraps around to the end.</p>",
+          },
+          {
+            diagram: graph({ a: 2, b: 3, c: 1, t: 1 }),
+            caption: 'After the rotation.',
+            verdict: 'correct',
+          },
+          {
+            html: '<p>t still exists and refers to 1, so it is part of the final memory too.</p>',
+          },
+        ],
       }),
       draw({
         title: 'Area before a change',
@@ -305,6 +710,23 @@ export const levels: Level[] = [
             value: 12,
             message:
               'The value 12 is not correct here. Notice that height was changed to 5 before area was calculated, so area uses 5, not 4.',
+          },
+        ],
+        about:
+          'A calculation uses the values its variables hold when its line runs. This is the same rule as Area after a change, with the lines in a different order.',
+        debrief: [
+          {
+            html: '<p>This time height becomes 5 <strong>before</strong> area is calculated, so the multiplication uses 5 and area refers to 15.</p>',
+          },
+          {
+            diagram: graph({ width: 3, height: 5, area: 15 }),
+            caption: 'Correct: area uses the new height.',
+            verdict: 'correct',
+          },
+          {
+            diagram: graph({ width: 3, height: 5, area: 12 }),
+            caption: 'Not correct: the 4 was gone before area was calculated.',
+            verdict: 'incorrect',
           },
         ],
       }),
@@ -366,7 +788,7 @@ export const levels: Level[] = [
         py: lines('s = "hi"', 't = s'),
         expected: graph({ s: 'hi', t: 'hi' }),
         hint:
-          'Assigning t from s gives t the value "hi". Strings cannot change in place, so one shared string node or two separate nodes are both correct.',
+          'Assigning t from s gives t the value "hi". Strings cannot change in place, so one shared string scalar node or two separate nodes are both correct.',
       }),
       write({
         title: "Two share, one doesn't",
@@ -848,7 +1270,7 @@ export const levels: Level[] = [
         py: 'p = {"a": 0, "b": 0}',
         expected: graph({ p: ref('p') }, { p: dict({ a: 0, b: 0 }) }),
         hint:
-          'Keys a and b both hold 0. Numbers cannot change in place, so one shared number node or two separate nodes with 0 are both correct.',
+          'Keys a and b both hold 0. Numbers cannot change in place, so one shared scalar number node or two separate nodes with 0 are both correct.',
       }),
     ],
   ),
@@ -1161,8 +1583,8 @@ export const levels: Level[] = [
     'nesting',
     L('Nested Arrays and Objects', 'Nested Lists and Dictionaries'),
     L(
-      'Arrays and objects can hold references to other arrays and objects. Each inner array or object is a separate object in memory, and the same one can be referred to from several places.',
-      'Lists and dictionaries can hold references to other lists and dictionaries. Each inner list or dictionary is a separate object in memory, and the same one can be referred to from several places.',
+      'Arrays and objects can hold references to other arrays and objects. Each inner array or object is a separate object in memory, and the same one can be referred to from several places. An inner container can even be the outer one, or lead back to it, so references can form loops.',
+      'Lists and dictionaries can hold references to other lists and dictionaries. Each inner list or dictionary is a separate object in memory, and the same one can be referred to from several places. An inner container can even be the outer one, or lead back to it, so references can form loops.',
     ),
     [
       draw({
@@ -1180,21 +1602,13 @@ export const levels: Level[] = [
         hint: 'Create grid as a list with two slots, each pointing at its own inner list: [1, 2] and [3, 4].',
       }),
       write({
-        title: 'A ragged grid',
-        js: 'let rows = [[1], [2, 3], []];',
-        py: 'rows = [[1], [2, 3], []]',
-        expected: graph(
-          { rows: ref('rows') },
-          {
-            rows: list(ref('row0'), ref('row1'), ref('row2')),
-            row0: list(1),
-            row1: list(2, 3),
-            row2: list(),
-          },
-        ),
+        title: 'An object that holds itself',
+        js: lines('let o = {};', 'o.self = o;'),
+        py: lines('o = {}', 'o["self"] = o'),
+        expected: graph({ o: ref('o') }, { o: dict({ self: ref('o') }) }),
         hint: {
-          js: 'Declare rows as a list of three separate inner lists: [1], [2, 3], and [].',
-          py: 'Assign rows a list of three separate inner lists: [1], [2, 3], and [].',
+          js: 'Declare o as an empty object, then point its self key back at o itself.',
+          py: 'Assign o an empty dict, then point its self key back at o itself.',
         },
       }),
       draw({
@@ -1238,33 +1652,20 @@ export const levels: Level[] = [
         hint: 'Create users as a list with two slots, each pointing at its own object with its own id value.',
       }),
       write({
-        title: 'A tree',
-        js: lines(
-          'let tree = {',
-          '  value: 1,',
-          '  kids: [{ value: 2, kids: [] }, { value: 3, kids: [] }],',
-          '};',
-        ),
-        py: lines(
-          'tree = {',
-          '    "value": 1,',
-          '    "kids": [{"value": 2, "kids": []}, {"value": 3, "kids": []}],',
-          '}',
-        ),
+        title: 'Parent and child',
+        js: lines('let parent = { kids: [] };', 'let kid = { parent: parent };', 'parent.kids.push(kid);'),
+        py: lines('parent = {"kids": []}', 'kid = {"parent": parent}', 'parent["kids"].append(kid)'),
         expected: graph(
-          { tree: ref('tree') },
+          { parent: ref('parent'), kid: ref('kid') },
           {
-            tree: dict({ value: 1, kids: ref('kids') }),
-            kids: list(ref('left'), ref('right')),
-            left: dict({ value: 2, kids: ref('leftKids') }),
-            right: dict({ value: 3, kids: ref('rightKids') }),
-            leftKids: list(),
-            rightKids: list(),
+            parent: dict({ kids: ref('kids') }),
+            kids: list(ref('kid')),
+            kid: dict({ parent: ref('parent') }),
           },
         ),
         hint: {
-          js: 'Declare tree as an object with value 1 and kids pointing at a list of two objects, each with its own value and its own empty kids list.',
-          py: 'Assign tree a dict with value 1 and kids pointing at a list of two dicts, each with its own value and its own empty kids list.',
+          js: 'Declare parent with empty kids, declare kid pointing at parent, then add kid to parent.kids.',
+          py: 'Assign parent with empty kids, assign kid pointing at parent, then add kid to parent["kids"].',
         },
       }),
       draw({
@@ -1326,14 +1727,17 @@ export const levels: Level[] = [
         },
       }),
       draw({
-        title: 'A list of pairs',
-        js: 'let pairs = [["a", 1], ["b", 2]];',
-        py: 'pairs = [["a", 1], ["b", 2]]',
+        title: 'Pointing at each other',
+        js: lines('let a = { n: 1 };', 'let b = { n: 2 };', 'a.other = b;', 'b.other = a;'),
+        py: lines('a = {"n": 1}', 'b = {"n": 2}', 'a["other"] = b', 'b["other"] = a'),
         expected: graph(
-          { pairs: ref('pairs') },
-          { pairs: list(ref('first'), ref('second')), first: list('a', 1), second: list('b', 2) },
+          { a: ref('a'), b: ref('b') },
+          {
+            a: dict({ n: 1, other: ref('b') }),
+            b: dict({ n: 2, other: ref('a') }),
+          },
         ),
-        hint: 'Create pairs as a list of two separate inner lists: ["a", 1] and ["b", 2].',
+        hint: 'Point a at b and b back at a, so the two objects refer to each other.',
       }),
       write({
         title: 'Two points in a line',
@@ -1669,10 +2073,10 @@ export const levels: Level[] = [
 
   level(
     'rebinding',
-    L('Rebinding and Functions', 'Rebinding and Functions'),
+    L('Building New Values', 'Building New Values'),
     L(
-      'Assigning to a variable only changes what that variable refers to; the container it referred to before is untouched. Growing an array with push changes it in place; combining with concat builds a new array and leaves the old one alone. A function parameter is a new variable referring to the caller\'s container, so the function can change that container but cannot repoint the caller\'s variable.',
-      'Assigning to a variable only changes what that variable refers to; the container it referred to before is untouched. Growing a list with append changes it in place; combining with + builds a new list and leaves the old one alone. A function parameter is a new variable referring to the caller\'s container, so the function can change that container but cannot repoint the caller\'s variable.',
+      'Strings never change: methods like toUpperCase() build a new string. Growing an array with push changes it in place; combining with concat builds a new array and leaves the old one alone. Setting a variable to null drops one reference; a value nothing refers to is gone for good.',
+      'Strings never change: methods like upper() build a new string. Growing a list with append changes it in place; combining with + builds a new list and leaves the old one alone. Setting a variable to None drops one reference; a value nothing refers to is gone for good.',
     ),
     [
       draw({
@@ -1719,6 +2123,13 @@ export const levels: Level[] = [
         },
       }),
       draw({
+        title: 'A string taken from a list',
+        js: lines('let words = ["hi"];', 'let w = words[0];', 'w = w + "!";'),
+        py: lines('words = ["hi"]', 'w = words[0]', 'w = w + "!"'),
+        expected: graph({ words: ref('words'), w: 'hi!' }, { words: list('hi') }),
+        hint: 'w gets a copy of the string from words[0]; adding "!" to w repoints w and leaves words alone.',
+      }),
+      draw({
         title: 'Dropping a reference',
         js: lines('let a = [1];', 'let b = a;', 'a = null;'),
         py: lines('a = [1]', 'b = a', 'a = None'),
@@ -1763,6 +2174,16 @@ export const levels: Level[] = [
           py: 'Use b = b + [3, 4] so b gets a new list and a keeps [1, 2].',
         },
       }),
+      draw({
+        title: 'In place, then new',
+        js: lines('let a = [10];', 'let b = a;', 'b.push(20);', 'b = b.concat([30]);'),
+        py: lines('a = [10]', 'b = a', 'b.append(20)', 'b = b + [30]'),
+        expected: graph({ a: ref('a'), b: ref('b') }, { a: list(10, 20), b: list(10, 20, 30) }),
+        hint: {
+          js: 'Growing b in place changes the shared list to [10, 20]; combining with [30] gives b a new list [10, 20, 30] and leaves a pointing at [10, 20].',
+          py: 'Growing b in place changes the shared list to [10, 20]; combining with [30] gives b a new list [10, 20, 30] and leaves a pointing at [10, 20].',
+        },
+      }),
       write({
         title: 'Mutate, then rebind',
         given: { js: lines('let a = [1];', 'let b = a;'), py: lines('a = [1]', 'b = a') },
@@ -1772,6 +2193,113 @@ export const levels: Level[] = [
         hint: 'Grow a in place to [1, 2] (visible through b), then point a at a new list [9]; b keeps [1, 2].',
         process: { runtime: runtime(sameObject(before('a'), after('b'))) },
       }),
+      write({
+        title: 'Shout the name, keep the backup',
+        given: {
+          js: lines('let name = "ada";', 'let backup = name;'),
+          py: lines('name = "ada"', 'backup = name'),
+        },
+        js: 'name = name.toUpperCase();',
+        py: 'name = name.upper()',
+        expected: graph({ name: 'ADA', backup: 'ada' }),
+        hint: {
+          js: 'Reassign name to name.toUpperCase(); strings never change in place, so backup stays "ada".',
+          py: 'Reassign name to name.upper(); strings never change in place, so backup stays "ada".',
+        },
+        process: {
+          source: [callsMethod('name', 'name', { javascript: 'toUpperCase', python: 'upper' })],
+          hidden: [
+            {
+              given: {
+                js: lines('let name = "bo";', 'let backup = name;'),
+                py: lines('name = "bo"', 'backup = name'),
+              },
+              expected: graph({ name: 'BO', backup: 'bo' }),
+            },
+          ],
+        },
+      }),
+    ],
+    [
+      draw({
+        title: 'Combine, then grow the copy',
+        js: lines('let a = [1];', 'let b = a;', 'b = b.concat([2]);', 'b.push(3);'),
+        py: lines('a = [1]', 'b = a', 'b = b + [2]', 'b.append(3)'),
+        expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1), b: list(1, 2, 3) }),
+        hint: {
+          js: 'After b = b.concat([2]), b points at a new list; growing it to [1, 2, 3] leaves a holding [1].',
+          py: 'After b = b + [2], b points at a new list; growing it to [1, 2, 3] leaves a holding [1].',
+        },
+      }),
+      draw({
+        title: 'Upper case through an alias',
+        js: lines('let s = "ab";', 'let t = s;', 's = s.toUpperCase();'),
+        py: lines('s = "ab"', 't = s', 's = s.upper()'),
+        expected: graph({ s: 'AB', t: 'ab' }),
+        hint: {
+          js: 's.toUpperCase() builds a new string "AB"; assigning it to s moves s to "AB" while t stays "ab".',
+          py: 's.upper() builds a new string "AB"; assigning it to s moves s to "AB" while t stays "ab".',
+        },
+      }),
+      write({
+        title: 'Let it go',
+        given: {
+          js: lines('let a = [1];', 'let b = [a];'),
+          py: lines('a = [1]', 'b = [a]'),
+        },
+        js: 'a = null;',
+        py: 'a = None',
+        expected: graph({ a: null, b: ref('b') }, { b: list(ref('inner')), inner: list(1) }),
+        hint: {
+          js: 'Reassign a to null; b still holds a reference to [1] in slot 0.',
+          py: 'Reassign a to None; b still holds a reference to [1] in slot 0.',
+        },
+        process: {
+          runtime: runtime(sameObject(before('a'), after('b', 0))),
+        },
+      }),
+      draw({
+        title: 'New list, old slot',
+        js: lines('let inner = [1];', 'let outer = [inner];', 'inner = inner.concat([2]);'),
+        py: lines('inner = [1]', 'outer = [inner]', 'inner = inner + [2]'),
+        expected: graph(
+          { inner: ref('newInner'), outer: ref('outer') },
+          { outer: list(ref('oldInner')), oldInner: list(1), newInner: list(1, 2) },
+        ),
+        hint: {
+          js: 'inner.concat([2]) builds a new list [1, 2] and assigns it to inner; outer still refers to [1].',
+          py: '(inner + [2]) builds a new list [1, 2] and assigns it to inner; outer still refers to [1].',
+        },
+      }),
+      write({
+        title: 'Two ways to grow',
+        given: { js: lines('let a = [4];', 'let b = a;'), py: lines('a = [4]', 'b = a') },
+        js: lines('a.push(5);', 'b = b.concat([6]);'),
+        py: lines('a.append(5)', 'b = b + [6]'),
+        expected: graph({ a: ref('a'), b: ref('b') }, { a: list(4, 5), b: list(4, 5, 6) }),
+        hint: {
+          js: 'Grow a in place to [4, 5] with push(5), then assign b a new list using b.concat([6]).',
+          py: 'Grow a in place to [4, 5] with append(5), then assign b a new list using b + [6].',
+        },
+        process: {
+          runtime: runtime(preserve('a')),
+          source: [combines('b', 'b')],
+        },
+      }),
+    ],
+  ),
+
+  level(
+    'functions',
+    L(
+      'Functions and Parameters',
+      'Functions and Parameters',
+    ),
+    L(
+      'Calling a function gives each parameter the value the caller passed, so a parameter and the caller\'s variable refer to the same array or object. Changing that container inside the function changes it for the caller. Assigning to the parameter only repoints the parameter. A returned value is handed back by reference, so a function that returns its argument gives the caller a second name for the same container.',
+      'Calling a function gives each parameter the value the caller passed, so a parameter and the caller\'s variable refer to the same list or dict. Changing that container inside the function changes it for the caller. Assigning to the parameter only repoints the parameter. A returned value is handed back by reference, so a function that returns its argument gives the caller a second name for the same container.',
+    ),
+    [
       draw({
         title: 'A function that mutates',
         js: lines('function add(arr) {', '  arr.push(1);', '}', 'let a = [];', 'add(a);'),
@@ -1787,6 +2315,182 @@ export const levels: Level[] = [
         hint: 'arr is a new variable, so assigning it [0] inside reset leaves a holding [1].',
       }),
       write({
+        title: 'Call it on the right list',
+        given: {
+          js: lines('function grow(arr) {', '  arr.push(0);', '}', 'let a = [1];', 'let b = [2];'),
+          py: lines('def grow(arr):', '    arr.append(0)', '', 'a = [1]', 'b = [2]'),
+        },
+        js: 'grow(b);',
+        py: 'grow(b)',
+        expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1), b: list(2, 0) }),
+        hint: 'Call grow(b); grow adds 0 to b in place while leaving a alone.',
+        process: { runtime: runtime(call('grow', [before('b')], 1)) },
+      }),
+      draw({
+        title: 'A function that returns a new list',
+        js: lines(
+          'function withOne(arr) {',
+          '  return arr.concat([1]);',
+          '}',
+          'let a = [0];',
+          'let b = withOne(a);',
+        ),
+        py: lines(
+          'def withOne(arr):',
+          '    return arr + [1]',
+          '',
+          'a = [0]',
+          'b = withOne(a)',
+        ),
+        expected: graph({ a: ref('a'), b: ref('b') }, { a: list(0), b: list(0, 1) }),
+        hint: {
+          js: 'withOne returns a new list with 1 added, so b refers to [0, 1] while a stays [0].',
+          py: 'withOne returns a new list with 1 added, so b refers to [0, 1] while a stays [0].',
+        },
+      }),
+      write({
+        title: 'Paired up',
+        given: {
+          js: lines('function pair(x) {', '  return [x, x];', '}', 'let row = [8];'),
+          py: lines('def pair(x):', '    return [x, x]', '', 'row = [8]'),
+        },
+        js: 'let grid = pair(row);',
+        py: 'grid = pair(row)',
+        expected: graph(
+          { row: ref('row'), grid: ref('grid') },
+          { grid: list(ref('row'), ref('row')), row: list(8) },
+        ),
+        hint: {
+          js: 'Declare grid by calling pair(row); both slots of grid point to row.',
+          py: 'Assign grid by calling pair(row); both slots of grid point to row.',
+        },
+        process: {
+          runtime: runtime(call('pair', [before('row')], 1), preserve('row')),
+        },
+      }),
+      draw({
+        title: 'Changes it and hands it back',
+        js: lines(
+          'function addOne(arr) {',
+          '  arr.push(1);',
+          '  return arr;',
+          '}',
+          'let a = [];',
+          'let b = addOne(a);',
+        ),
+        py: lines(
+          'def addOne(arr):',
+          '    arr.append(1)',
+          '    return arr',
+          '',
+          'a = []',
+          'b = addOne(a)',
+        ),
+        expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: list(1) }),
+        hint: 'addOne grows a in place and returns that same list, so a and b end up sharing [1].',
+      }),
+      write({
+        title: 'Add without changing it',
+        given: {
+          js: 'let cart = ["tea"];',
+          py: 'cart = ["tea"]',
+        },
+        then: {
+          js: 'let order = withMilk(cart);',
+          py: 'order = withMilk(cart)',
+        },
+        js: lines('function withMilk(list) {', '  return list.concat(["milk"]);', '}'),
+        py: lines('def withMilk(list):', '    return list + ["milk"]'),
+        expected: graph(
+          { cart: ref('cart'), order: ref('order') },
+          { cart: list('tea'), order: list('tea', 'milk') },
+        ),
+        constraints: [
+          {
+            rule: 'Your boss said withMilk must work for any cart. If another programmer updates the code so that the cart starts as ["coffee"], order must be ["coffee", "milk"].',
+            cases: [
+              {
+                change: 'cart starts as ["coffee"]',
+                given: { js: 'let cart = ["coffee"];', py: 'cart = ["coffee"]' },
+                expected: graph(
+                  { cart: ref('cart'), order: ref('order') },
+                  { cart: list('coffee'), order: list('coffee', 'milk') },
+                ),
+              },
+            ],
+          },
+        ],
+        hint: {
+          js: 'Define withMilk(list) to return list.concat(["milk"]) without modifying list.',
+          py: 'Define withMilk(list) to return list + ["milk"] without modifying list.',
+        },
+      }),
+      draw({
+        title: 'A function that keeps what it is given',
+        js: lines(
+          'function remember(box, item) {',
+          '  box.push(item);',
+          '}',
+          'let seen = [];',
+          'let p = { n: 1 };',
+          'remember(seen, p);',
+          'p.n = 2;',
+        ),
+        py: lines(
+          'def remember(box, item):',
+          '    box.append(item)',
+          '',
+          'seen = []',
+          'p = {"n": 1}',
+          'remember(seen, p)',
+          'p["n"] = 2',
+        ),
+        expected: graph(
+          { seen: ref('seen'), p: ref('p') },
+          { seen: list(ref('p')), p: dict({ n: 2 }) },
+        ),
+        hint: 'remember adds p to seen; changing p.n to 2 afterward is visible through seen because seen holds p.',
+      }),
+      write({
+        title: 'Change it for everyone',
+        given: {
+          js: lines('let cart = ["tea"];', 'let saved = cart;'),
+          py: lines('cart = ["tea"]', 'saved = cart'),
+        },
+        then: {
+          js: 'addMilk(cart);',
+          py: 'addMilk(cart)',
+        },
+        js: lines('function addMilk(list) {', '  list.push("milk");', '}'),
+        py: lines('def addMilk(list):', '    list.append("milk")'),
+        expected: graph(
+          { cart: ref('shared'), saved: ref('shared') },
+          { shared: list('tea', 'milk') },
+        ),
+        constraints: [
+          {
+            rule: 'Your boss said addMilk must change the cart in place for everyone. If another programmer updates the code so that the cart starts as ["coffee"], cart and saved must both be ["coffee", "milk"].',
+            cases: [
+              {
+                change: 'cart starts as ["coffee"]',
+                given: {
+                  js: lines('let cart = ["coffee"];', 'let saved = cart;'),
+                  py: lines('cart = ["coffee"]', 'saved = cart'),
+                },
+                expected: graph(
+                  { cart: ref('shared'), saved: ref('shared') },
+                  { shared: list('coffee', 'milk') },
+                ),
+              },
+            ],
+          },
+        ],
+        hint: {
+          js: 'Define addMilk(list) to push "milk" into list in place.',
+          py: 'Define addMilk(list) to append "milk" into list in place.',
+        },
+      }),
+      write({
         title: 'Call it right',
         given: {
           js: lines('function fill(arr) {', '  arr.push(0);', '  arr = [1];', '  arr.push(2);', '}'),
@@ -1800,6 +2504,16 @@ export const levels: Level[] = [
       }),
     ],
     [
+      draw({
+        title: 'A function that changes an alias',
+        js: lines('function mark(o) {', '  o.seen = true;', '}', 'let a = {};', 'let b = a;', 'mark(b);'),
+        py: lines('def mark(o):', '    o["seen"] = True', '', 'a = {}', 'b = a', 'mark(b)'),
+        expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: dict({ seen: true }) }),
+        hint: {
+          js: 'o is a new name for the same object, so adding seen holding true inside mark is visible through a and b.',
+          py: 'o is a new name for the same dict, so adding seen holding True inside mark is visible through a and b.',
+        },
+      }),
       write({
         title: 'Change it from inside',
         given: {
@@ -1826,16 +2540,6 @@ export const levels: Level[] = [
         hint: 'Call touch(b) once; the slot change inside touch lands in the shared list ["new", "old"], while the reassign inside never escapes.',
         process: { runtime: runtime(call('touch', [before('b')], 1)) },
       }),
-      draw({
-        title: 'A function that changes an alias',
-        js: lines('function mark(o) {', '  o.seen = true;', '}', 'let a = {};', 'let b = a;', 'mark(b);'),
-        py: lines('def mark(o):', '    o["seen"] = True', '', 'a = {}', 'b = a', 'mark(b)'),
-        expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: dict({ seen: true }) }),
-        hint: {
-          js: 'o is a new name for the same object, so adding seen holding true inside mark is visible through a and b.',
-          py: 'o is a new name for the same dict, so adding seen holding True inside mark is visible through a and b.',
-        },
-      }),
       write({
         title: 'Tag only one',
         given: {
@@ -1859,241 +2563,30 @@ export const levels: Level[] = [
         hint: 'Assigning arr [9] inside f repoints only the parameter; growing that new list afterward leaves a holding [5].',
       }),
       draw({
-        title: 'Combine, then grow the copy',
-        js: lines('let a = [1];', 'let b = a;', 'b = b.concat([2]);', 'b.push(3);'),
-        py: lines('a = [1]', 'b = a', 'b = b + [2]', 'b.append(3)'),
-        expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1), b: list(1, 2, 3) }),
-        hint: {
-          js: 'After b = b.concat([2]), b points at a new list; growing it to [1, 2, 3] leaves a holding [1].',
-          py: 'After b = b + [2], b points at a new list; growing it to [1, 2, 3] leaves a holding [1].',
-        },
-      }),
-    ],
-  ),
-
-  level(
-    'cycles',
-    L('Cycles and Linked Data', 'Cycles and Linked Data'),
-    L(
-      'Objects can be chained into a linked list, where each one refers to the next and the last refers to null. References can also loop back: an array or object can refer to itself, and two objects can refer to each other.',
-      'Dictionaries can be chained into a linked list, where each one refers to the next and the last refers to None. References can also loop back: a list or dictionary can refer to itself, and two dictionaries can refer to each other.',
-    ),
-    [
-      draw({
-        title: 'A linked list',
+        title: 'Passing an inner list',
         js: lines(
-          'let c = { v: 3, next: null };',
-          'let b = { v: 2, next: c };',
-          'let a = { v: 1, next: b };',
+          'function grow(arr) {',
+          '  arr.push(0);',
+          '}',
+          'let grid = [[1], [2]];',
+          'grow(grid[0]);',
         ),
         py: lines(
-          'c = {"v": 3, "next": None}',
-          'b = {"v": 2, "next": c}',
-          'a = {"v": 1, "next": b}',
+          'def grow(arr):',
+          '    arr.append(0)',
+          '',
+          'grid = [[1], [2]]',
+          'grow(grid[0])',
         ),
         expected: graph(
-          { a: ref('a'), b: ref('b'), c: ref('c') },
+          { grid: ref('grid') },
           {
-            a: dict({ v: 1, next: ref('b') }),
-            b: dict({ v: 2, next: ref('c') }),
-            c: dict({ v: 3, next: null }),
+            grid: list(ref('first'), ref('second')),
+            first: list(1, 0),
+            second: list(2),
           },
         ),
-        hint: {
-          js: 'Chain a to b to c, with c next holding null.',
-          py: 'Chain a to b to c, with c next holding None.',
-        },
-      }),
-      write({
-        title: 'A two-node list',
-        js: lines('let tail = { v: "b", next: null };', 'let head = { v: "a", next: tail };'),
-        py: lines('tail = {"v": "b", "next": None}', 'head = {"v": "a", "next": tail}'),
-        expected: graph(
-          { head: ref('head') },
-          {
-            head: dict({ v: 'a', next: ref('tail') }),
-            tail: dict({ v: 'b', next: null }),
-          },
-        ),
-        hint: {
-          js: 'Declare tail with v "b" and next null, then declare head with v "a" and next pointing at tail.',
-          py: 'Assign tail with v "b" and next None, then assign head with v "a" and next pointing at tail.',
-        },
-      }),
-      write({
-        title: 'A circular linked list',
-        js: lines(
-          'let c = { v: 3, next: null };',
-          'let b = { v: 2, next: c };',
-          'let head = { v: 1, next: b };',
-          'c.next = head;',
-        ),
-        py: lines(
-          'c = {"v": 3, "next": None}',
-          'b = {"v": 2, "next": c}',
-          'head = {"v": 1, "next": b}',
-          'c["next"] = head',
-        ),
-        expected: graph(
-          { head: ref('head') },
-          {
-            head: dict({ v: 1, next: ref('second') }),
-            second: dict({ v: 2, next: ref('third') }),
-            third: dict({ v: 3, next: ref('head') }),
-          },
-        ),
-        hint: 'Build c, b, and head as a chain, then point c back at head to close the ring.',
-      }),
-      draw({
-        title: 'A list containing itself',
-        js: lines('let a = [];', 'a.push(a);'),
-        py: lines('a = []', 'a.append(a)'),
-        expected: graph({ a: ref('a') }, { a: list(ref('a')) }),
-        hint: 'Add a itself as its one slot, so the list refers to itself.',
-      }),
-      write({
-        title: 'A list holding itself twice',
-        js: lines('let a = [];', 'a.push(a);', 'a.push(a);'),
-        py: lines('a = []', 'a.append(a)', 'a.append(a)'),
-        expected: graph({ a: ref('a') }, { a: list(ref('a'), ref('a')) }),
-        hint: 'Start from an empty list, then add the list itself twice so both slots point back at it.',
-      }),
-      draw({
-        title: 'An object containing itself',
-        js: lines('let a = {};', 'a.self = a;'),
-        py: lines('a = {}', 'a["self"] = a'),
-        expected: graph({ a: ref('a') }, { a: dict({ self: ref('a') }) }),
-        hint: 'Point key self back at the same object a.',
-      }),
-      write({
-        title: 'An object in its own list',
-        js: lines('let o = { items: [] };', 'o.items.push(o);'),
-        py: lines('o = {"items": []}', 'o["items"].append(o)'),
-        expected: graph(
-          { o: ref('o') },
-          { o: dict({ items: ref('items') }), items: list(ref('o')) },
-        ),
-        hint: {
-          js: 'Declare o with an empty items list, then add o itself into that list.',
-          py: 'Assign o an empty items list, then add o itself into that list.',
-        },
-      }),
-      draw({
-        title: 'Pointing at each other',
-        js: lines('let a = { n: 1 };', 'let b = { n: 2 };', 'a.other = b;', 'b.other = a;'),
-        py: lines('a = {"n": 1}', 'b = {"n": 2}', 'a["other"] = b', 'b["other"] = a'),
-        expected: graph(
-          { a: ref('a'), b: ref('b') },
-          {
-            a: dict({ n: 1, other: ref('b') }),
-            b: dict({ n: 2, other: ref('a') }),
-          },
-        ),
-        hint: 'Point a at b and b back at a, so the two objects refer to each other.',
-      }),
-      write({
-        title: 'A doubly linked pair',
-        js: lines(
-          'let first = { v: 1, prev: null, next: null };',
-          'let second = { v: 2, prev: first, next: null };',
-          'first.next = second;',
-        ),
-        py: lines(
-          'first = {"v": 1, "prev": None, "next": None}',
-          'second = {"v": 2, "prev": first, "next": None}',
-          'first["next"] = second',
-        ),
-        expected: graph(
-          { first: ref('first') },
-          {
-            first: dict({ v: 1, prev: null, next: ref('second') }),
-            second: dict({ v: 2, prev: ref('first'), next: null }),
-          },
-        ),
-        hint: {
-          js: 'Declare first with prev and next null, declare second with prev pointing at first and next null, then point first at second.',
-          py: 'Assign first with prev and next None, assign second with prev pointing at first and next None, then point first at second.',
-        },
-      }),
-      draw({
-        title: 'Two lists in a loop',
-        js: lines('let x = [1];', 'let y = [x];', 'x.push(y);'),
-        py: lines('x = [1]', 'y = [x]', 'x.append(y)'),
-        expected: graph(
-          { x: ref('x'), y: ref('y') },
-          { x: list(1, ref('y')), y: list(ref('x')) },
-        ),
-        hint: 'x holds 1 and y, while y holds x: each list refers to the other.',
-      }),
-    ],
-    [
-      draw({
-        title: 'A two-node ring',
-        js: lines('let a = { v: 1, next: null };', 'let b = { v: 2, next: a };', 'a.next = b;'),
-        py: lines('a = {"v": 1, "next": None}', 'b = {"v": 2, "next": a}', 'a["next"] = b'),
-        expected: graph(
-          { a: ref('a'), b: ref('b') },
-          { a: dict({ v: 1, next: ref('b') }), b: dict({ v: 2, next: ref('a') }) },
-        ),
-        hint: 'Point a at b and b back at a to make a two-node ring.',
-      }),
-      write({
-        title: 'Two keys back home',
-        js: lines('let o = {};', 'o.me = o;', 'o.also = o;'),
-        py: lines('o = {}', 'o["me"] = o', 'o["also"] = o'),
-        expected: graph({ o: ref('o') }, { o: dict({ me: ref('o'), also: ref('o') }) }),
-        hint: {
-          js: 'Declare o as empty, then point both me and also back at o itself.',
-          py: 'Assign o as empty, then point both me and also back at o itself.',
-        },
-      }),
-      draw({
-        title: 'Parent and child',
-        js: lines('let parent = { kids: [] };', 'let kid = { parent: parent };', 'parent.kids.push(kid);'),
-        py: lines('parent = {"kids": []}', 'kid = {"parent": parent}', 'parent["kids"].append(kid)'),
-        expected: graph(
-          { parent: ref('parent'), kid: ref('kid') },
-          {
-            parent: dict({ kids: ref('kids') }),
-            kids: list(ref('kid')),
-            kid: dict({ parent: ref('parent') }),
-          },
-        ),
-        hint: 'Point kid at parent, and parent at a list holding that same kid.',
-      }),
-      draw({
-        title: 'A loop through an inner list',
-        js: lines('let a = [[]];', 'a[0].push(a);'),
-        py: lines('a = [[]]', 'a[0].append(a)'),
-        expected: graph({ a: ref('a') }, { a: list(ref('inner')), inner: list(ref('a')) }),
-        hint: 'Point the inner empty list back at a, so a holds the inner list and the inner list holds a.',
-      }),
-      write({
-        title: 'A ring linked a, c, b',
-        given: {
-          js: lines(
-            'let a = { v: 1, next: null };',
-            'let b = { v: 2, next: null };',
-            'let c = { v: 3, next: null };',
-          ),
-          py: lines(
-            'a = {"v": 1, "next": None}',
-            'b = {"v": 2, "next": None}',
-            'c = {"v": 3, "next": None}',
-          ),
-        },
-        js: lines('a.next = c;', 'c.next = b;', 'b.next = a;'),
-        py: lines('a["next"] = c', 'c["next"] = b', 'b["next"] = a'),
-        expected: graph(
-          { a: ref('a'), b: ref('b'), c: ref('c') },
-          {
-            a: dict({ v: 1, next: ref('c') }),
-            b: dict({ v: 2, next: ref('a') }),
-            c: dict({ v: 3, next: ref('b') }),
-          },
-        ),
-        hint: 'Point a at c, c at b, and b back at a to close the ring; the starting objects stay in place.',
-        process: { runtime: runtime(preserve('a'), preserve('b'), preserve('c')) },
+        hint: 'grow(grid[0]) passes the inner list [1] to grow, which adds 0 to it in place to become [1, 0].',
       }),
     ],
   ),
@@ -2126,10 +2619,16 @@ export function nextProblem(id: string): Problem | undefined {
   return position === -1 ? undefined : problems[position + 1]
 }
 
+export function hintIn(hint: Hint, language: Language): string {
+  return typeof hint === 'string' ? hint : hint[language]
+}
+
 export function problemHint(problem: Problem, language: Language): string | undefined {
-  if (!problem.hint) return undefined
-  if (typeof problem.hint === 'string') return problem.hint
-  return problem.hint[language]
+  return problem.hint && hintIn(problem.hint, language)
+}
+
+export function problemAbout(problem: Problem, language: Language): string | undefined {
+  return problem.about && hintIn(problem.about, language)
 }
 
 export function problemTitle(problem: Problem, language: Language): string {

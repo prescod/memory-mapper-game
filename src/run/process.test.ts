@@ -313,3 +313,41 @@ describe('alternate starting values', () => {
     expect(snapshots.map((snapshot) => snapshot.variables.area)).toEqual([12, 20])
   })
 })
+
+describe('trailing starter code (then)', () => {
+  it('runs trailing code after the learner code in JavaScript', async () => {
+    const snapshots = await execute(
+      {
+        language: 'javascript',
+        given: 'let cart = ["tea"];',
+        code: 'function withMilk(list) { return list.concat(["milk"]); }',
+        then: 'let order = withMilk(cart);',
+        names: ['cart', 'order'],
+      },
+      () => micropython,
+      () => {},
+    )
+    expect(snapshots[0].containers[(snapshots[0].variables.order as { ref: string }).ref]).toEqual({
+      kind: 'array',
+      items: ['tea', 'milk'],
+    })
+  })
+
+  it('runs trailing code after the learner code in Python', async () => {
+    const snapshots = await execute(
+      {
+        language: 'python',
+        given: 'cart = ["tea"]',
+        code: 'def withMilk(list): return list + ["milk"]',
+        then: 'order = withMilk(cart)',
+        names: ['cart', 'order'],
+      },
+      () => micropython,
+      () => {},
+    )
+    expect(snapshots[0].containers[(snapshots[0].variables.order as { ref: string }).ref]).toEqual({
+      kind: 'array',
+      items: ['tea', 'milk'],
+    })
+  })
+})

@@ -13,21 +13,22 @@ import type { PythonSnapshotter } from './snapshotPy'
  * has loaded, so callers can time the run alone.
  */
 export async function execute(
-  { language, given, code, names, checks, alternateGivens = [] }: RunRequest,
+  { language, given, code, then, names, checks, alternateGivens = [], alternateThens = [] }: RunRequest,
   loadPython: () => Promise<PythonSnapshotter> | PythonSnapshotter,
   started: () => void,
 ): Promise<Snapshot[]> {
   const starts = [given, ...alternateGivens]
+  const thens = [then ?? '', ...alternateThens]
 
-  let runOne: (start: string, index: number) => Snapshot
+  let runOne: (start: string, after: string, index: number) => Snapshot
   if (language === 'javascript') {
-    runOne = (start, index) => runJavaScript(start, code, names, index === 0 ? checks : undefined)
+    runOne = (start, after, index) => runJavaScript(start, code, names, index === 0 ? checks : undefined, after)
   } else {
     // The engine is only fetched once someone checks Python code.
     const snapshotter = await loadPython()
-    runOne = (start, index) => {
+    runOne = (start, after, index) => {
       const ruled = index === 0 ? checks : undefined
-      const { source, skippedLines } = joinProgram(start, code, ruled && PYTHON_CHECKPOINT)
+      const { source, skippedLines } = joinProgram(start, code, ruled && PYTHON_CHECKPOINT, after)
       return snapshotter(source, names, skippedLines, ruled)
     }
   }
@@ -35,7 +36,7 @@ export async function execute(
   started()
   return starts.map((start, index) => {
     try {
-      return runOne(start, index)
+      return runOne(start, thens[index] ?? '', index)
     } catch (error) {
       if (index === 0) throw error
       throw new UserCodeError(

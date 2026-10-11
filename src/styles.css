@@ -352,6 +352,11 @@ textarea {
   border-bottom: 1px solid var(--border);
 }
 
+.problem-panel:has(.problem-about[open]) {
+  max-height: none;
+  overflow-y: visible;
+}
+
 .problem-position {
   margin: 0;
   color: var(--muted);
@@ -392,6 +397,34 @@ textarea {
   line-height: 1.4;
 }
 
+.problem-constraints {
+  margin: 6px 0;
+  padding: 8px 12px;
+  background: #fff6e0;
+  border-left: 4px solid #e0a020;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.problem-constraints-heading {
+  margin: 0 0 2px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.problem-constraints ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.problem-constraints li + li {
+  margin-top: 4px;
+}
+
 .problem-about {
   margin-top: 4px;
   color: var(--muted);
@@ -412,14 +445,25 @@ textarea {
   display: none;
 }
 
-.problem-about summary::before {
-  content: '▸';
+.problem-about-chevron {
+  display: inline-block;
   margin-right: 6px;
   transition: transform 0.15s;
 }
 
-.problem-about[open] summary::before {
+.problem-about[open] .problem-about-chevron {
   transform: rotate(90deg);
+}
+
+.problem-about-toggle {
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+.problem-about-done {
+  margin-top: 4px;
+  padding-left: 0;
 }
 
 .level-heading {
@@ -473,6 +517,14 @@ textarea {
 
 .given-code {
   margin: 4px 0 8px;
+}
+
+.then-caption {
+  margin-top: 8px;
+}
+
+.then-code {
+  margin: 4px 0 0;
 }
 
 .code-editor {
@@ -1079,4 +1131,145 @@ select.mem-input {
   .scalar-kind {
     font-size: 0.9rem;
   }
+}
+
+/* Debrief after checking a problem */
+
+.debrief {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px;
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.debrief-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(31, 157, 85, 0.12);
+  color: var(--success);
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 16px;
+}
+
+.debrief-banner .success-burst {
+  width: 20px;
+  height: 20px;
+  font-size: 0.8rem;
+  animation: none;
+}
+
+.debrief-heading {
+  margin: 0 0 16px;
+  font-size: 1.25rem;
+  color: var(--text);
+}
+
+.debrief-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.debrief-html p {
+  margin: 0 0 10px;
+}
+
+.debrief-html p:last-child {
+  margin-bottom: 0;
+}
+
+.debrief-html pre {
+  margin: 8px 0 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--code-bg);
+  color: #f2f4f8;
+  font-family: monospace;
+  font-size: 0.9rem;
+  overflow-x: auto;
+  line-height: 1.4;
+}
+
+.debrief-html code {
+  font-family: monospace;
+  font-size: 0.9em;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.debrief-html pre code {
+  padding: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.debrief-html ol {
+  margin: 8px 0 10px 20px;
+  padding: 0;
+}
+
+.debrief-html li {
+  margin-bottom: 4px;
+}
+
+.debrief-figure {
+  position: relative;
+  margin: 8px 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.debrief-canvas-wrapper {
+  height: 200px;
+  width: 100%;
+  position: relative;
+}
+
+.debrief-canvas-wrapper .canvas {
+  height: 100%;
+}
+
+.debrief-caption {
+  padding: 8px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.debrief-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.debrief-badge-correct {
+  background: rgba(31, 157, 85, 0.15);
+  color: var(--success);
+  border: 1px solid rgba(31, 157, 85, 0.3);
+}
+
+.debrief-badge-incorrect {
+  background: rgba(217, 45, 32, 0.15);
+  color: var(--error);
+  border: 1px solid rgba(217, 45, 32, 0.3);
 }

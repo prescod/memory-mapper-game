@@ -22,6 +22,13 @@ describe('joinProgram', () => {
   it('leaves the learner code alone when there is no starter code', () => {
     expect(joinProgram('', 'c = 3')).toEqual({ source: 'c = 3', skippedLines: 0 })
   })
+
+  it('appends trailing code after the learner code without changing skippedLines', () => {
+    expect(joinProgram('a = 1', 'b = 2', undefined, 'c = 3')).toEqual({
+      source: 'a = 1\nb = 2\nc = 3',
+      skippedLines: 1,
+    })
+  })
 })
 
 describe('JavaScript snapshots', () => {

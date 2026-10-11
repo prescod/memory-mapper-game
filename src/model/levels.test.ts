@@ -28,16 +28,28 @@ function hiddenBefore(problem: Problem, language: Language): string {
   return problem.opaquePrelude === true ? withOpaquePrelude(language, given) : given
 }
 
+function hiddenAfter(problem: Problem, language: Language): string {
+  return problem.kind === 'write' ? (problem.then?.[language] ?? '') : ''
+}
+
 /** The whole program for a problem: for a write problem, its starter code followed by the reference answer. */
 function programOf(problem: Problem, language: Language): string {
   if (problem.kind === 'draw')
     return problem.opaquePrelude === true
       ? withOpaquePrelude(language, problem.code[language])
       : problem.code[language]
-  return joinProgram(hiddenBefore(problem, language), problem.solution[language]).source
+  return joinProgram(
+    hiddenBefore(problem, language),
+    problem.solution[language],
+    undefined,
+    hiddenAfter(problem, language),
+  ).source
 }
 
 const namesOf = (problem: Problem) => problem.expected.variables.map((variable) => variable.name)
+
+const constraintCasesOf = (problem: WriteProblem) =>
+  (problem.constraints ?? []).flatMap((constraint) => constraint.cases)
 
 const matches = (actual: MemoryGraph, expected: MemoryGraph) =>
   verify(actual, expected).errors.length === 0 && verify(expected, actual).errors.length === 0
@@ -61,6 +73,7 @@ interface Execution {
   key: string
   problem: Problem
   given: (language: Language) => string
+  then: (language: Language) => string
   expected: MemoryGraph
 }
 
@@ -69,20 +82,29 @@ const executions: Execution[] = problems.flatMap((problem) => {
     key: problem.id,
     problem,
     given: (language) => (problem.kind === 'write' ? (problem.given?.[language] ?? '') : ''),
+    then: (language) => (problem.kind === 'write' ? (problem.then?.[language] ?? '') : ''),
     expected: problem.expected,
   }
-  const hidden =
-    problem.kind === 'write'
-      ? (problem.process?.hidden ?? []).map(
-          (alternate, index): Execution => ({
-            key: `${problem.id}#hidden${index + 1}`,
-            problem,
-            given: (language) => alternate.given[language],
-            expected: alternate.expected,
-          }),
-        )
-      : []
-  return [shown, ...hidden]
+  const alternates = (
+    label: string,
+    cases: { given: Record<Language, string>; then?: Record<Language, string>; expected: MemoryGraph }[],
+  ) =>
+    cases.map(
+      (alternate, index): Execution => ({
+        key: `${problem.id}#${label}${index + 1}`,
+        problem,
+        given: (language) => alternate.given[language],
+        then: (language) =>
+          alternate.then?.[language] ?? (problem.kind === 'write' ? (problem.then?.[language] ?? '') : ''),
+        expected: alternate.expected,
+      }),
+    )
+  if (problem.kind !== 'write') return [shown]
+  return [
+    shown,
+    ...alternates('hidden', problem.process?.hidden ?? []),
+    ...alternates('constraint', constraintCasesOf(problem)),
+  ]
 })
 
 /** The program for an execution: draw code, or starter code followed by the reference answer. */
@@ -94,7 +116,7 @@ function programFor(execution: Execution, language: Language): string {
     problem.opaquePrelude === true
       ? withOpaquePrelude(language, execution.given(language))
       : execution.given(language)
-  return joinProgram(start, problem.solution[language]).source
+  return joinProgram(start, problem.solution[language], undefined, execution.then(language)).source
 }
 
 /**
@@ -164,6 +186,20 @@ const anonymous = (graph: MemoryGraph): MemoryGraph => ({
   variables: graph.variables.map((variable, index) => ({ ...variable, name: `v${index}` })),
 })
 
+describe('code-to-picture problems', () => {
+  it('include every declared variable in the expected graph', () => {
+    const pattern = /^\s*(?:let|const|var)\s+([A-Za-z_$][\w$]*)/gm
+    for (const problem of problems) {
+      if (problem.kind !== 'draw') continue
+      const names = problem.expected.variables.map((variable) => variable.name)
+      const declared = [...problem.code.javascript.matchAll(pattern)].map((match) => match[1])
+      for (const name of declared) {
+        expect(names, problem.id).toContain(name)
+      }
+    }
+  })
+})
+
 describe('mystery problems', () => {
   it('show pictures that no other problem shows', () => {
     for (const problem of problems.filter((candidate) => candidate.mystery)) {
@@ -205,7 +241,9 @@ async function grade(problem: WriteProblem, language: Language, code: string) {
   return gradeRun(problem, language, code, outcome)
 }
 
-const processed = writeProblems.filter((problem) => problem.process !== undefined)
+const processed = writeProblems.filter(
+  (problem) => problem.process !== undefined || problem.constraints !== undefined,
+)
 
 describe('process rules', () => {
   it.each(processed.map((problem) => [problem.id, problem] as const))(
@@ -213,7 +251,7 @@ describe('process rules', () => {
     (_id, problem) => {
       const visible = new Set(namesOf(problem))
       const starter = problem.given?.javascript ?? ''
-      for (const alternate of problem.process?.hidden ?? []) {
+      for (const alternate of [...(problem.process?.hidden ?? []), ...constraintCasesOf(problem)]) {
         expect(alternate.expected.variables.map((variable) => variable.name)).toEqual(namesOf(problem))
         expect(alternate.given.javascript, `${problem.id} alternate starter`).not.toBe(problem.given?.javascript)
       }
@@ -234,7 +272,9 @@ describe('process rules', () => {
 
   it('need starter code for any rule that looks at the start', () => {
     for (const problem of processed) {
-      if (problem.process?.runtime || problem.process?.hidden) expect(problem.given, problem.id).toBeDefined()
+      if (problem.process?.runtime || problem.process?.hidden || problem.constraints) {
+        expect(problem.given, problem.id).toBeDefined()
+      }
     }
   })
 
@@ -255,6 +295,7 @@ describe('process rules', () => {
           hiddenBefore(problem, 'python'),
           problem.solution.python,
           problem.process?.runtime && PYTHON_CHECKPOINT,
+          hiddenAfter(problem, 'python'),
         ).source,
         names: namesOf(problem),
         checks: problem.process?.runtime,
@@ -340,22 +381,40 @@ describe('shortcuts that match the picture but miss the point', () => {
     ['rebinding-9', 'a = [9];\nb = [1, 2];', 'a = [9]\nb = [1, 2]', /"b" afterward should be the same container as "a" at the start/],
     [
       'rebinding-10',
+      'name = "ADA";',
+      'name = "ADA"',
+      /by calling name\.(toUpperCase|upper)\(\)/,
+    ],
+    [
+      'rebinding-15',
+      'a.push(5);\nb = [4, 5, 6];',
+      'a.append(5)\nb = [4, 5, 6]',
+      /Build "b" with "b(\.concat\(\[\.\.\.\]\)| \+ \[\.\.\.\])"/,
+    ],
+    [
+      'functions-6',
+      'grow(a);\na.pop();\nb.push(0);',
+      'grow(a)\na.pop()\nb.append(0)',
+      /Call grow\(b\) once/,
+    ],
+    [
+      'functions-8',
+      'function withMilk(list) {\n  return ["tea", "milk"];\n}',
+      'def withMilk(list):\n    return ["tea", "milk"]',
+      /breaks the special constraint/,
+    ],
+    [
+      'functions-10',
       'let a = [];\nlet b = [];\na.push(0);\na.push(0);\nb.push(0);',
       'a = []\nb = []\na.append(0)\na.append(0)\nb.append(0)',
       /Call fill\(a\) 2 times/,
     ],
-    ['rebinding-11', 'b[0] = "new";', 'b[0] = "new"', /Call touch\(b\) once/],
+    ['functions-12', 'b[0] = "new";', 'b[0] = "new"', /Call touch\(b\) once/],
     [
-      'rebinding-13',
+      'functions-13',
       'let a = { n: 1, tagged: true };\nlet b = { n: 2 };',
       'a = {"n": 1, "tagged": True}\nb = {"n": 2}',
       /Call tag\(a\) once/,
-    ],
-    [
-      'cycles-15',
-      'a = { v: 1, next: null };\nb = { v: 2, next: null };\nc = { v: 3, next: null };\na.next = c;\nc.next = b;\nb.next = a;',
-      'a = {"v": 1, "next": None}\nb = {"v": 2, "next": None}\nc = {"v": 3, "next": None}\na["next"] = c\nc["next"] = b\nb["next"] = a',
-      KEEP('a'),
     ],
   ]
 
@@ -407,5 +466,94 @@ describe('diagnostic hints', () => {
     const result = verify(mistaken, problem.expected, problem.hints)
     expect(result.ok).toBe(false)
     expect(result.errors[0].message).toMatch(/separate Pet calls/)
+  })
+})
+
+describe('debrief diagrams', () => {
+  const diagrams = problems.flatMap((problem) =>
+    (problem.debrief ?? []).flatMap((block, index) =>
+      'diagram' in block && block.verdict !== undefined
+        ? [{ id: `${problem.id}#diagram${index + 1}`, problem, diagram: block.diagram, verdict: block.verdict }]
+        : [],
+    ),
+  )
+
+  it.each(diagrams.map((d) => [d.id, d] as const))('%s verdict matches verify()', (_id, { problem, diagram, verdict }) => {
+    const result = verify(diagram, problem.expected)
+    if (verdict === 'correct') {
+      expect(result.errors).toEqual([])
+    } else {
+      expect(result.ok).toBe(false)
+    }
+  })
+})
+
+describe('debrief alternate answers', () => {
+  const alternates: [id: string, code: string, language: Language][] = [
+    ['scalars-8', '[a, b] = [b, a];', 'javascript'],
+    ['scalars-8', 'a, b = b, a', 'python'],
+  ]
+
+  it.each(alternates)('%s accepts %j in %s', async (id, code, language) => {
+    const problem = writeProblems.find((candidate) => candidate.id === id)!
+    expect(await grade(problem, language, code)).toEqual({ ok: true, errors: [] })
+  })
+})
+
+/**
+ * Each answer builds the right picture but breaks the puzzle's special
+ * constraint, and the feedback must say so in terms of the constraint.
+ */
+describe('special constraints', () => {
+  const broken: [id: string, js: string, py: string, complaint: RegExp][] = [
+    [
+      'scalars-6',
+      'let b = 8;',
+      'b = 8',
+      /special constraint\. If another programmer changes the code so that a starts at 3, b should become 3, but your code makes it 8\./,
+    ],
+    [
+      'scalars-7',
+      'let teams = players;',
+      'teams = players',
+      /special constraint\. If another programmer changes the code so that players starts at 6, teams should stay 2, but your code makes it 6\./,
+    ],
+    [
+      'scalars-8',
+      'a = 2;\nb = 1;',
+      'a = 2\nb = 1',
+      /special constraint\. .*a should become 9, but your code makes it 2, and b should become 5, but your code makes it 1\./,
+    ],
+  ]
+
+  const cases = broken.flatMap(([id, js, py, complaint]) =>
+    LANGUAGES.map((language) => [`${id} in ${language}`, id, language === 'javascript' ? js : py, language, complaint] as const),
+  )
+
+  it.each(cases)('%s rejects an answer that breaks it', async (_label, id, code, language, complaint) => {
+    const problem = writeProblems.find((candidate) => candidate.id === id)!
+    const verdict = await grade(problem, language, code)
+    expect(verdict.ok).toBe(false)
+    expect(verdict.errors.map((error) => error.message)).toEqual([expect.stringMatching(complaint)])
+  })
+})
+
+describe('debrief rejected answers', () => {
+  it('scalars-9 rejects re-declaring with let in JavaScript', async () => {
+    const problem = writeProblems.find((candidate) => candidate.id === 'scalars-9')!
+    const verdict = await grade(problem, 'javascript', 'let y = 9;')
+    expect(verdict.ok).toBe(false)
+    expect(verdict.errors.map((e) => e.message).join('\n')).toMatch(/already been declared/)
+  })
+
+  it('scalars-10 rejects leaving a variable undefined in JavaScript', async () => {
+    const problem = writeProblems.find((candidate) => candidate.id === 'scalars-10')!
+    const verdict = await grade(
+      problem,
+      'javascript',
+      'let name = "Bo";\nlet age = 7;\nlet member = true;\nlet nickname;',
+    )
+    expect(verdict.ok).toBe(false)
+    expect(verdict.errors.map((e) => e.message).join('\n')).toMatch(/has no value/)
   })
 })
