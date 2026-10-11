@@ -9,11 +9,11 @@ const capitalize = (word: string) => word.charAt(0).toUpperCase() + word.slice(1
 function palette(language: Language): { type: MemNodeType; label: string }[] {
   const names = CONTAINER_NAMES[language]
   return [
-    { type: 'variable', label: '+ Variable' },
-    { type: 'scalar', label: '+ Scalar' },
-    { type: 'array', label: `+ ${capitalize(names.array)}` },
-    { type: 'object', label: `+ ${capitalize(names.object)}` },
-    { type: 'pet', label: '+ Pet' },
+    { type: 'variable', label: 'Variable' },
+    { type: 'scalar', label: 'Scalar' },
+    { type: 'array', label: capitalize(names.array) },
+    { type: 'object', label: capitalize(names.object) },
+    { type: 'pet', label: 'Pet' },
   ]
 }
 
@@ -36,6 +36,7 @@ export function Toolbar({ language, onAdd }: ToolbarProps) {
           key={type}
           type="button"
           className={`toolbar-button toolbar-${type}`}
+          aria-label={`Add ${label}`}
           draggable
           onDragStart={(event) => onDragStart(event, type)}
           onClick={() => onAdd(type)}

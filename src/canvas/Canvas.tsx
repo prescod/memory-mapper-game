@@ -96,7 +96,7 @@ function CanvasInner({
     (type: MemNodeType) => {
       const bounds = wrapper.current?.getBoundingClientRect()
       if (!bounds) return
-      const topLeft = screenToFlowPosition({ x: bounds.left + 8, y: bounds.top + 48 })
+      const topLeft = screenToFlowPosition({ x: bounds.left + 8, y: bounds.top + 8 })
       const bottomRight = screenToFlowPosition({ x: bounds.right - 8, y: bounds.bottom - 8 })
       const region = {
         x: topLeft.x,
@@ -195,6 +195,11 @@ function CanvasInner({
     <FeedbackContext.Provider value={feedback}>
       <LanguageContext.Provider value={language}>
         <ReadOnlyContext.Provider value={isReadOnly}>
+          {!isReadOnly && (
+            <div className="canvas-toolbar">
+              <Toolbar language={language} onAdd={addInView} />
+            </div>
+          )}
           <div className="canvas" ref={wrapper}>
             <ReactFlow<MemFlowNode, MemFlowEdge>
               nodes={displayedNodes}
@@ -224,10 +229,22 @@ function CanvasInner({
               fitViewOptions={isReadOnly ? { maxZoom: 1 } : undefined}
             >
               <Background />
-              {!compact && <Controls position="bottom-right" showInteractive={false} />}
-              {!isReadOnly && (
-                <Panel position="top-left" className="toolbar-panel">
-                  <Toolbar language={language} onAdd={addInView} />
+              {!compact && (
+                <Panel position="bottom-right">
+                  <div className="canvas-actions">
+                    {!isReadOnly && !pending && hasSelection && (
+                      <button
+                        type="button"
+                        className="canvas-delete"
+                        onClick={() =>
+                          void deleteElements({ nodes: selectedNodes, edges: selectedEdges })
+                        }
+                      >
+                        Delete
+                      </button>
+                    )}
+                    <Controls showInteractive={false} />
+                  </div>
                 </Panel>
               )}
               {!isReadOnly && pending && (
@@ -238,17 +255,6 @@ function CanvasInner({
                       Cancel
                     </button>
                   </div>
-                </Panel>
-              )}
-              {!isReadOnly && !pending && hasSelection && (
-                <Panel position="bottom-left">
-                  <button
-                    type="button"
-                    className="canvas-delete"
-                    onClick={() => void deleteElements({ nodes: selectedNodes, edges: selectedEdges })}
-                  >
-                    Delete
-                  </button>
                 </Panel>
               )}
             </ReactFlow>
