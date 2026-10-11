@@ -13,25 +13,48 @@ import {
   type RuntimeChecks,
   type SourceRule,
 } from './process'
-import type { DiagnosticHint, Language, Level, MemoryGraph, Problem } from './types'
+import type {
+  DiagnosticHint,
+  Language,
+  Level,
+  LocalizedText,
+  MemoryGraph,
+  Problem,
+} from './types'
 
 const lines = (...rows: string[]) => rows.join('\n')
 
+/** The same text in each language mode: `L('array', 'list')`, for example. */
+const L = (javascript: string, python: string): LocalizedText => ({ javascript, python })
+
+/**
+ * An opaque object holding one curriculum-only tag entry. The identity level
+ * shows these tags so same-labeled objects can still be told apart.
+ */
+const tag = (label: string) => dict({ $: label })
+
 export type SpecHint = string | { js: string; py: string }
+
+/** Problem titles that name language keywords are spelled per language. */
+export type SpecTitle = string | { js: string; py: string }
+
+const toTitle = (title: SpecTitle): string | LocalizedText =>
+  typeof title === 'string' ? title : { javascript: title.js, python: title.py }
 
 interface DrawSpec {
   kind: 'draw'
-  title: string
+  title: SpecTitle
   js: string
   py: string
   expected: MemoryGraph
   hints?: DiagnosticHint[]
   hint?: SpecHint
+  opaquePrelude?: boolean
 }
 
 interface WriteSpec {
   kind: 'write'
-  title: string
+  title: SpecTitle
   /** Read-only code that runs before the learner's. */
   given?: { js: string; py: string }
   /** Reference answer, in the two languages. */
@@ -41,6 +64,7 @@ interface WriteSpec {
   process?: ProcessSpec
   hints?: DiagnosticHint[]
   hint?: SpecHint
+  opaquePrelude?: boolean
 }
 
 /** Starter code that differs from `given`, with the picture the same answer must build from it. */
@@ -77,18 +101,19 @@ function toProblem(spec: Spec, id: string, mystery: boolean): Problem {
     return {
       kind: 'draw',
       id,
-      title: spec.title,
+      title: toTitle(spec.title),
       mystery,
       code: { javascript: spec.js, python: spec.py },
       expected: spec.expected,
       hints: spec.hints,
       hint,
+      ...(spec.opaquePrelude !== undefined && { opaquePrelude: spec.opaquePrelude }),
     }
   }
   return {
     kind: 'write',
     id,
-    title: spec.title,
+    title: toTitle(spec.title),
     mystery,
     expected: spec.expected,
     given: spec.given && { javascript: spec.given.js, python: spec.given.py },
@@ -103,6 +128,7 @@ function toProblem(spec: Spec, id: string, mystery: boolean): Problem {
     },
     hints: spec.hints,
     hint,
+    ...(spec.opaquePrelude !== undefined && { opaquePrelude: spec.opaquePrelude }),
   }
 }
 
@@ -117,8 +143,8 @@ function toProblem(spec: Spec, id: string, mystery: boolean): Problem {
  */
 function level(
   id: string,
-  title: string,
-  description: string,
+  title: LocalizedText,
+  description: LocalizedText,
   tutorial: Spec[],
   mysteries: Spec[],
 ): Level {
@@ -135,9 +161,12 @@ function level(
 
 export const levels: Level[] = [
   level(
-    'numbers',
-    'Variables and Numbers',
-    'A variable is a name that holds a value. Assigning a new value replaces the old one. Setting one variable from another gives it the same value, but the two stay independent: changing one later leaves the other alone. When a value in the diagram already belongs to an existing variable, your code must refer to that variable by name rather than typing the number again.',
+    'scalars',
+    L('Variables and Primitives', 'Variables and Scalars'),
+    L(
+      'A variable holds a value at the moment you assign it, not a live formula or spreadsheet cell. Reassigning replaces what it holds. Copying from another variable gives it the same value, but the two stay independent: changing one later leaves the other alone. When a value in the diagram already belongs to an existing variable, your code must refer to that variable by name rather than typing the value again.',
+      'A variable holds a value at the moment you assign it, not a live formula or spreadsheet cell. Reassigning replaces what it holds. Copying from another variable gives it the same value, but the two stay independent: changing one later leaves the other alone. When a value in the diagram already belongs to an existing variable, your code must refer to that variable by name rather than typing the value again.',
+    ),
     [
       draw({
         title: 'One variable',
@@ -145,26 +174,6 @@ export const levels: Level[] = [
         py: 'x = 10',
         expected: graph({ x: 10 }),
         hint: 'Create a variable named x and a number node with value 10, then connect x to 10.',
-      }),
-      write({
-        title: 'A negative number',
-        js: 'let temp = -4;',
-        py: 'temp = -4',
-        expected: graph({ temp: -4 }),
-        hint: {
-          js: 'Declare a variable named temp and assign it -4.',
-          py: 'Assign -4 to a variable named temp.',
-        },
-      }),
-      write({
-        title: 'A decimal',
-        js: 'let price = 2.5;',
-        py: 'price = 2.5',
-        expected: graph({ price: 2.5 }),
-        hint: {
-          js: 'Declare a variable named price and assign it 2.5.',
-          py: 'Assign 2.5 to a variable named price.',
-        },
       }),
       draw({
         title: 'Reassignment',
@@ -251,6 +260,24 @@ export const levels: Level[] = [
           ],
         },
       }),
+      write({
+        title: 'Only one changes',
+        given: { js: lines('let x = 4;', 'let y = x;'), py: lines('x = 4', 'y = x') },
+        js: 'y = 9;',
+        py: 'y = 9',
+        expected: graph({ x: 4, y: 9 }),
+        hint: 'Reassign only y to 9. The variable x will remain unchanged.',
+      }),
+      write({
+        title: 'One of each',
+        js: lines('let name = "Bo";', 'let age = 7;', 'let member = true;', 'let nickname = null;'),
+        py: lines('name = "Bo"', 'age = 7', 'member = True', 'nickname = None'),
+        expected: graph({ name: 'Bo', age: 7, member: true, nickname: null }),
+        hint: {
+          js: 'Declare four variables: name with "Bo", age with 7, member with true, and nickname with null.',
+          py: 'Assign four variables: name with "Bo", age with 7, member with True, and nickname with None.',
+        },
+      }),
     ],
     [
       draw({
@@ -260,13 +287,12 @@ export const levels: Level[] = [
         expected: graph({ a: 8, b: 3 }),
         hint: 'Copying a variable copies its current value. When a is reassigned to 8, b keeps its value 3.',
       }),
-      write({
-        title: 'Only one changes',
-        given: { js: lines('let x = 4;', 'let y = x;'), py: lines('x = 4', 'y = x') },
-        js: 'y = 9;',
-        py: 'y = 9',
-        expected: graph({ x: 4, y: 9 }),
-        hint: 'Reassign only y to 9. The variable x will remain unchanged.',
+      draw({
+        title: 'A string',
+        js: 'let name = "Ada";',
+        py: 'name = "Ada"',
+        expected: graph({ name: 'Ada' }),
+        hint: 'Create a variable named name and connect it to a string node with "Ada".',
       }),
       draw({
         title: 'A chain of copies',
@@ -317,76 +343,80 @@ export const levels: Level[] = [
   ),
 
   level(
-    'simple-values',
-    'Strings, Booleans and Null',
-    'Strings, booleans and null (None in Python) are simple values, just like numbers: each variable holds its own. A string can\'t be changed in place, so adding to one builds a new string.',
+    'identity',
+    L(
+      'Objects with Identity and Multiple References',
+      'Objects with Identity and Multiple References',
+    ),
+    L(
+      'Unlike numbers and strings, an object is a separate thing in memory, and a variable only holds a reference to it. Two variables can refer to the same object, while two makeObject calls always build two separate objects, even with the same label. makeObject is built in for this level: it builds an opaque object tagged with its label.',
+      'Unlike numbers and strings, an object is a separate thing in memory, and a variable only holds a reference to it. Two variables can refer to the same object, while two make_object calls always build two separate objects, even with the same label. make_object is built in for this level: it builds an opaque object tagged with its label.',
+    ),
     [
       draw({
-        title: 'A string',
-        js: 'let name = "Ada";',
-        py: 'name = "Ada"',
-        expected: graph({ name: 'Ada' }),
-        hint: 'Create a variable named name and connect it to a string node with "Ada".',
+        title: 'One labeled object',
+        js: 'let item = makeObject("Ada");',
+        py: 'item = make_object("Ada")',
+        expected: graph({ item: ref('o') }, { o: tag('Ada') }),
+        hint: 'Create a variable named item and connect it to the object tagged "Ada".',
+        opaquePrelude: true,
       }),
       draw({
-        title: 'A boolean',
-        js: 'let ready = true;',
-        py: 'ready = True',
-        expected: graph({ ready: true }),
-        hint: {
-          js: 'Create a variable named ready and connect it to a boolean node with value true.',
-          py: 'Create a variable named ready and connect it to a boolean node with value True.',
-        },
+        title: 'Two names, one object',
+        js: lines('let a = makeObject("main");', 'let b = a;'),
+        py: lines('a = make_object("main")', 'b = a'),
+        expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: tag('main') }),
+        hint: 'Assigning b = a makes both names refer to the same object, not a second copy.',
+        opaquePrelude: true,
       }),
       write({
-        title: 'A false value',
-        js: 'let done = false;',
-        py: 'done = False',
-        expected: graph({ done: false }),
-        hint: {
-          js: 'Declare a variable named done and assign it false.',
-          py: 'Assign False to a variable named done.',
-        },
-      }),
-      write({
-        title: 'An empty string',
-        js: 'let label = "";',
-        py: 'label = ""',
-        expected: graph({ label: '' }),
-        hint: {
-          js: 'Declare a variable named label and assign it an empty string "".',
-          py: 'Assign an empty string "" to a variable named label.',
-        },
+        title: 'Three names, one object',
+        js: lines('let a = makeObject("x");', 'let b = a;', 'let c = a;'),
+        py: lines('a = make_object("x")', 'b = a', 'c = a'),
+        expected: graph(
+          { a: ref('shared'), b: ref('shared'), c: ref('shared') },
+          { shared: tag('x') },
+        ),
+        hint: 'Each assignment from a adds another name for the same object.',
+        opaquePrelude: true,
       }),
       draw({
-        title: 'Nothing',
-        js: 'let nothing = null;',
-        py: 'nothing = None',
-        expected: graph({ nothing: null }),
-        hint: {
-          js: 'Create a variable named nothing and connect it to a null node.',
-          py: 'Create a variable named nothing and connect it to a None node.',
-        },
+        title: 'Same label, separate objects',
+        js: lines('let a = makeObject("A");', 'let b = makeObject("A");'),
+        py: lines('a = make_object("A")', 'b = make_object("A")'),
+        expected: graph({ a: ref('a'), b: ref('b') }, { a: tag('A'), b: tag('A') }),
+        hint: 'Two makeObject calls with the same label still build two separate objects in memory.',
+        hints: [
+          {
+            variable: 'b',
+            aliasing: 'shared',
+            message:
+              'a and b are built from separate makeObject calls, so they refer to two separate objects even though the labels match.',
+          },
+        ],
+        opaquePrelude: true,
       }),
       write({
-        title: 'Text, not a number',
-        js: 'let code = "42";',
-        py: 'code = "42"',
-        expected: graph({ code: '42' }),
+        title: 'Two fresh objects',
+        js: lines('let p = makeObject("empty");', 'let q = makeObject("empty");'),
+        py: lines('p = make_object("empty")', 'q = make_object("empty")'),
+        expected: graph({ p: ref('p'), q: ref('q') }, { p: tag('empty'), q: tag('empty') }),
         hint: {
-          js: 'Declare code and assign it "42" so it is stored as text rather than a number.',
-          py: 'Assign "42" to code so it is stored as text rather than a number.',
+          js: 'Declare two variables, each with its own makeObject call.',
+          py: 'Create two variables, each with its own make_object call.',
         },
+        opaquePrelude: true,
       }),
       write({
-        title: 'One of each',
-        js: lines('let name = "Bo";', 'let age = 7;', 'let member = true;', 'let nickname = null;'),
-        py: lines('name = "Bo"', 'age = 7', 'member = True', 'nickname = None'),
-        expected: graph({ name: 'Bo', age: 7, member: true, nickname: null }),
-        hint: {
-          js: 'Declare four variables: name with "Bo", age with 7, member with true, and nickname with null.',
-          py: 'Assign four variables: name with "Bo", age with 7, member with True, and nickname with None.',
-        },
+        title: "Two share, one doesn't",
+        js: lines('let a = makeObject("pair");', 'let b = a;', 'let c = makeObject("pair");'),
+        py: lines('a = make_object("pair")', 'b = a', 'c = make_object("pair")'),
+        expected: graph(
+          { a: ref('shared'), b: ref('shared'), c: ref('alone') },
+          { shared: tag('pair'), alone: tag('pair') },
+        ),
+        hint: 'b = a shares one object; c = makeObject("pair") creates a second object with the same label.',
+        opaquePrelude: true,
       }),
       draw({
         title: 'Copying a string',
@@ -394,13 +424,6 @@ export const levels: Level[] = [
         py: lines('s = "hi"', 't = s'),
         expected: graph({ s: 'hi', t: 'hi' }),
         hint: 'Strings are simple values. Both s and t each get their own string node holding "hi".',
-      }),
-      draw({
-        title: 'Building a new string',
-        js: lines('let s = "hi";', 's = s + "!";'),
-        py: lines('s = "hi"', 's = s + "!"'),
-        expected: graph({ s: 'hi!' }),
-        hint: 'Adding to a string builds a new string. In the end, s points to "hi!".',
       }),
       write({
         title: 'A full name',
@@ -427,14 +450,80 @@ export const levels: Level[] = [
           ],
         },
       }),
+      draw({
+        title: 'Building a new string',
+        js: lines('let s = "hi";', 's = s + "!";'),
+        py: lines('s = "hi"', 's = s + "!"'),
+        expected: graph({ s: 'hi!' }),
+        hint: 'Adding to a string builds a new string. In the end, s points to "hi!".',
+      }),
+      write({
+        title: 'Another name for the same object',
+        given: { js: 'let a = makeObject("item");', py: 'a = make_object("item")' },
+        js: 'let b = a;',
+        py: 'b = a',
+        expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: tag('item') }),
+        hint: {
+          js: 'Declare b and assign it from a instead of calling makeObject again.',
+          py: 'Set b from a instead of calling make_object again.',
+        },
+        opaquePrelude: true,
+      }),
     ],
     [
       draw({
-        title: 'Adding to a copied string',
-        js: lines('let s = "ab";', 'let t = s;', 't = t + "c";'),
-        py: lines('s = "ab"', 't = s', 't = t + "c"'),
-        expected: graph({ s: 'ab', t: 'abc' }),
-        hint: 'Changing t creates a new string abc for t, leaving s holding ab.',
+        title: 'Copying the copy',
+        js: lines('let a = makeObject("hub");', 'let b = a;', 'let c = b;'),
+        py: lines('a = make_object("hub")', 'b = a', 'c = b'),
+        expected: graph(
+          { a: ref('shared'), b: ref('shared'), c: ref('shared') },
+          { shared: tag('hub') },
+        ),
+        hint: 'Chaining assignments still leaves every name pointing at one shared object.',
+        opaquePrelude: true,
+      }),
+      write({
+        title: 'One shared, one empty',
+        js: lines('let x = makeObject("data");', 'let y = x;', 'let z = makeObject("empty");'),
+        py: lines('x = make_object("data")', 'y = x', 'z = make_object("empty")'),
+        expected: graph(
+          { x: ref('shared'), y: ref('shared'), z: ref('empty') },
+          { shared: tag('data'), empty: tag('empty') },
+        ),
+        hint: 'y = x shares the "data" object; z = makeObject("empty") is a separate object.',
+        opaquePrelude: true,
+      }),
+      draw({
+        title: 'Two pairs',
+        js: lines(
+          'let a = makeObject("on");',
+          'let b = a;',
+          'let c = makeObject("on");',
+          'let d = c;',
+        ),
+        py: lines(
+          'a = make_object("on")',
+          'b = a',
+          'c = make_object("on")',
+          'd = c',
+        ),
+        expected: graph(
+          { a: ref('first'), b: ref('first'), c: ref('second'), d: ref('second') },
+          { first: tag('on'), second: tag('on') },
+        ),
+        hint: 'a and b share one object; c and d share a different object, even though both carry the label "on".',
+        opaquePrelude: true,
+      }),
+      draw({
+        title: 'Which names share?',
+        js: lines('let a = makeObject("twin");', 'let b = makeObject("twin");', 'let c = a;'),
+        py: lines('a = make_object("twin")', 'b = make_object("twin")', 'c = a'),
+        expected: graph(
+          { a: ref('shared'), b: ref('alone'), c: ref('shared') },
+          { shared: tag('twin'), alone: tag('twin') },
+        ),
+        hint: "c = a joins c with a's object; b keeps its own object with the same label.",
+        opaquePrelude: true,
       }),
       write({
         title: 'Clear one, keep the backup',
@@ -450,49 +539,16 @@ export const levels: Level[] = [
           py: 'Reassign name to None. The backup variable will keep its value.',
         },
       }),
-      draw({
-        title: 'Joining digits makes text',
-        js: 'let n = "1" + "2";',
-        py: 'n = "1" + "2"',
-        expected: graph({ n: '12' }),
-        hint: 'Joining the strings "1" and "2" produces the string node "12".',
-      }),
-      draw({
-        title: 'A copied boolean',
-        js: lines('let on = true;', 'let was = on;', 'on = false;'),
-        py: lines('on = True', 'was = on', 'on = False'),
-        expected: graph({ on: false, was: true }),
-        hint: {
-          js: 'Reassigning on to false does not change was, which remains true.',
-          py: 'Reassigning on to False does not change was, which remains True.',
-        },
-      }),
-      write({
-        title: 'A greeting',
-        given: { js: 'let name = "Bo";', py: 'name = "Bo"' },
-        js: 'let greeting = "Hello, " + name + "!";',
-        py: 'greeting = "Hello, " + name + "!"',
-        expected: graph({ name: 'Bo', greeting: 'Hello, Bo!' }),
-        hint: {
-          js: 'Declare greeting by combining "Hello, ", the existing variable name, and "!".',
-          py: 'Assign greeting by combining "Hello, ", the existing variable name, and "!".',
-        },
-        process: {
-          hidden: [
-            {
-              given: { js: 'let name = "Cy";', py: 'name = "Cy"' },
-              expected: graph({ name: 'Cy', greeting: 'Hello, Cy!' }),
-            },
-          ],
-        },
-      }),
     ],
   ),
 
   level(
     'arrays',
-    'Arrays and Lists',
-    'An array (JavaScript) or list (Python) is a separate object in memory with numbered slots. A variable holds only a reference to it, so two variables can refer to the same list or array. Two lists or arrays with equal contents are still two separate objects.',
+    L('Arrays', 'Lists'),
+    L(
+      'An array is a separate object in memory with numbered slots. A variable holds only a reference to it. An array literal like [1, 2] builds an array. You already know from the previous level when two variables share one array and when two arrays stay separate, so here focus on building and reading slot structure.',
+      'A list is a separate object in memory with numbered slots. A variable holds only a reference to it. A list literal like [1, 2] builds a list. You already know from the previous level when two variables share one list and when two lists stay separate, so here focus on building and reading slot structure.',
+    ),
     [
       draw({
         title: 'A list of numbers',
@@ -529,7 +585,7 @@ export const levels: Level[] = [
         },
       }),
       write({
-        title: 'Null and None in a list',
+        title: { js: 'Null in a list', py: 'None in a list' },
         js: 'let cells = [null, 0, null];',
         py: 'cells = [None, 0, None]',
         expected: graph({ cells: ref('cells') }, { cells: list(null, 0, null) }),
@@ -539,56 +595,49 @@ export const levels: Level[] = [
         },
       }),
       draw({
-        title: 'Two names, one list',
-        js: lines('let a = [7];', 'let b = a;'),
-        py: lines('a = [7]', 'b = a'),
-        expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: list(7) }),
-        hint: 'Assigning b = a makes both names refer to the same list, not a second copy.',
+        title: 'One slot',
+        js: 'let cell = [7];',
+        py: 'cell = [7]',
+        expected: graph({ cell: ref('cell') }, { cell: list(7) }),
+        hint: 'Create variable cell and a list with one slot holding 7, then connect them.',
       }),
       write({
-        title: 'Three names, one list',
-        js: lines('let a = ["x"];', 'let b = a;', 'let c = a;'),
-        py: lines('a = ["x"]', 'b = a', 'c = a'),
-        expected: graph(
-          { a: ref('shared'), b: ref('shared'), c: ref('shared') },
-          { shared: list('x') },
-        ),
-        hint: 'Each assignment from a adds another name for the same list object.',
+        title: 'Two of the same number',
+        js: 'let pair = [3, 3];',
+        py: 'pair = [3, 3]',
+        expected: graph({ pair: ref('pair') }, { pair: list(3, 3) }),
+        hint: {
+          js: 'Declare pair and assign it a list literal containing 3 and 3.',
+          py: 'Assign pair a list literal containing 3 and 3.',
+        },
       }),
       draw({
-        title: 'Equal but separate',
-        js: lines('let a = [1, 2];', 'let b = [1, 2];'),
-        py: lines('a = [1, 2]', 'b = [1, 2]'),
-        expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1, 2), b: list(1, 2) }),
-        hint: 'Two list literals with the same contents are still two separate list objects in memory.',
-        hints: [
-          {
-            variable: 'b',
-            aliasing: 'shared',
-            message:
-              'a and b are built from separate list literals, so they refer to two separate lists even though the slots match.',
-          },
-        ],
+        title: 'A longer list',
+        js: 'let nums = [1, 2, 3, 4];',
+        py: 'nums = [1, 2, 3, 4]',
+        expected: graph({ nums: ref('nums') }, { nums: list(1, 2, 3, 4) }),
+        hint: 'Create variable nums and a list with slots 1, 2, 3, and 4, then connect nums to that list.',
       }),
       write({
-        title: 'Two empty lists',
-        js: lines('let p = [];', 'let q = [];'),
-        py: lines('p = []', 'q = []'),
-        expected: graph({ p: ref('p'), q: ref('q') }, { p: list(), q: list() }),
+        title: 'A list from a variable',
+        given: { js: 'let n = 5;', py: 'n = 5' },
+        js: 'let row = [n];',
+        py: 'row = [n]',
+        expected: graph({ n: 5, row: ref('row') }, { row: list(5) }),
         hint: {
-          js: 'Declare two variables, each with its own empty list literal.',
-          py: 'Create two variables, each with its own empty list literal.',
+          js: 'Declare row as a one-slot list built from the existing variable n.',
+          py: 'Assign row a one-slot list built from the existing variable n.',
         },
       }),
       write({
-        title: 'Two share, one doesn\'t',
-        js: lines('let a = [1];', 'let b = a;', 'let c = [1];'),
-        py: lines('a = [1]', 'b = a', 'c = [1]'),
-        expected: graph(
-          { a: ref('shared'), b: ref('shared'), c: ref('alone') },
-          { shared: list(1), alone: list(1) },
-        ),
-        hint: 'b = a shares one list; c = [1] creates a second list with the same value in slot 0.',
+        title: 'A three-string list',
+        js: 'let tags = ["a", "b", "c"];',
+        py: 'tags = ["a", "b", "c"]',
+        expected: graph({ tags: ref('tags') }, { tags: list('a', 'b', 'c') }),
+        hint: {
+          js: 'Declare tags as ["a", "b", "c"].',
+          py: 'Assign tags ["a", "b", "c"].',
+        },
       }),
     ],
     [
@@ -606,55 +655,57 @@ export const levels: Level[] = [
         },
       }),
       draw({
-        title: 'Copying the copy',
-        js: lines('let a = [];', 'let b = a;', 'let c = b;'),
-        py: lines('a = []', 'b = a', 'c = b'),
-        expected: graph(
-          { a: ref('shared'), b: ref('shared'), c: ref('shared') },
-          { shared: list() },
-        ),
-        hint: 'Chaining assignments still leaves every name pointing at one shared list.',
-      }),
-      write({
-        title: 'One shared, one empty',
-        js: lines('let x = ["a", "b"];', 'let y = x;', 'let z = [];'),
-        py: lines('x = ["a", "b"]', 'y = x', 'z = []'),
-        expected: graph(
-          { x: ref('shared'), y: ref('shared'), z: ref('empty') },
-          { shared: list('a', 'b'), empty: list() },
-        ),
-        hint: 'y = x shares the ["a", "b"] list; z = [] is a separate empty list.',
+        title: 'Same contents, separate lists',
+        js: lines('let a = [1];', 'let b = [1];'),
+        py: lines('a = [1]', 'b = [1]'),
+        expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1), b: list(1) }),
+        hint: 'Two list literals with the same contents are still two separate lists in memory.',
+        hints: [
+          {
+            variable: 'b',
+            aliasing: 'shared',
+            message:
+              'a and b are built from separate list literals, so they refer to two separate lists even though the slots match.',
+          },
+        ],
       }),
       draw({
-        title: 'Two pairs',
-        js: lines('let a = [true];', 'let b = a;', 'let c = [true];', 'let d = c;'),
-        py: lines('a = [True]', 'b = a', 'c = [True]', 'd = c'),
-        expected: graph(
-          { a: ref('first'), b: ref('first'), c: ref('second'), d: ref('second') },
-          { first: list(true), second: list(true) },
-        ),
+        title: 'Three words',
+        js: 'let words = ["I", "see", "you"];',
+        py: 'words = ["I", "see", "you"]',
+        expected: graph({ words: ref('words') }, { words: list('I', 'see', 'you') }),
+        hint: 'Create variable words and a three-slot list holding "I", "see", and "you", then connect them.',
+      }),
+      draw({
+        title: 'Booleans in a list',
+        js: 'let flags = [true, false, true];',
+        py: 'flags = [True, False, True]',
+        expected: graph({ flags: ref('flags') }, { flags: list(true, false, true) }),
         hint: {
-          js: 'a and b share one list; c and d share a different list, even though both hold true.',
-          py: 'a and b share one list; c and d share a different list, even though both hold True.',
+          js: 'One list holds true, false, and true in three slots.',
+          py: 'One list holds True, False, and True in three slots.',
         },
       }),
-      draw({
-        title: 'Which names share?',
-        js: lines('let a = [0, 0];', 'let b = [0, 0];', 'let c = a;'),
-        py: lines('a = [0, 0]', 'b = [0, 0]', 'c = a'),
-        expected: graph(
-          { a: ref('shared'), b: ref('alone'), c: ref('shared') },
-          { shared: list(0, 0), alone: list(0, 0) },
-        ),
-        hint: 'c = a joins c with a\'s list; b keeps its own list with the same slot values.',
+      write({
+        title: 'Two lists from literals',
+        js: lines('let p = [0];', 'let q = [0];'),
+        py: lines('p = [0]', 'q = [0]'),
+        expected: graph({ p: ref('p'), q: ref('q') }, { p: list(0), q: list(0) }),
+        hint: {
+          js: 'Declare two variables, each with its own single-slot list literal holding 0.',
+          py: 'Create two variables, each with its own single-slot list literal holding 0.',
+        },
       }),
     ],
   ),
 
   level(
     'objects',
-    'Objects and Dictionaries',
-    'An object (JavaScript) or dictionary (Python) stores values under named keys. Like a list or array, it is a separate object or dictionary in memory, and variables hold references to it.',
+    L('Objects', 'Dictionaries'),
+    L(
+      'An object stores values under named keys. Like an array, it is a separate object in memory, and variables hold references to it.',
+      'A dictionary stores values under named keys. Like a list, it is a separate object in memory, and variables hold references to it.',
+    ),
     [
       draw({
         title: 'One key',
@@ -804,8 +855,11 @@ export const levels: Level[] = [
 
   level(
     'mutating-arrays',
-    'Changing Arrays and Lists',
-    'Adding, removing or overwriting an item changes the list or array itself, so every variable that refers to it sees the change. Assigning a new list or array to a variable is different: it repoints only that variable and leaves the previous one as it was.',
+    L('Changing Arrays', 'Changing Lists'),
+    L(
+      'Adding, removing or overwriting an item changes the array itself, so every variable that refers to it sees the change. Assigning a new array to a variable is different: it repoints only that variable and leaves the previous one as it was.',
+      'Adding, removing or overwriting an item changes the list itself, so every variable that refers to it sees the change. Assigning a new list to a variable is different: it repoints only that variable and leaves the previous one as it was.',
+    ),
     [
       draw({
         title: 'Appending',
@@ -939,8 +993,11 @@ export const levels: Level[] = [
 
   level(
     'mutating-objects',
-    'Changing Objects',
-    'Adding, changing or deleting a key changes the object itself, so every variable that refers to it sees the change. Assigning a brand new object to a variable repoints only that variable; the old object is untouched.',
+    L('Changing Objects', 'Changing Dictionaries'),
+    L(
+      'Adding, changing or deleting a key changes the object itself, so every variable that refers to it sees the change. Assigning a brand new object to a variable repoints only that variable; the old object is untouched.',
+      'Adding, changing or deleting a key changes the dictionary itself, so every variable that refers to it sees the change. Assigning a brand new dictionary to a variable repoints only that variable; the old dictionary is untouched.',
+    ),
     [
       draw({
         title: 'Adding a key',
@@ -1102,8 +1159,11 @@ export const levels: Level[] = [
 
   level(
     'nesting',
-    'Nested Structures',
-    'Lists (arrays) and objects (dictionaries) can hold references to other lists and objects. Each inner list or object is a separate object in memory, and the same one can be referred to from several places.',
+    L('Nested Arrays and Objects', 'Nested Lists and Dictionaries'),
+    L(
+      'Arrays and objects can hold references to other arrays and objects. Each inner array or object is a separate object in memory, and the same one can be referred to from several places.',
+      'Lists and dictionaries can hold references to other lists and dictionaries. Each inner list or dictionary is a separate object in memory, and the same one can be referred to from several places.',
+    ),
     [
       draw({
         title: 'A grid',
@@ -1317,8 +1377,11 @@ export const levels: Level[] = [
 
   level(
     'copies',
-    'Copies and Aliases',
-    'Copying with spread (JavaScript) or list() and dict() (Python) makes a new outer list or array or object or dictionary, but any inner lists or objects inside are shared with the original, not copied. That is a shallow copy. Repeating an item, as with fill() or *, repeats the same reference.',
+    L('Copies and Aliases', 'Copies and Aliases'),
+    L(
+      'Copying with spread makes a new outer array or object, but any inner arrays or objects inside are shared with the original, not copied. That is a shallow copy. Repeating an item, as with fill(), repeats the same reference.',
+      'Copying with list() and dict() makes a new outer list or dictionary, but any inner lists or dictionaries inside are shared with the original, not copied. That is a shallow copy. Repeating an item with * repeats the same reference.',
+    ),
     [
       draw({
         title: 'A copy of a list',
@@ -1606,8 +1669,11 @@ export const levels: Level[] = [
 
   level(
     'rebinding',
-    'Rebinding and Functions',
-    'Assigning to a variable only changes what that variable refers to; the container it referred to before is untouched. Growing a list with append or push changes it in place; combining with concat or + builds a new list and leaves the old one alone. A function parameter is a new variable referring to the caller\'s container, so the function can change that container but cannot repoint the caller\'s variable.',
+    L('Rebinding and Functions', 'Rebinding and Functions'),
+    L(
+      'Assigning to a variable only changes what that variable refers to; the container it referred to before is untouched. Growing an array with push changes it in place; combining with concat builds a new array and leaves the old one alone. A function parameter is a new variable referring to the caller\'s container, so the function can change that container but cannot repoint the caller\'s variable.',
+      'Assigning to a variable only changes what that variable refers to; the container it referred to before is untouched. Growing a list with append changes it in place; combining with + builds a new list and leaves the old one alone. A function parameter is a new variable referring to the caller\'s container, so the function can change that container but cannot repoint the caller\'s variable.',
+    ),
     [
       draw({
         title: 'Strings never change',
@@ -1807,8 +1873,11 @@ export const levels: Level[] = [
 
   level(
     'cycles',
-    'Cycles and Linked Data',
-    'Objects can be chained into a linked list, where each one refers to the next and the last refers to null (None in Python). References can also loop back: a list or array or object or dictionary can refer to itself, and two objects can refer to each other.',
+    L('Cycles and Linked Data', 'Cycles and Linked Data'),
+    L(
+      'Objects can be chained into a linked list, where each one refers to the next and the last refers to null. References can also loop back: an array or object can refer to itself, and two objects can refer to each other.',
+      'Dictionaries can be chained into a linked list, where each one refers to the next and the last refers to None. References can also loop back: a list or dictionary can refer to itself, and two dictionaries can refer to each other.',
+    ),
     [
       draw({
         title: 'A linked list',
@@ -2061,4 +2130,8 @@ export function problemHint(problem: Problem, language: Language): string | unde
   if (!problem.hint) return undefined
   if (typeof problem.hint === 'string') return problem.hint
   return problem.hint[language]
+}
+
+export function problemTitle(problem: Problem, language: Language): string {
+  return typeof problem.title === 'string' ? problem.title : problem.title[language]
 }

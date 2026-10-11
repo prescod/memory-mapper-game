@@ -65,6 +65,9 @@ export type Language = 'javascript' | 'python'
 
 export const LANGUAGES: Language[] = ['javascript', 'python']
 
+/** The same text in each language mode, e.g. level titles that name arrays or lists. */
+export type LocalizedText = Record<Language, string>
+
 export const LANGUAGE_LABELS: Record<Language, string> = {
   javascript: 'JavaScript',
   python: 'Python',
@@ -103,13 +106,19 @@ export type Hint = string | Record<Language, string>
 export interface DrawProblem {
   kind: 'draw'
   id: string
-  title: string
+  title: string | LocalizedText
   /** Title and level description stay hidden until solved, since they would give the answer away. */
   mystery: boolean
   code: Record<Language, string>
   expected: MemoryGraph
   hints?: DiagnosticHint[]
   hint?: Hint
+  /**
+   * Whether checking this puzzle runs the reference code with the hidden
+   * `makeObject` / `make_object` helper defined. Learners only ever see calls
+   * to it, never its definition.
+   */
+  opaquePrelude?: boolean
 }
 
 /**
@@ -122,7 +131,7 @@ export interface DrawProblem {
 export interface WriteProblem {
   kind: 'write'
   id: string
-  title: string
+  title: string | LocalizedText
   /** See `DrawProblem.mystery`. */
   mystery: boolean
   expected: MemoryGraph
@@ -132,14 +141,16 @@ export interface WriteProblem {
   process?: ProcessSpec
   hints?: DiagnosticHint[]
   hint?: Hint
+  /** See `DrawProblem.opaquePrelude`. */
+  opaquePrelude?: boolean
 }
 
 export type Problem = DrawProblem | WriteProblem
 
 export interface Level {
   id: string
-  title: string
-  description: string
+  title: LocalizedText
+  description: LocalizedText
   /** Tutorial problems first, then mystery problems that retest the same ideas. */
   problems: Problem[]
 }

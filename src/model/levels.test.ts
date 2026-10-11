@@ -6,8 +6,9 @@ import { snapshotJavaScript, snapshotToGraph } from '../run/snapshotJs'
 import { loadNodePythonSnapshotter } from '../run/testRuntime'
 import { buildRunRequest, gradeRun } from '../verify/grade'
 import { verify } from '../verify/verify'
-import { graph, list, ref } from './builders'
+import { graph, dict, ref } from './builders'
 import { findProblem, levels, nextProblem, previousProblem, problemHint, problems } from './levels'
+import { OPAQUE_PRELUDE } from '../run/opaquePrelude'
 import { snapshotPython } from './snapshot'
 import {
   LANGUAGES,
@@ -22,10 +23,20 @@ const micropython = await loadNodePythonSnapshotter()
 
 const writeProblems = problems.filter((problem): problem is WriteProblem => problem.kind === 'write')
 
+/** Starter code plus the hidden prelude, when the puzzle calls the opaque helper. */
+function hiddenBefore(problem: Problem, language: Language): string {
+  const prefix = problem.opaquePrelude === true ? `${OPAQUE_PRELUDE[language]}\n` : ''
+  const given = problem.kind === 'write' ? (problem.given?.[language] ?? '') : ''
+  return `${prefix}${given}`
+}
+
 /** The whole program for a problem: for a write problem, its starter code followed by the reference answer. */
 function programOf(problem: Problem, language: Language): string {
-  if (problem.kind === 'draw') return problem.code[language]
-  return joinProgram(problem.given?.[language] ?? '', problem.solution[language]).source
+  if (problem.kind === 'draw')
+    return problem.opaquePrelude === true
+      ? `${OPAQUE_PRELUDE[language]}\n${problem.code[language]}`
+      : problem.code[language]
+  return joinProgram(hiddenBefore(problem, language), problem.solution[language]).source
 }
 
 const namesOf = (problem: Problem) => problem.expected.variables.map((variable) => variable.name)
@@ -68,9 +79,9 @@ describe('curriculum shape', () => {
       list.map((problem) => (problem.kind === 'draw' ? 'D' : 'W')).join('')
     const order = levels.map((level) => `${kinds(tutorialOf(level))} ${kinds(mysteriesOf(level))}`)
     expect(order).toEqual([
-      'DWWDDWDWDW DWDWD',
-      'DDWWDWWDDW DWDDW',
-      'DWDDWDWDWW WDWDD',
+      'DDDWDWDWWW DDDWD',
+      'DDWDWWDWDW DWDDW',
+      'DWDDWDWDWW WDDDW',
       'DWDWDWDDWW WDDWD',
       'DWDDWDWWDW WDWDD',
       'DWDDWDWWDW DWDDW',
@@ -148,8 +159,10 @@ const executions: Execution[] = problems.flatMap((problem) => {
 /** The program for an execution: draw code, or starter code followed by the reference answer. */
 function programFor(execution: Execution, language: Language): string {
   const { problem } = execution
-  if (problem.kind === 'draw') return problem.code[language]
-  return joinProgram(execution.given(language), problem.solution[language]).source
+  if (problem.kind === 'draw')
+    return programOf(problem, language)
+  const prefix = problem.opaquePrelude === true ? `${OPAQUE_PRELUDE[language]}\n` : ''
+  return joinProgram(`${prefix}${execution.given(language)}`, problem.solution[language]).source
 }
 
 /**
@@ -194,7 +207,7 @@ describe('expected graphs match real execution', () => {
   const unsolved = writeProblems.filter((problem) => problem.given !== undefined)
   const unsolvedGraph = (problem: WriteProblem, language: Language, run: (code: string) => MemoryGraph) => {
     try {
-      return run(problem.given![language])
+      return run(hiddenBefore(problem, language))
     } catch {
       return undefined
     }
@@ -265,8 +278,8 @@ const processed = writeProblems.filter((problem) => problem.process !== undefine
 describe('process rules', () => {
   it('cover the puzzles whose picture alone can be faked', () => {
     expect(processed.map((problem) => problem.id).sort()).toEqual([
-      'numbers-8', 'numbers-9', 'numbers-10', 'numbers-14',
-      'simple-values-10', 'simple-values-15',
+      'scalars-6', 'scalars-7', 'scalars-8', 'scalars-14',
+      'identity-9',
       'mutating-arrays-6', 'mutating-arrays-7', 'mutating-arrays-8', 'mutating-arrays-9',
       'mutating-arrays-10', 'mutating-arrays-11', 'mutating-arrays-13',
       'mutating-objects-6', 'mutating-objects-7', 'mutating-objects-8', 'mutating-objects-9',
@@ -321,7 +334,7 @@ describe('process rules', () => {
       processed.map((problem) => ({
         id: problem.id,
         code: joinProgram(
-          problem.given?.python ?? '',
+          hiddenBefore(problem, 'python'),
           problem.solution.python,
           problem.process?.runtime && PYTHON_CHECKPOINT,
         ).source,
@@ -347,12 +360,11 @@ describe('shortcuts that match the picture but miss the point', () => {
   const KEEP = (name: string) => new RegExp(`Change what "${name}" already refers to`)
 
   const shortcuts: [id: string, js: string, py: string, complaint: RegExp][] = [
-    ['numbers-8', 'let b = 8;', 'b = 8', START_CHANGED],
-    ['numbers-9', 'let z = 1;', 'z = 1', START_CHANGED],
-    ['numbers-10', 'a = 2;\nb = 1;', 'a = 2\nb = 1', START_CHANGED],
-    ['numbers-14', 'a = 2;\nb = 3;\nc = 1;', 'a = 2\nb = 3\nc = 1', START_CHANGED],
-    ['simple-values-10', 'let full = "Ada Lovelace";', 'full = "Ada Lovelace"', START_CHANGED],
-    ['simple-values-15', 'let greeting = "Hello, Bo!";', 'greeting = "Hello, Bo!"', START_CHANGED],
+    ['scalars-6', 'let b = 8;', 'b = 8', START_CHANGED],
+    ['scalars-7', 'let z = 1;', 'z = 1', START_CHANGED],
+    ['scalars-8', 'a = 2;\nb = 1;', 'a = 2\nb = 1', START_CHANGED],
+    ['scalars-14', 'a = 2;\nb = 3;\nc = 1;', 'a = 2\nb = 3\nc = 1', START_CHANGED],
+    ['identity-9', 'let full = "Ada Lovelace";', 'full = "Ada Lovelace"', START_CHANGED],
 
     ['mutating-arrays-6', 'a = [3, 6, 9];', 'a = [3, 6, 9]', KEEP('a')],
     ['mutating-arrays-7', 'a = [1, 5, 3];', 'a = [1, 5, 3]', KEEP('a')],
@@ -457,7 +469,7 @@ describe('copies-14 alternatives', () => {
 
 describe('diagnostic hints', () => {
   it('explains the static value rule when area is drawn as updated on Area after a change', () => {
-    const problem = findProblem('numbers-4')!.problem
+    const problem = findProblem('scalars-4')!.problem
     const mistaken = graph({ width: 3, height: 5, area: 15 })
     const result = verify(mistaken, problem.expected, problem.hints)
     expect(result.ok).toBe(false)
@@ -465,19 +477,22 @@ describe('diagnostic hints', () => {
   })
 
   it('explains the order of execution when area is drawn with the old height on Area before a change', () => {
-    const problem = findProblem('numbers-15')!.problem
+    const problem = findProblem('scalars-15')!.problem
     const mistaken = graph({ width: 3, height: 5, area: 12 })
     const result = verify(mistaken, problem.expected, problem.hints)
     expect(result.ok).toBe(false)
     expect(result.errors[0].message).toMatch(/height was changed to 5 before area was calculated/)
   })
 
-  it('explains separate literals when a and b are merged onto one list on Equal but separate', () => {
-    const problem = findProblem('arrays-5')!.problem
-    const mistaken = graph({ a: ref('shared'), b: ref('shared') }, { shared: list(1, 2) })
+  it('explains separate constructors when a and b are merged onto one object on Same label, separate objects', () => {
+    const problem = findProblem('identity-3')!.problem
+    const mistaken = graph(
+      { a: ref('shared'), b: ref('shared') },
+      { shared: dict({ $: 'A' }) },
+    )
     const result = verify(mistaken, problem.expected, problem.hints)
     expect(result.ok).toBe(false)
-    expect(result.errors[0].message).toMatch(/separate list literals/)
+    expect(result.errors[0].message).toMatch(/separate makeObject calls/)
   })
 })
 
@@ -495,35 +510,35 @@ describe('on-demand hints', () => {
   })
 
   it('gives the expected hint for swap', () => {
-    const swappedProblem = findProblem('numbers-10')!.problem
+    const swappedProblem = findProblem('scalars-8')!.problem
     expect(problemHint(swappedProblem, 'javascript')).toBe('It is okay for you to add a third variable.')
     expect(problemHint(swappedProblem, 'python')).toBe('It is okay for you to add a third variable.')
   })
 
   it('gives the expected hint for multiplication in wrong order (Area after a change)', () => {
-    const areaProblem = findProblem('numbers-4')!.problem
+    const areaProblem = findProblem('scalars-4')!.problem
     expect(problemHint(areaProblem, 'javascript')).toBe('Pay careful attention to the order of your work.')
     expect(problemHint(areaProblem, 'python')).toBe('Pay careful attention to the order of your work.')
   })
 
   it('gives the expected hint for multiplication in wrong order (Area before a change)', () => {
-    const areaProblem = findProblem('numbers-15')!.problem
+    const areaProblem = findProblem('scalars-15')!.problem
     expect(problemHint(areaProblem, 'javascript')).toBe('Pay careful attention to the order of your work.')
     expect(problemHint(areaProblem, 'python')).toBe('Pay careful attention to the order of your work.')
   })
 
   it('provides language-appropriate boolean and null keywords in hints', () => {
-    const falseProblem = findProblem('simple-values-6')!.problem
-    expect(problemHint(falseProblem, 'python')).toBe('Assign False to a variable named done.')
-    expect(problemHint(falseProblem, 'javascript')).toBe('Declare a variable named done and assign it false.')
-
-    const oneOfEach = findProblem('simple-values-9')!.problem
+    const oneOfEach = findProblem('scalars-10')!.problem
     expect(problemHint(oneOfEach, 'python')).toContain('True')
     expect(problemHint(oneOfEach, 'python')).toContain('None')
     expect(problemHint(oneOfEach, 'javascript')).toContain('true')
     expect(problemHint(oneOfEach, 'javascript')).toContain('null')
 
-    const clearOne = findProblem('simple-values-12')!.problem
+    const flags = findProblem('arrays-14')!.problem
+    expect(problemHint(flags, 'python')).toContain('False')
+    expect(problemHint(flags, 'javascript')).toContain('false')
+
+    const clearOne = findProblem('identity-15')!.problem
     expect(problemHint(clearOne, 'python')).toContain('None')
     expect(problemHint(clearOne, 'javascript')).toContain('null')
   })

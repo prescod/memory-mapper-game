@@ -39,7 +39,7 @@ export function CodePanel({
         Level {levelNumber} · {position}
       </p>
       <h2 ref={heading} tabIndex={-1}>
-        <ProblemTitle problem={problem} visible={revealed} />
+        <ProblemTitle problem={problem} visible={revealed} language={language} />
       </h2>
       <LanguageToggle />
       {problem.kind === 'draw' && (
@@ -47,9 +47,9 @@ export function CodePanel({
           <code>{problem.code[language]}</code>
         </pre>
       )}
-      <h3 className="level-heading">{level.title}</h3>
+      <h3 className="level-heading">{level.title[language]}</h3>
       {revealed ? (
-        <p className="level-description">{level.description}</p>
+        <p className="level-description">{level.description[language]}</p>
       ) : (
         <p className="level-description">
           A mystery problem: it uses only ideas from this level, without naming them. The title and

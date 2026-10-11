@@ -12,8 +12,8 @@ vi.hoisted(() => {
 import { progressKey, useAppStore } from './useAppStore'
 
 const draft = { nodes: [], edges: [] }
-const js = progressKey('numbers-1', 'javascript')
-const py = progressKey('numbers-1', 'python')
+const js = progressKey('scalars-1', 'javascript')
+const py = progressKey('scalars-1', 'python')
 
 describe('progress resets', () => {
   beforeEach(() => useAppStore.setState({ completed: {}, drafts: {}, codeDrafts: {} }))

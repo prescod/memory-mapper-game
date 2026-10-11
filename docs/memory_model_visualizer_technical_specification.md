@@ -37,27 +37,27 @@ The user will interact with the following "building blocks" (Nodes) and "pointer
 
 ## 4. Example Levels / Curriculum
 
-**Level 1: Basic Primitives**
+**Level 1: Variables and Scalars (JavaScript: Variables and Primitives)**
 ```javascript
-let x = 10;
-let y = x;
+let width = 3;
+let height = 4;
+let area = width * height;
+height = 5;
 ```
-*Expected Graph:* Variable `x` points to Scalar `10`. Variable `y` points to a *separate* Scalar `10` (JS) OR the same Scalar `10` (Python small int caching, though usually taught as pointing to the same value). *Note: The app should configure rules per language mode.*
+*Expected Graph:* Variables `width`, `height`, and `area` each point to their own Scalar (`3`, `5`, and `12`). Changing `height` later does not update `area`: variables hold values at a point in time, not live formulas.
 
-**Level 2: Reference Types**
+**Level 2: Objects with Identity and Multiple References**
 ```javascript
-let arr1 = [42];
-let arr2 = arr1;
+let a = makeObject("Alice");
+let b = a;
 ```
-*Expected Graph:* Variable `arr1` and Variable `arr2` both point to the *exact same* Array node. The Array node's `0` slot points to a Scalar `42`.
+*Expected Graph:* Variables `a` and `b` both point to the *exact same* Object node, tagged `"Alice"`. Two `makeObject("Alice")` calls would build two separate objects with the same tag. `makeObject` (`make_object` in Python) is built in for this level; learners see calls to it, never its definition, which the grader prepends at run time only.
 
-**Level 3: Mutation**
-```python
-a = {'score': 100}
-b = a
-b['score'] = 200
+**Level 3: Arrays (Python: Lists)**
+```javascript
+let nums = [1, 2, 3];
 ```
-*Expected Graph:* Variables `a` and `b` point to the same Dictionary node. The Dictionary's `score` slot points to a Scalar `200` (the 100 scalar should be either absent or shown as garbage collected/disconnected).
+*Expected Graph:* Variable `nums` points to an Array node whose slots `0`, `1`, `2` point to Scalars `1`, `2`, `3`.
 
 ## 5. Technical Architecture
 
