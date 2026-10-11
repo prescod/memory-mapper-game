@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { callsMethod, combines, copiesFrom, multiplies, type SourceRule } from '../model/process'
+import { callsMethod, combines, copiesFrom, copiesOrCombinesFrom, multiplies, type SourceRule } from '../model/process'
 import type { Language } from '../model/types'
 import { checkSource, findLiteralReusedHint } from './source'
 
@@ -46,7 +46,6 @@ const cases: Case[] = [
         'let q = { ...p };',
         'let q = [...p];',
         'let q = { ...p, extra: 1 };',
-        'let q = [[...p[0]], [...p[1]]];',
         'let q = p.slice();',
         'let q = Array.from(p);',
         'let q = Object.assign({}, p);',
@@ -55,7 +54,6 @@ const cases: Case[] = [
       python: [
         'q = dict(p)',
         'q = list(p)',
-        'q = [list(p[0]), list(p[1])]',
         'q = p.copy()',
         'q = p[:]',
         'q = {**p}',
@@ -68,10 +66,36 @@ const cases: Case[] = [
         'let q = p;',
         'let q = { tags: p.tags };',
         'let q = { ...other };',
+        'let q = [[...p[0]], [...p[1]]];',
+        'let q = [...p.tags];',
+        'let q = p.tags.slice();',
+        'let q = Array.from(p.tags);',
         'let q = { ...p };\nq = { n: 1 };',
         'let r = { ...p };\nlet q = {};',
       ],
-      python: ['q = {"n": 1}', 'q = p', 'q = {"tags": p["tags"]}', 'q = dict(other)', 'q = dict(p)\nq = {"n": 1}', 'q = p[0]'],
+      python: [
+        'q = {"n": 1}',
+        'q = p',
+        'q = {"tags": p["tags"]}',
+        'q = dict(other)',
+        'q = [list(p[0]), list(p[1])]',
+        'q = list(p["tags"])',
+        'q = p["tags"].copy()',
+        'q = dict(p)\nq = {"n": 1}',
+        'q = p[0]',
+      ],
+    },
+  },
+  {
+    name: 'copying or combining into a new list',
+    rule: copiesOrCombinesFrom('b', 'a'),
+    accepted: {
+      javascript: ['let b = [...a];', 'let b = [...a, [3]];', 'let b = a.concat([[3]]);'],
+      python: ['b = list(a)', 'b = [*a, [3]]', 'b = a + [[3]]'],
+    },
+    rejected: {
+      javascript: ['let b = [a[0], a[1], [3]];', 'let b = [[...a[0]], [...a[1]]];', 'b = c.concat([[3]]);'],
+      python: ['b = [a[0], a[1], [3]]', 'b = [list(a[0]), list(a[1])]', 'b = c + [[3]]'],
     },
   },
   {

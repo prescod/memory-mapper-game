@@ -6,6 +6,7 @@ import {
   callsMethod,
   combines,
   copiesFrom,
+  copiesOrCombinesFrom,
   preserve,
   runtime,
   sameObject,
@@ -325,7 +326,7 @@ export const levels: Level[] = [
         js: 'let name = "Ada";',
         py: 'name = "Ada"',
         expected: graph({ name: 'Ada' }),
-        hint: 'Create a variable named name and connect it to a string node with Ada.',
+        hint: 'Create a variable named name and connect it to a string node with "Ada".',
       }),
       draw({
         title: 'A boolean',
@@ -338,7 +339,7 @@ export const levels: Level[] = [
         },
       }),
       write({
-        title: 'False',
+        title: 'A false value',
         js: 'let done = false;',
         py: 'done = False',
         expected: graph({ done: false }),
@@ -372,7 +373,10 @@ export const levels: Level[] = [
         js: 'let code = "42";',
         py: 'code = "42"',
         expected: graph({ code: '42' }),
-        hint: 'Enclose 42 in quotes so it is stored as text rather than a number.',
+        hint: {
+          js: 'Declare code and assign it "42" so it is stored as text rather than a number.',
+          py: 'Assign "42" to code so it is stored as text rather than a number.',
+        },
       }),
       write({
         title: 'One of each',
@@ -389,14 +393,14 @@ export const levels: Level[] = [
         js: lines('let s = "hi";', 'let t = s;'),
         py: lines('s = "hi"', 't = s'),
         expected: graph({ s: 'hi', t: 'hi' }),
-        hint: 'Strings are simple values. Both s and t each get their own string node holding hi.',
+        hint: 'Strings are simple values. Both s and t each get their own string node holding "hi".',
       }),
       draw({
         title: 'Building a new string',
         js: lines('let s = "hi";', 's = s + "!";'),
         py: lines('s = "hi"', 's = s + "!"'),
         expected: graph({ s: 'hi!' }),
-        hint: 'Adding to a string builds a new string. In the end, s points to hi!.',
+        hint: 'Adding to a string builds a new string. In the end, s points to "hi!".',
       }),
       write({
         title: 'A full name',
@@ -407,7 +411,10 @@ export const levels: Level[] = [
         js: 'let full = first + " " + last;',
         py: 'full = first + " " + last',
         expected: graph({ first: 'Ada', last: 'Lovelace', full: 'Ada Lovelace' }),
-        hint: 'Join first, a space " ", and last to build full.',
+        hint: {
+          js: 'Declare full by joining first, a space " ", and last.',
+          py: 'Assign full by joining first, a space " ", and last.',
+        },
         process: {
           hidden: [
             {
@@ -466,7 +473,10 @@ export const levels: Level[] = [
         js: 'let greeting = "Hello, " + name + "!";',
         py: 'greeting = "Hello, " + name + "!"',
         expected: graph({ name: 'Bo', greeting: 'Hello, Bo!' }),
-        hint: 'Combine "Hello, ", the existing variable name, and "!" into greeting.',
+        hint: {
+          js: 'Declare greeting by combining "Hello, ", the existing variable name, and "!".',
+          py: 'Assign greeting by combining "Hello, ", the existing variable name, and "!".',
+        },
         process: {
           hidden: [
             {
@@ -551,6 +561,14 @@ export const levels: Level[] = [
         py: lines('a = [1, 2]', 'b = [1, 2]'),
         expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1, 2), b: list(1, 2) }),
         hint: 'Two list literals with the same contents are still two separate list objects in memory.',
+        hints: [
+          {
+            variable: 'b',
+            aliasing: 'shared',
+            message:
+              'a and b are built from separate list literals, so they refer to two separate lists even though the slots match.',
+          },
+        ],
       }),
       write({
         title: 'Two empty lists',
@@ -621,7 +639,7 @@ export const levels: Level[] = [
         },
       }),
       draw({
-        title: 'The alias is the one that matters',
+        title: 'Which names share?',
         js: lines('let a = [0, 0];', 'let b = [0, 0];', 'let c = a;'),
         py: lines('a = [0, 0]', 'b = [0, 0]', 'c = a'),
         expected: graph(
@@ -643,30 +661,41 @@ export const levels: Level[] = [
         js: 'let user = { name: "Ada" };',
         py: 'user = {"name": "Ada"}',
         expected: graph({ user: ref('user') }, { user: dict({ name: 'Ada' }) }),
+        hint: 'Create variable user and an object with key name holding "Ada", then connect user to that object.',
       }),
       write({
-        title: 'A key holding null',
+        title: 'A key holding nothing',
         js: 'let cell = { value: null };',
         py: 'cell = {"value": None}',
         expected: graph({ cell: ref('cell') }, { cell: dict({ value: null }) }),
+        hint: {
+          js: 'Declare cell as an object with key value holding null.',
+          py: 'Assign cell a dict with key value holding None.',
+        },
       }),
       draw({
         title: 'Two keys',
         js: 'let point = { x: 1, y: 2 };',
         py: 'point = {"x": 1, "y": 2}',
         expected: graph({ point: ref('point') }, { point: dict({ x: 1, y: 2 }) }),
+        hint: 'Create variable point and an object with keys x holding 1 and y holding 2.',
       }),
       write({
         title: 'Settings',
         js: 'let settings = { dark: true, size: 12 };',
         py: 'settings = {"dark": True, "size": 12}',
         expected: graph({ settings: ref('settings') }, { settings: dict({ dark: true, size: 12 }) }),
+        hint: {
+          js: 'Declare settings as an object with dark holding true and size holding 12.',
+          py: 'Assign settings a dict with dark holding True and size holding 12.',
+        },
       }),
       draw({
         title: 'An empty object',
         js: 'let empty = {};',
         py: 'empty = {}',
         expected: graph({ empty: ref('empty') }, { empty: dict({}) }),
+        hint: 'Create variable empty and an empty object with no keys, then connect them.',
       }),
       write({
         title: 'A book',
@@ -676,18 +705,24 @@ export const levels: Level[] = [
           { book: ref('book') },
           { book: dict({ title: 'Dune', year: 1965, read: false }) },
         ),
+        hint: {
+          js: 'Declare book as an object with title "Dune", year 1965, and read holding false.',
+          py: 'Assign book a dict with title "Dune", year 1965, and read holding False.',
+        },
       }),
       draw({
         title: 'Two names, one object',
         js: lines('let a = { k: 1 };', 'let b = a;'),
         py: lines('a = {"k": 1}', 'b = a'),
         expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: dict({ k: 1 }) }),
+        hint: 'Assigning b = a makes both names refer to the same object, not a second copy.',
       }),
       draw({
         title: 'Equal but separate',
         js: lines('let a = { k: 1 };', 'let b = { k: 1 };'),
         py: lines('a = {"k": 1}', 'b = {"k": 1}'),
         expected: graph({ a: ref('a'), b: ref('b') }, { a: dict({ k: 1 }), b: dict({ k: 1 }) }),
+        hint: 'Two object literals with the same keys and values are still two separate objects in memory.',
       }),
       write({
         title: 'Three names, one object',
@@ -697,6 +732,7 @@ export const levels: Level[] = [
           { x: ref('shared'), y: ref('shared'), z: ref('shared') },
           { shared: dict({ n: 0 }) },
         ),
+        hint: 'Each assignment from x adds another name for the same object.',
       }),
       write({
         title: 'One alone, two together',
@@ -706,6 +742,7 @@ export const levels: Level[] = [
           { a: ref('alone'), b: ref('pair'), c: ref('pair') },
           { alone: dict({ id: 1 }), pair: dict({ id: 2 }) },
         ),
+        hint: 'c = b shares one object; a holds a separate object with its own id value.',
       }),
     ],
     [
@@ -717,6 +754,7 @@ export const levels: Level[] = [
           { ann: ref('ann'), bob: ref('bob') },
           { ann: dict({ name: 'Ann' }), bob: dict({ name: 'Bob' }) },
         ),
+        hint: 'Create ann and bob as two separate objects, each with its own name key.',
       }),
       draw({
         title: 'Two pairs of names',
@@ -726,12 +764,20 @@ export const levels: Level[] = [
           { a: ref('first'), b: ref('second'), c: ref('first'), d: ref('second') },
           { first: dict({ on: true }), second: dict({ on: true }) },
         ),
+        hint: {
+          js: 'a and b start as separate objects; c joins the first object and d joins the second, even though both hold true.',
+          py: 'a and b start as separate objects; c joins the first object and d joins the second, even though both hold True.',
+        },
       }),
       draw({
         title: 'Three kinds of value',
         js: 'let pet = { name: "Rex", owner: null, age: 3 };',
         py: 'pet = {"name": "Rex", "owner": None, "age": 3}',
         expected: graph({ pet: ref('pet') }, { pet: dict({ name: 'Rex', owner: null, age: 3 }) }),
+        hint: {
+          js: 'Create pet as an object with name "Rex", owner holding null, and age 3.',
+          py: 'Create pet as a dict with name "Rex", owner holding None, and age 3.',
+        },
       }),
       write({
         title: 'Settings under another name',
@@ -741,12 +787,17 @@ export const levels: Level[] = [
           { config: ref('shared'), settings: ref('shared') },
           { shared: dict({ debug: false, name: 'app', retries: 0 }) },
         ),
+        hint: {
+          js: 'Declare config as an object, then assign settings from config so both name the same object.',
+          py: 'Assign config a dict, then set settings from config so both name the same dict.',
+        },
       }),
       draw({
         title: 'Two keys, same value',
         js: 'let p = { a: 0, b: 0 };',
         py: 'p = {"a": 0, "b": 0}',
         expected: graph({ p: ref('p') }, { p: dict({ a: 0, b: 0 }) }),
+        hint: 'One object holds two keys a and b, each with its own number node holding 0.',
       }),
     ],
   ),
@@ -761,6 +812,7 @@ export const levels: Level[] = [
         js: lines('let a = [1];', 'a.push(2);'),
         py: lines('a = [1]', 'a.append(2)'),
         expected: graph({ a: ref('a') }, { a: list(1, 2) }),
+        hint: 'Adding to the end changes the same list in place: a ends holding [1, 2].',
       }),
       write({
         title: 'Grow a list',
@@ -768,6 +820,7 @@ export const levels: Level[] = [
         js: lines('a.push(3);', 'a.push(6);', 'a.push(9);'),
         py: lines('a.append(3)', 'a.append(6)', 'a.append(9)'),
         expected: graph({ a: ref('a') }, { a: list(3, 6, 9) }),
+        hint: 'Add 3, then 6, then 9 to the end of a, changing the same list in place.',
         process: { runtime: runtime(preserve('a')) },
       }),
       draw({
@@ -775,12 +828,14 @@ export const levels: Level[] = [
         js: lines('let a = [1, 2, 3];', 'a[0] = 9;'),
         py: lines('a = [1, 2, 3]', 'a[0] = 9'),
         expected: graph({ a: ref('a') }, { a: list(9, 2, 3) }),
+        hint: 'Overwriting slot 0 changes the same list in place: a ends holding [9, 2, 3].',
       }),
       draw({
         title: 'Removing the last item',
         js: lines('let a = [1, 2, 3];', 'a.pop();'),
         py: lines('a = [1, 2, 3]', 'a.pop()'),
         expected: graph({ a: ref('a') }, { a: list(1, 2) }),
+        hint: 'Removing the last item changes the same list in place: a ends holding [1, 2].',
       }),
       write({
         title: 'Change the middle',
@@ -788,6 +843,7 @@ export const levels: Level[] = [
         js: 'a[1] = 5;',
         py: 'a[1] = 5',
         expected: graph({ a: ref('a') }, { a: list(1, 5, 3) }),
+        hint: 'Change slot 1 of a to 5 in place, leaving slots 0 and 2 alone.',
         process: { runtime: runtime(preserve('a')) },
       }),
       draw({
@@ -795,6 +851,7 @@ export const levels: Level[] = [
         js: lines('let a = [1];', 'let b = a;', 'b.push(2);'),
         py: lines('a = [1]', 'b = a', 'b.append(2)'),
         expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: list(1, 2) }),
+        hint: 'b = a shares one list, so growing through b changes the list a sees too: both end holding [1, 2].',
       }),
       write({
         title: 'Empty it for both',
@@ -802,6 +859,7 @@ export const levels: Level[] = [
         js: lines('a.pop();', 'a.pop();'),
         py: lines('a.pop()', 'a.pop()'),
         expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: list() }),
+        hint: 'Remove both items from a in place so a and b end sharing one empty list.',
         process: { runtime: runtime(preserve('a')) },
       }),
       write({
@@ -810,6 +868,7 @@ export const levels: Level[] = [
         js: 'b.push("y");',
         py: 'b.append("y")',
         expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: list('x', 'y') }),
+        hint: 'Add "y" to the end of b in place; a shares the same list so both end holding ["x", "y"].',
         process: { runtime: runtime(preserve('a')) },
       }),
       draw({
@@ -817,6 +876,7 @@ export const levels: Level[] = [
         js: lines('let a = [1, 2, 3];', 'let b = a;', 'a = [0];'),
         py: lines('a = [1, 2, 3]', 'b = a', 'a = [0]'),
         expected: graph({ a: ref('new'), b: ref('old') }, { old: list(1, 2, 3), new: list(0) }),
+        hint: 'Assigning a = [0] repoints only a at a new list; b keeps referring to [1, 2, 3].',
       }),
       write({
         title: 'Split them apart',
@@ -824,6 +884,7 @@ export const levels: Level[] = [
         js: 'b = [1, 2];',
         py: 'b = [1, 2]',
         expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1), b: list(1, 2) }),
+        hint: 'Point b at a new list [1, 2]; a keeps its original [1].',
         process: { runtime: runtime(preserve('a')) },
       }),
     ],
@@ -840,6 +901,7 @@ export const levels: Level[] = [
           { a: ref('shared'), b: ref('alone'), c: ref('shared') },
           { shared: list(1, 2), alone: list() },
         ),
+        hint: 'Point b at a new empty list, then grow c in place so a and c share [1, 2].',
         process: { runtime: runtime(preserve('a')) },
       }),
       draw({
@@ -847,6 +909,7 @@ export const levels: Level[] = [
         js: lines('let a = [4, 5];', 'a.push(6);', 'a.pop();', 'a.pop();'),
         py: lines('a = [4, 5]', 'a.append(6)', 'a.pop()', 'a.pop()'),
         expected: graph({ a: ref('a') }, { a: list(4) }),
+        hint: 'Each change applies to the same list in order: grow to [4, 5, 6], then remove twice to end at [4].',
       }),
       write({
         title: 'Fill the ends',
@@ -854,6 +917,7 @@ export const levels: Level[] = [
         js: lines('a[0] = 7;', 'a[2] = 8;'),
         py: lines('a[0] = 7', 'a[2] = 8'),
         expected: graph({ a: ref('a') }, { a: list(7, 0, 8) }),
+        hint: 'Set slot 0 to 7 and slot 2 to 8 in place, leaving slot 1 as 0.',
         process: { runtime: runtime(preserve('a')) },
       }),
       draw({
@@ -861,12 +925,14 @@ export const levels: Level[] = [
         js: lines('let a = [1];', 'let b = a;', 'b = [2];', 'b.push(3);'),
         py: lines('a = [1]', 'b = a', 'b = [2]', 'b.append(3)'),
         expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1), b: list(2, 3) }),
+        hint: 'Assigning b = [2] repoints only b; growing b afterward leaves a holding [1] while b ends holding [2, 3].',
       }),
       draw({
         title: 'Both hands on one list',
         js: lines('let a = ["x", "y"];', 'let b = a;', 'b[0] = "z";', 'a.pop();'),
         py: lines('a = ["x", "y"]', 'b = a', 'b[0] = "z"', 'a.pop()'),
         expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: list('z') }),
+        hint: 'b = a shares one list, so every change through either name lands in the same place: overwrite slot 0 to "z", then remove the last item to end at ["z"].',
       }),
     ],
   ),
@@ -881,6 +947,7 @@ export const levels: Level[] = [
         js: lines('let p = { n: 1 };', 'p.m = 2;'),
         py: lines('p = {"n": 1}', 'p["m"] = 2'),
         expected: graph({ p: ref('p') }, { p: dict({ n: 1, m: 2 }) }),
+        hint: 'Adding a key changes the same object in place: p ends with n holding 1 and m holding 2.',
       }),
       write({
         title: 'Fill an empty object',
@@ -888,6 +955,7 @@ export const levels: Level[] = [
         js: lines('p.width = 4;', 'p.height = 2;'),
         py: lines('p["width"] = 4', 'p["height"] = 2'),
         expected: graph({ p: ref('p') }, { p: dict({ width: 4, height: 2 }) }),
+        hint: 'Add keys width holding 4 and height holding 2 to p in place.',
         process: { runtime: runtime(preserve('p')) },
       }),
       draw({
@@ -895,12 +963,14 @@ export const levels: Level[] = [
         js: lines('let p = { n: 1 };', 'p.n = 5;'),
         py: lines('p = {"n": 1}', 'p["n"] = 5'),
         expected: graph({ p: ref('p') }, { p: dict({ n: 5 }) }),
+        hint: 'Changing key n to 5 updates the same object in place.',
       }),
       draw({
         title: 'Changing through an alias',
         js: lines('let a = { n: 1 };', 'let b = a;', 'b.n = 2;'),
         py: lines('a = {"n": 1}', 'b = a', 'b["n"] = 2'),
         expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: dict({ n: 2 }) }),
+        hint: 'b = a shares one object, so changing n through b is visible through a: both end with n holding 2.',
       }),
       write({
         title: 'Both see it',
@@ -911,6 +981,10 @@ export const levels: Level[] = [
           { a: ref('shared'), b: ref('shared') },
           { shared: dict({ n: 1, done: true }) },
         ),
+        hint: {
+          js: 'Add key done holding true to b in place; a shares the same object.',
+          py: 'Add key done holding True to b in place; a shares the same object.',
+        },
         process: { runtime: runtime(preserve('a')) },
       }),
       draw({
@@ -918,6 +992,7 @@ export const levels: Level[] = [
         js: lines('let p = { a: 1, b: 2 };', 'delete p.b;'),
         py: lines('p = {"a": 1, "b": 2}', 'del p["b"]'),
         expected: graph({ p: ref('p') }, { p: dict({ a: 1 }) }),
+        hint: 'Deleting key b changes the same object in place, leaving only a holding 1.',
       }),
       write({
         title: 'Rename a key',
@@ -925,6 +1000,7 @@ export const levels: Level[] = [
         js: lines('p.renamed = p.old;', 'delete p.old;'),
         py: lines('p["renamed"] = p["old"]', 'del p["old"]'),
         expected: graph({ p: ref('p') }, { p: dict({ renamed: 1 }) }),
+        hint: 'Copy the value at old to a new key renamed, then remove old, changing the same object in place.',
         process: {
           runtime: runtime(preserve('p')),
           hidden: [
@@ -944,6 +1020,7 @@ export const levels: Level[] = [
         js: lines('delete p.a;', 'delete p.b;'),
         py: lines('del p["a"]', 'del p["b"]'),
         expected: graph({ p: ref('shared'), q: ref('shared') }, { shared: dict({}) }),
+        hint: 'Remove keys a and b from p in place so p and q end sharing one empty object.',
         process: { runtime: runtime(preserve('p')) },
       }),
       draw({
@@ -951,6 +1028,7 @@ export const levels: Level[] = [
         js: lines('let p = { n: 1 };', 'let q = p;', 'p = { n: 9 };'),
         py: lines('p = {"n": 1}', 'q = p', 'p = {"n": 9}'),
         expected: graph({ p: ref('new'), q: ref('old') }, { old: dict({ n: 1 }), new: dict({ n: 9 }) }),
+        hint: 'Assigning p a new object with n holding 9 repoints only p; q keeps referring to the original with n holding 1.',
       }),
       write({
         title: 'Leave the old one behind',
@@ -961,6 +1039,7 @@ export const levels: Level[] = [
           { p: ref('new'), q: ref('old') },
           { old: dict({ n: 1, m: 3 }), new: dict({ n: 2 }) },
         ),
+        hint: 'Add key m holding 3 to p in place, then point p at a new object with n holding 2; q keeps the original with both keys.',
         process: { runtime: runtime(sameObject(before('p'), after('q'))) },
       }),
     ],
@@ -970,6 +1049,7 @@ export const levels: Level[] = [
         js: lines('let p = { n: 1 };', 'let q = p;', 'q.n = q.n + 1;', 'p.m = 0;'),
         py: lines('p = {"n": 1}', 'q = p', 'q["n"] = q["n"] + 1', 'p["m"] = 0'),
         expected: graph({ p: ref('shared'), q: ref('shared') }, { shared: dict({ n: 2, m: 0 }) }),
+        hint: 'p and q name the same object, so both changes land together: n becomes 2 and m holding 0 is added.',
       }),
       write({
         title: 'Swap inside an object',
@@ -977,6 +1057,7 @@ export const levels: Level[] = [
         js: lines('let t = p.a;', 'p.a = p.b;', 'p.b = t;'),
         py: lines('t = p["a"]', 'p["a"] = p["b"]', 'p["b"] = t'),
         expected: graph({ p: ref('p') }, { p: dict({ a: 2, b: 1 }) }),
+        hint: 'Use a temporary variable to hold the value at key a, then move the value at key b to a and the saved value to b.',
         process: {
           runtime: runtime(preserve('p')),
           hidden: [
@@ -992,12 +1073,14 @@ export const levels: Level[] = [
         js: lines('let a = { x: 1, y: 2 };', 'let b = a;', 'delete b.x;'),
         py: lines('a = {"x": 1, "y": 2}', 'b = a', 'del b["x"]'),
         expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: dict({ y: 2 }) }),
+        hint: 'b = a shares one object, so deleting key x through b leaves a with only y holding 2.',
       }),
       draw({
         title: 'The alias kept the original object',
         js: lines('let p = { n: 1 };', 'let q = p;', 'p = { n: 1 };', 'q.n = 2;'),
         py: lines('p = {"n": 1}', 'q = p', 'p = {"n": 1}', 'q["n"] = 2'),
         expected: graph({ p: ref('new'), q: ref('old') }, { old: dict({ n: 2 }), new: dict({ n: 1 }) }),
+        hint: 'Assigning p a new object with n holding 1 repoints only p; changing n through q to 2 touches the original alone.',
       }),
       write({
         title: 'Mark it, then move on',
@@ -1008,6 +1091,10 @@ export const levels: Level[] = [
           { a: ref('new'), b: ref('old') },
           { old: dict({ score: 0, done: true }), new: dict({ score: 5 }) },
         ),
+        hint: {
+          js: 'Add done holding true through b in place, then point a at a new object with score 5; b keeps the marked original.',
+          py: 'Add done holding True through b in place, then point a at a new object with score 5; b keeps the marked original.',
+        },
         process: { runtime: runtime(sameObject(before('a'), after('b'))) },
       }),
     ],
@@ -1030,6 +1117,7 @@ export const levels: Level[] = [
             row1: list(3, 4),
           },
         ),
+        hint: 'Create grid as a list with two slots, each pointing at its own inner list: [1, 2] and [3, 4].',
       }),
       write({
         title: 'A ragged grid',
@@ -1044,6 +1132,10 @@ export const levels: Level[] = [
             row2: list(),
           },
         ),
+        hint: {
+          js: 'Declare rows as a list of three separate inner lists: [1], [2, 3], and [].',
+          py: 'Assign rows a list of three separate inner lists: [1], [2, 3], and [].',
+        },
       }),
       draw({
         title: 'An object holding a list',
@@ -1056,6 +1148,7 @@ export const levels: Level[] = [
             langs: list('js', 'py'),
           },
         ),
+        hint: 'Create person as an object with name "Ada" and langs pointing at its own list ["js", "py"].',
       }),
       write({
         title: 'An object inside an object',
@@ -1065,6 +1158,10 @@ export const levels: Level[] = [
           { home: ref('home') },
           { home: dict({ address: ref('address') }), address: dict({ city: 'Oslo' }) },
         ),
+        hint: {
+          js: 'Declare home as an object with address pointing at its own inner object holding city "Oslo".',
+          py: 'Assign home a dict with address pointing at its own inner dict holding city "Oslo".',
+        },
       }),
       draw({
         title: 'A list of objects',
@@ -1078,6 +1175,7 @@ export const levels: Level[] = [
             second: dict({ id: 2 }),
           },
         ),
+        hint: 'Create users as a list with two slots, each pointing at its own object with its own id value.',
       }),
       write({
         title: 'A tree',
@@ -1104,6 +1202,10 @@ export const levels: Level[] = [
             rightKids: list(),
           },
         ),
+        hint: {
+          js: 'Declare tree as an object with value 1 and kids pointing at a list of two objects, each with its own value and its own empty kids list.',
+          py: 'Assign tree a dict with value 1 and kids pointing at a list of two dicts, each with its own value and its own empty kids list.',
+        },
       }),
       draw({
         title: 'The same inner list twice',
@@ -1113,6 +1215,7 @@ export const levels: Level[] = [
           { inner: ref('inner'), outer: ref('outer') },
           { inner: list(1), outer: list(ref('inner'), ref('inner')) },
         ),
+        hint: 'Both slots of outer point at the same inner list [1]; there is only one inner list.',
       }),
       write({
         title: 'Two keys, one list',
@@ -1122,6 +1225,10 @@ export const levels: Level[] = [
           { box: ref('box') },
           { box: dict({ left: ref('shared'), right: ref('shared') }), shared: list(0) },
         ),
+        hint: {
+          js: 'Declare l as [0], then declare box as an object with left and right both pointing at that same list.',
+          py: 'Assign l as [0], then assign box a dict with left and right both pointing at that same list.',
+        },
       }),
       write({
         title: 'Two lists, one object',
@@ -1131,6 +1238,7 @@ export const levels: Level[] = [
           { a: ref('a'), b: ref('b') },
           { a: list(ref('shared')), b: list(ref('shared')), shared: dict({ v: 1 }) },
         ),
+        hint: 'Create o with v holding 1, then create a and b as two separate lists that both hold that same object.',
       }),
       draw({
         title: 'Changing a nested list',
@@ -1140,6 +1248,7 @@ export const levels: Level[] = [
           { inner: ref('inner'), outer: ref('outer') },
           { inner: list(1, 2), outer: list(ref('inner')) },
         ),
+        hint: 'Growing inner in place to [1, 2] is visible through outer, since outer holds that same inner list.',
       }),
     ],
     [
@@ -1151,6 +1260,10 @@ export const levels: Level[] = [
           { board: ref('board') },
           { board: list(ref('row'), ref('row')), row: list(null, null) },
         ),
+        hint: {
+          js: 'Declare row as [null, null], then declare board as a list holding that same row twice.',
+          py: 'Assign row as [None, None], then assign board a list holding that same row twice.',
+        },
       }),
       draw({
         title: 'A list of pairs',
@@ -1160,6 +1273,7 @@ export const levels: Level[] = [
           { pairs: ref('pairs') },
           { pairs: list(ref('first'), ref('second')), first: list('a', 1), second: list('b', 2) },
         ),
+        hint: 'Create pairs as a list of two separate inner lists: ["a", 1] and ["b", 2].',
       }),
       write({
         title: 'Two points in a line',
@@ -1173,6 +1287,10 @@ export const levels: Level[] = [
             end: dict({ x: 3, y: 4 }),
           },
         ),
+        hint: {
+          js: 'Declare line as an object with start and end each pointing at their own point object.',
+          py: 'Assign line a dict with start and end each pointing at their own point dict.',
+        },
       }),
       draw({
         title: 'One list in two objects',
@@ -1182,6 +1300,7 @@ export const levels: Level[] = [
           { tag: ref('tag'), a: ref('a'), b: ref('b') },
           { tag: list('new'), a: dict({ tags: ref('tag') }), b: dict({ tags: ref('tag') }) },
         ),
+        hint: 'Both a and b hold the same tag list ["new"] in their tags key.',
       }),
       draw({
         title: 'Changing an object inside a list',
@@ -1191,6 +1310,7 @@ export const levels: Level[] = [
           { inner: ref('inner'), outer: ref('outer') },
           { inner: dict({ n: 2 }), outer: list(ref('inner')) },
         ),
+        hint: 'Changing n to 2 inside inner is visible through outer, since outer holds that same object.',
       }),
     ],
   ),
@@ -1205,12 +1325,20 @@ export const levels: Level[] = [
         js: lines('let a = [1, 2];', 'let b = [...a];'),
         py: lines('a = [1, 2]', 'b = list(a)'),
         expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1, 2), b: list(1, 2) }),
+        hint: {
+          js: 'b = [...a] makes a new outer list with the same slot values; a and b point at different lists.',
+          py: 'b = list(a) makes a new outer list with the same slot values; a and b point at different lists.',
+        },
       }),
       draw({
         title: 'A copy of an object',
         js: lines('let p = { n: 1 };', 'let q = { ...p };'),
         py: lines('p = {"n": 1}', 'q = dict(p)'),
         expected: graph({ p: ref('p'), q: ref('q') }, { p: dict({ n: 1 }), q: dict({ n: 1 }) }),
+        hint: {
+          js: 'q = { ...p } makes a new outer object with the same keys; p and q point at different objects.',
+          py: 'q = dict(p) makes a new outer dict with the same keys; p and q point at different dicts.',
+        },
       }),
       write({
         title: 'Copy and add a key',
@@ -1218,6 +1346,10 @@ export const levels: Level[] = [
         js: lines('let q = { ...p };', 'q.m = 2;'),
         py: lines('q = dict(p)', 'q["m"] = 2'),
         expected: graph({ p: ref('p'), q: ref('q') }, { p: dict({ n: 1 }), q: dict({ n: 1, m: 2 }) }),
+        hint: {
+          js: 'Declare q as a copy of p, then add key m holding 2 to q in place; p stays with only n.',
+          py: 'Assign q as a copy of p, then add key m holding 2 to q in place; p stays with only n.',
+        },
         process: {
           runtime: runtime(preserve('p')),
           source: [copiesFrom('q', 'p')],
@@ -1235,6 +1367,10 @@ export const levels: Level[] = [
         js: lines('let b = [...a];', 'b.push(3);'),
         py: lines('b = list(a)', 'b.append(3)'),
         expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1, 2), b: list(1, 2, 3) }),
+        hint: {
+          js: 'Declare b as a copy of a, then grow b to [1, 2, 3] in place; a stays [1, 2].',
+          py: 'Assign b as a copy of a, then grow b to [1, 2, 3] in place; a stays [1, 2].',
+        },
         process: {
           runtime: runtime(preserve('a')),
           source: [copiesFrom('b', 'a')],
@@ -1254,6 +1390,7 @@ export const levels: Level[] = [
           { a: ref('a'), b: ref('b') },
           { a: list(ref('inner')), b: list(ref('inner')), inner: list(1) },
         ),
+        hint: 'Copying makes a new outer list, but its one slot still points at the same inner list [1].',
       }),
       draw({
         title: 'Mutating inside a shallow copy',
@@ -1263,6 +1400,7 @@ export const levels: Level[] = [
           { a: ref('a'), b: ref('b') },
           { a: list(ref('inner')), b: list(ref('inner')), inner: list(1, 2) },
         ),
+        hint: 'b shares the inner list with a, so growing that inner list to [1, 2] is visible through both outer lists.',
       }),
       write({
         title: 'A shallow object copy',
@@ -1277,9 +1415,26 @@ export const levels: Level[] = [
             tags: list('x', 'y'),
           },
         ),
+        hint: {
+          js: 'Declare q as a copy of p, then grow the shared tags list in place so both end with ["x", "y"].',
+          py: 'Assign q as a copy of p, then grow the shared tags list in place so both end with ["x", "y"].',
+        },
         process: {
           runtime: runtime(preserve('p'), preserve('p', 'tags')),
           source: [copiesFrom('q', 'p')],
+          hidden: [
+            {
+              given: { js: 'let p = { tags: ["z"] };', py: 'p = {"tags": ["z"]}' },
+              expected: graph(
+                { p: ref('p'), q: ref('q') },
+                {
+                  p: dict({ tags: ref('tags') }),
+                  q: dict({ tags: ref('tags') }),
+                  tags: list('z', 'y'),
+                },
+              ),
+            },
+          ],
         },
       }),
       draw({
@@ -1290,6 +1445,10 @@ export const levels: Level[] = [
           { row: ref('row'), grid: ref('grid') },
           { row: list(0), grid: list(ref('row'), ref('row')) },
         ),
+        hint: {
+          js: 'Array(2).fill(row) repeats the same row reference twice: both slots of grid point at the one row list.',
+          py: '[row] * 2 repeats the same row reference twice: both slots of grid point at the one row list.',
+        },
       }),
       write({
         title: 'Rows that don\'t share',
@@ -1304,6 +1463,10 @@ export const levels: Level[] = [
             row2: list(0),
           },
         ),
+        hint: {
+          js: 'Declare grid as a list of three separate inner lists, each holding [0].',
+          py: 'Assign grid a list of three separate inner lists, each holding [0].',
+        },
       }),
       write({
         title: 'A copy that shares nothing',
@@ -1321,9 +1484,12 @@ export const levels: Level[] = [
             b1: list(2),
           },
         ),
+        hint: {
+          js: 'Declare b as a new outer list holding copies of each inner list, so no inner list is shared with a.',
+          py: 'Assign b a new outer list holding copies of each inner list, so no inner list is shared with a.',
+        },
         process: {
           runtime: runtime(preserve('a'), preserve('a', 0), preserve('a', 1)),
-          source: [copiesFrom('b', 'a')],
           hidden: [
             {
               given: { js: 'let a = [[3], [4]];', py: 'a = [[3], [4]]' },
@@ -1357,9 +1523,26 @@ export const levels: Level[] = [
             tags: list('a', 'b'),
           },
         ),
+        hint: {
+          js: 'Declare q as a copy of p, then add extra holding true to q and grow the shared tags list to ["a", "b"].',
+          py: 'Assign q as a copy of p, then add extra holding True to q and grow the shared tags list to ["a", "b"].',
+        },
         process: {
           runtime: runtime(preserve('p'), preserve('p', 'tags')),
           source: [copiesFrom('q', 'p')],
+          hidden: [
+            {
+              given: { js: 'let p = { tags: ["c"] };', py: 'p = {"tags": ["c"]}' },
+              expected: graph(
+                { p: ref('p'), q: ref('q') },
+                {
+                  p: dict({ tags: ref('tags') }),
+                  q: dict({ tags: ref('tags'), extra: true }),
+                  tags: list('c', 'b'),
+                },
+              ),
+            },
+          ],
         },
       }),
       draw({
@@ -1375,6 +1558,7 @@ export const levels: Level[] = [
             new: dict({ n: 2 }),
           },
         ),
+        hint: 'Copying shares the inner object at first; assigning b a new inner object repoints only b, leaving a with the original.',
       }),
       draw({
         title: 'Changing the repeated row',
@@ -1384,6 +1568,7 @@ export const levels: Level[] = [
           { row: ref('row'), grid: ref('grid') },
           { row: list(0, 1), grid: list(ref('row'), ref('row'), ref('row')) },
         ),
+        hint: 'All three slots of grid point at the same row list, so growing row to [0, 1] is visible through every slot.',
       }),
       write({
         title: 'Copy, then add a row',
@@ -1400,9 +1585,13 @@ export const levels: Level[] = [
             r3: list(3),
           },
         ),
+        hint: {
+          js: 'Declare b as a copy of a, then add a new row [3] to b in place; a stays with two rows.',
+          py: 'Assign b as a copy of a, then add a new row [3] to b in place; a stays with two rows.',
+        },
         process: {
           runtime: runtime(preserve('a'), preserve('a', 0), preserve('a', 1)),
-          source: [copiesFrom('b', 'a')],
+          source: [copiesOrCombinesFrom('b', 'a')],
         },
       }),
       draw({
@@ -1410,6 +1599,7 @@ export const levels: Level[] = [
         js: lines('let a = [1, 2];', 'let b = [...a];', 'a[0] = 9;'),
         py: lines('a = [1, 2]', 'b = list(a)', 'a[0] = 9'),
         expected: graph({ a: ref('a'), b: ref('b') }, { a: list(9, 2), b: list(1, 2) }),
+        hint: 'Copying freezes the slot values: changing slot 0 of a to 9 afterward leaves b holding [1, 2].',
       }),
     ],
   ),
@@ -1424,6 +1614,10 @@ export const levels: Level[] = [
         js: lines('let s = "ab";', 'let t = s.toUpperCase();'),
         py: lines('s = "ab"', 't = s.upper()'),
         expected: graph({ s: 'ab', t: 'AB' }),
+        hint: {
+          js: 's.toUpperCase() builds a new string "AB"; s keeps "ab".',
+          py: 's.upper() builds a new string "AB"; s keeps "ab".',
+        },
       }),
       write({
         title: 'Upper and lower',
@@ -1431,6 +1625,10 @@ export const levels: Level[] = [
         js: lines('let lo = s.toLowerCase();', 'let up = s.toUpperCase();'),
         py: lines('lo = s.lower()', 'up = s.upper()'),
         expected: graph({ s: 'Hi', lo: 'hi', up: 'HI' }),
+        hint: {
+          js: 'Declare lo with s.toLowerCase() and up with s.toUpperCase(); s stays "Hi".',
+          py: 'Assign lo with s.lower() and up with s.upper(); s stays "Hi".',
+        },
         process: {
           source: [
             callsMethod('lo', 's', { javascript: 'toLowerCase', python: 'lower' }),
@@ -1459,6 +1657,10 @@ export const levels: Level[] = [
         js: lines('let a = [1];', 'let b = a;', 'a = null;'),
         py: lines('a = [1]', 'b = a', 'a = None'),
         expected: graph({ a: null, b: ref('b') }, { b: list(1) }),
+        hint: {
+          js: 'Assigning a = null repoints only a; b keeps referring to [1].',
+          py: 'Assigning a = None repoints only a; b keeps referring to [1].',
+        },
       }),
       write({
         title: 'Nobody points here',
@@ -1469,6 +1671,10 @@ export const levels: Level[] = [
         js: lines('a = null;', 'b = null;'),
         py: lines('a = None', 'b = None'),
         expected: graph({ a: null, b: null }),
+        hint: {
+          js: 'Reassign a to null, then b to null.',
+          py: 'Reassign a to None, then b to None.',
+        },
       }),
       write({
         title: 'Combine without changing the original',
@@ -1497,6 +1703,7 @@ export const levels: Level[] = [
         js: lines('a.push(2);', 'a = [9];'),
         py: lines('a.append(2)', 'a = [9]'),
         expected: graph({ a: ref('new'), b: ref('old') }, { old: list(1, 2), new: list(9) }),
+        hint: 'Grow a in place to [1, 2] (visible through b), then point a at a new list [9]; b keeps [1, 2].',
         process: { runtime: runtime(sameObject(before('a'), after('b'))) },
       }),
       draw({
@@ -1504,12 +1711,14 @@ export const levels: Level[] = [
         js: lines('function add(arr) {', '  arr.push(1);', '}', 'let a = [];', 'add(a);'),
         py: lines('def add(arr):', '    arr.append(1)', '', 'a = []', 'add(a)'),
         expected: graph({ a: ref('a') }, { a: list(1) }),
+        hint: 'arr is a new name for the same list a holds, so growing it inside add changes a to [1].',
       }),
       draw({
         title: 'A function that rebinds',
         js: lines('function reset(arr) {', '  arr = [0];', '}', 'let a = [1];', 'reset(a);'),
         py: lines('def reset(arr):', '    arr = [0]', '', 'a = [1]', 'reset(a)'),
         expected: graph({ a: ref('a') }, { a: list(1) }),
+        hint: 'arr is a new variable, so assigning it [0] inside reset leaves a holding [1].',
       }),
       write({
         title: 'Call it right',
@@ -1520,6 +1729,7 @@ export const levels: Level[] = [
         js: lines('let a = [];', 'let b = [];', 'fill(a);', 'fill(a);', 'fill(b);'),
         py: lines('a = []', 'b = []', 'fill(a)', 'fill(a)', 'fill(b)'),
         expected: graph({ a: ref('a'), b: ref('b') }, { a: list(0, 0), b: list(0) }),
+        hint: 'Call fill(a) twice and fill(b) once; each call grows that list by one in place, while the reassign inside fill never escapes.',
         process: { runtime: runtime(call('fill', [after('a')], 2), call('fill', [after('b')], 1)) },
       }),
     ],
@@ -1547,6 +1757,7 @@ export const levels: Level[] = [
         js: 'touch(b);',
         py: 'touch(b)',
         expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: list('new', 'old') }),
+        hint: 'Call touch(b) once; the slot change inside touch lands in the shared list ["new", "old"], while the reassign inside never escapes.',
         process: { runtime: runtime(call('touch', [before('b')], 1)) },
       }),
       draw({
@@ -1554,6 +1765,10 @@ export const levels: Level[] = [
         js: lines('function mark(o) {', '  o.seen = true;', '}', 'let a = {};', 'let b = a;', 'mark(b);'),
         py: lines('def mark(o):', '    o["seen"] = True', '', 'a = {}', 'b = a', 'mark(b)'),
         expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: dict({ seen: true }) }),
+        hint: {
+          js: 'o is a new name for the same object, so adding seen holding true inside mark is visible through a and b.',
+          py: 'o is a new name for the same dict, so adding seen holding True inside mark is visible through a and b.',
+        },
       }),
       write({
         title: 'Tag only one',
@@ -1567,6 +1782,7 @@ export const levels: Level[] = [
           { a: ref('a'), b: ref('b') },
           { a: dict({ n: 1, tagged: true }), b: dict({ n: 2 }) },
         ),
+        hint: 'Call tag(a) once; the tagged key lands on a, while the reassign inside tag is lost and b is never touched.',
         process: { runtime: runtime(call('tag', [after('a')], 1)) },
       }),
       draw({
@@ -1574,12 +1790,17 @@ export const levels: Level[] = [
         js: lines('function f(arr) {', '  arr = [9];', '  arr.push(1);', '}', 'let a = [5];', 'f(a);'),
         py: lines('def f(arr):', '    arr = [9]', '    arr.append(1)', '', 'a = [5]', 'f(a)'),
         expected: graph({ a: ref('a') }, { a: list(5) }),
+        hint: 'Assigning arr [9] inside f repoints only the parameter; growing that new list afterward leaves a holding [5].',
       }),
       draw({
         title: 'Combine, then grow the copy',
         js: lines('let a = [1];', 'let b = a;', 'b = b.concat([2]);', 'b.push(3);'),
         py: lines('a = [1]', 'b = a', 'b = b + [2]', 'b.append(3)'),
         expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1), b: list(1, 2, 3) }),
+        hint: {
+          js: 'After b = b.concat([2]), b points at a new list; growing it to [1, 2, 3] leaves a holding [1].',
+          py: 'After b = b + [2], b points at a new list; growing it to [1, 2, 3] leaves a holding [1].',
+        },
       }),
     ],
   ),
@@ -1609,6 +1830,10 @@ export const levels: Level[] = [
             c: dict({ v: 3, next: null }),
           },
         ),
+        hint: {
+          js: 'Chain a to b to c, with c next holding null.',
+          py: 'Chain a to b to c, with c next holding None.',
+        },
       }),
       write({
         title: 'A two-node list',
@@ -1621,6 +1846,10 @@ export const levels: Level[] = [
             tail: dict({ v: 'b', next: null }),
           },
         ),
+        hint: {
+          js: 'Declare tail with v "b" and next null, then declare head with v "a" and next pointing at tail.',
+          py: 'Assign tail with v "b" and next None, then assign head with v "a" and next pointing at tail.',
+        },
       }),
       write({
         title: 'A circular linked list',
@@ -1644,24 +1873,28 @@ export const levels: Level[] = [
             third: dict({ v: 3, next: ref('head') }),
           },
         ),
+        hint: 'Build c, b, and head as a chain, then point c back at head to close the ring.',
       }),
       draw({
         title: 'A list containing itself',
         js: lines('let a = [];', 'a.push(a);'),
         py: lines('a = []', 'a.append(a)'),
         expected: graph({ a: ref('a') }, { a: list(ref('a')) }),
+        hint: 'Add a itself as its one slot, so the list refers to itself.',
       }),
       write({
         title: 'A list holding itself twice',
         js: lines('let a = [];', 'a.push(a);', 'a.push(a);'),
         py: lines('a = []', 'a.append(a)', 'a.append(a)'),
         expected: graph({ a: ref('a') }, { a: list(ref('a'), ref('a')) }),
+        hint: 'Start from an empty list, then add the list itself twice so both slots point back at it.',
       }),
       draw({
         title: 'An object containing itself',
         js: lines('let a = {};', 'a.self = a;'),
         py: lines('a = {}', 'a["self"] = a'),
         expected: graph({ a: ref('a') }, { a: dict({ self: ref('a') }) }),
+        hint: 'Point key self back at the same object a.',
       }),
       write({
         title: 'An object in its own list',
@@ -1671,6 +1904,10 @@ export const levels: Level[] = [
           { o: ref('o') },
           { o: dict({ items: ref('items') }), items: list(ref('o')) },
         ),
+        hint: {
+          js: 'Declare o with an empty items list, then add o itself into that list.',
+          py: 'Assign o an empty items list, then add o itself into that list.',
+        },
       }),
       draw({
         title: 'Pointing at each other',
@@ -1683,6 +1920,7 @@ export const levels: Level[] = [
             b: dict({ n: 2, other: ref('a') }),
           },
         ),
+        hint: 'Point a at b and b back at a, so the two objects refer to each other.',
       }),
       write({
         title: 'A doubly linked pair',
@@ -1703,6 +1941,10 @@ export const levels: Level[] = [
             second: dict({ v: 2, prev: ref('first'), next: null }),
           },
         ),
+        hint: {
+          js: 'Declare first with prev and next null, declare second with prev pointing at first and next null, then point first at second.',
+          py: 'Assign first with prev and next None, assign second with prev pointing at first and next None, then point first at second.',
+        },
       }),
       draw({
         title: 'Two lists in a loop',
@@ -1712,6 +1954,7 @@ export const levels: Level[] = [
           { x: ref('x'), y: ref('y') },
           { x: list(1, ref('y')), y: list(ref('x')) },
         ),
+        hint: 'x holds 1 and y, while y holds x: each list refers to the other.',
       }),
     ],
     [
@@ -1723,12 +1966,17 @@ export const levels: Level[] = [
           { a: ref('a'), b: ref('b') },
           { a: dict({ v: 1, next: ref('b') }), b: dict({ v: 2, next: ref('a') }) },
         ),
+        hint: 'Point a at b and b back at a to make a two-node ring.',
       }),
       write({
         title: 'Two keys back home',
         js: lines('let o = {};', 'o.me = o;', 'o.also = o;'),
         py: lines('o = {}', 'o["me"] = o', 'o["also"] = o'),
         expected: graph({ o: ref('o') }, { o: dict({ me: ref('o'), also: ref('o') }) }),
+        hint: {
+          js: 'Declare o as empty, then point both me and also back at o itself.',
+          py: 'Assign o as empty, then point both me and also back at o itself.',
+        },
       }),
       draw({
         title: 'Parent and child',
@@ -1742,12 +1990,14 @@ export const levels: Level[] = [
             kid: dict({ parent: ref('parent') }),
           },
         ),
+        hint: 'Point kid at parent, and parent at a list holding that same kid.',
       }),
       draw({
         title: 'A loop through an inner list',
         js: lines('let a = [[]];', 'a[0].push(a);'),
         py: lines('a = [[]]', 'a[0].append(a)'),
         expected: graph({ a: ref('a') }, { a: list(ref('inner')), inner: list(ref('a')) }),
+        hint: 'Point the inner empty list back at a, so a holds the inner list and the inner list holds a.',
       }),
       write({
         title: 'A ring linked a, c, b',
@@ -1773,6 +2023,7 @@ export const levels: Level[] = [
             c: dict({ v: 3, next: ref('b') }),
           },
         ),
+        hint: 'Point a at c, c at b, and b back at a to close the ring; the starting objects stay in place.',
         process: { runtime: runtime(preserve('a'), preserve('b'), preserve('c')) },
       }),
     ],

@@ -117,25 +117,52 @@ function holds(
 
     case 'combine':
       return language === 'javascript'
-        ? [...methodCalls(rhs, read)].some(
-            ({ callee, method }) => method === 'concat' && mentions(callee, rule.source, read),
-          )
-        : [...descendants(rhs)].some(
-            (node) =>
-              node.name === 'BinaryExpression' &&
-              children(node).some((child) => child.name === 'ArithOp' && read(child) === '+') &&
-              mentions(node, rule.source, read),
-          )
+        ? combinesInJavaScript(rhs, rule.source, read)
+        : combinesInPython(rhs, rule.source, read)
+
+    case 'copyOrCombine':
+      return language === 'javascript'
+        ? copiesInJavaScript(rhs, rule.source, read) || combinesInJavaScript(rhs, rule.source, read)
+        : copiesInPython(rhs, rule.source, read) || combinesInPython(rhs, rule.source, read)
   }
 }
 
+function combinesInJavaScript(rhs: SyntaxNode, source: string, read: (node: SyntaxNode) => string): boolean {
+  return [...methodCalls(rhs, read)].some(
+    ({ receiver, method }) =>
+      method === 'concat' && receiver !== null && read(receiver).trim() === source,
+  )
+}
+
+function combinesInPython(rhs: SyntaxNode, source: string, read: (node: SyntaxNode) => string): boolean {
+  return [...descendants(rhs)].some(
+    (node) =>
+      node.name === 'BinaryExpression' &&
+      children(node).some((child) => child.name === 'ArithOp' && read(child) === '+') &&
+      children(node).some((child) => child.name !== 'ArithOp' && read(child).trim() === source),
+  )
+}
+
+/**
+ * Whether `text` names `source` as a whole container rather than reaching
+ * inside it: `p` counts, but `p.tags` and `p[0]` do not. Whole-container
+ * operations that copy (`p[:]`, `p.copy()`) still count via their own checks.
+ */
+function namesWhole(text: string, source: string): boolean {
+  const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`(^|[^\\w$.])${escaped}(?![\\w$]|\\s*[[.])`).test(text)
+}
+
 function copiesInJavaScript(rhs: SyntaxNode, source: string, read: (node: SyntaxNode) => string): boolean {
-  const spread = [...descendants(rhs)].some((node) => node.name === 'Spread' && mentions(node.nextSibling, source, read))
-  const calls = [...methodCalls(rhs, read)].some(({ call, callee, method }) => {
-    const owner = callee.firstChild ? read(callee.firstChild) : ''
-    if (method === 'slice') return mentions(callee, source, read)
+  const spread = [...descendants(rhs)].some(
+    (node) =>
+      node.name === 'Spread' && node.nextSibling !== null && read(node.nextSibling).trim() === source,
+  )
+  const calls = [...methodCalls(rhs, read)].some(({ call, receiver, method }) => {
+    if (method === 'slice') return receiver?.name === 'VariableName' && read(receiver) === source
+    const owner = receiver !== null && receiver !== undefined ? read(receiver).trim() : ''
     const builtIn = (owner === 'Object' && method === 'assign') || (owner === 'Array' && method === 'from')
-    return builtIn && mentions(call, source, read)
+    return builtIn && namesWhole(read(call), source)
   })
   return spread || calls
 }
@@ -145,21 +172,29 @@ function copiesInPython(rhs: SyntaxNode, source: string, read: (node: SyntaxNode
     switch (node.name) {
       case 'CallExpression': {
         const callee = node.firstChild
-        return callee?.name === 'VariableName' && ['list', 'dict'].includes(read(callee)) && mentions(node, source, read)
+        if (callee?.name !== 'VariableName' || !['list', 'dict'].includes(read(callee))) return false
+        return new RegExp(`^(list|dict)\\(\\s*${source}\\s*\\)$`).test(read(node).trim())
       }
-      case 'MemberExpression':
-        return children(node).some((child) => child.name === ':') && mentions(node, source, read)
+      case 'MemberExpression': {
+        if (!children(node).some((child) => child.name === ':')) return false
+        const text = read(node).trim()
+        return new RegExp(`^${source}\\s*\\[[^\\[\\]]*:[^\\[\\]]*\\]$`).test(text)
+      }
       case 'ArrayExpression':
       case 'DictionaryExpression':
         return children(node).some(
-          (child) => (child.name === '*' || child.name === '**') && mentions(child.nextSibling, source, read),
+          (child) =>
+            (child.name === '*' || child.name === '**') &&
+            child.nextSibling !== null &&
+            read(child.nextSibling).trim() === source,
         )
       default:
         return false
     }
   })
   const copyMethod = [...methodCalls(rhs, read)].some(
-    ({ callee, method }) => method === 'copy' && mentions(callee, source, read),
+    ({ receiver, method }) =>
+      method === 'copy' && receiver?.name === 'VariableName' && read(receiver) === source,
   )
   return copyingSyntax || copyMethod
 }
@@ -177,6 +212,10 @@ function explain(rule: SourceRule, language: Language): string {
       return language === 'javascript'
         ? `Build ${target} with "${rule.source}.concat([...])".`
         : `Build ${target} with "${rule.source} + [...]".`
+    case 'copyOrCombine':
+      return language === 'javascript'
+        ? `Build ${target} by copying "${rule.source}" or with "${rule.source}.concat([...])".`
+        : `Build ${target} by copying "${rule.source}" or with "${rule.source} + [...]".`
   }
 }
 

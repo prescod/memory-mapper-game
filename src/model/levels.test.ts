@@ -6,7 +6,7 @@ import { snapshotJavaScript, snapshotToGraph } from '../run/snapshotJs'
 import { loadNodePythonSnapshotter } from '../run/testRuntime'
 import { buildRunRequest, gradeRun } from '../verify/grade'
 import { verify } from '../verify/verify'
-import { graph } from './builders'
+import { graph, list, ref } from './builders'
 import { findProblem, levels, nextProblem, previousProblem, problemHint, problems } from './levels'
 import { snapshotPython } from './snapshot'
 import {
@@ -388,7 +388,7 @@ describe('shortcuts that match the picture but miss the point', () => {
       'q = {"tags": p["tags"]}\nq["tags"].append("y")',
       /by copying "p"/,
     ],
-    ['copies-10', 'let b = [[1], [2]];', 'b = [[1], [2]]', /by copying "a"/],
+    ['copies-10', 'let b = [[1], [2]];', 'b = [[1], [2]]', START_CHANGED],
     [
       'copies-11',
       'let q = { tags: p.tags, extra: true };\nq.tags.push("b");',
@@ -442,6 +442,19 @@ describe('shortcuts that match the picture but miss the point', () => {
   })
 })
 
+describe('copies-14 alternatives', () => {
+  const alternatives: [code: string, language: Language][] = [
+    ['let b = [...a, [3]];', 'javascript'],
+    ['let b = a.concat([[3]]);', 'javascript'],
+    ['b = a + [[3]]', 'python'],
+  ]
+
+  it.each(alternatives)('accepts %s in %s', async (code, language) => {
+    const problem = writeProblems.find((candidate) => candidate.id === 'copies-14')!
+    expect(await grade(problem, language, code)).toEqual({ ok: true, errors: [] })
+  })
+})
+
 describe('diagnostic hints', () => {
   it('explains the static value rule when area is drawn as updated on Area after a change', () => {
     const problem = findProblem('numbers-4')!.problem
@@ -458,43 +471,24 @@ describe('diagnostic hints', () => {
     expect(result.ok).toBe(false)
     expect(result.errors[0].message).toMatch(/height was changed to 5 before area was calculated/)
   })
+
+  it('explains separate literals when a and b are merged onto one list on Equal but separate', () => {
+    const problem = findProblem('arrays-5')!.problem
+    const mistaken = graph({ a: ref('shared'), b: ref('shared') }, { shared: list(1, 2) })
+    const result = verify(mistaken, problem.expected, problem.hints)
+    expect(result.ok).toBe(false)
+    expect(result.errors[0].message).toMatch(/separate list literals/)
+  })
 })
 
 describe('on-demand hints', () => {
-  it('provides hints for all problems in the first two levels for both languages', () => {
-    const firstTwoLevels = levels.slice(0, 2)
-    for (const lvl of firstTwoLevels) {
+  it('provides hints for every problem in both languages', () => {
+    for (const lvl of levels) {
       for (const problem of lvl.problems) {
         for (const language of LANGUAGES) {
           const hint = problemHint(problem, language)
-          expect(typeof hint).toBe('string')
-          expect(hint!.trim().length).toBeGreaterThan(0)
-        }
-      }
-    }
-  })
-
-  it('provides hints for every arrays problem in both languages', () => {
-    const arraysLevel = levels.find((level) => level.id === 'arrays')
-    expect(arraysLevel).toBeDefined()
-    for (const problem of arraysLevel!.problems) {
-      for (const language of LANGUAGES) {
-        const hint = problemHint(problem, language)
-        expect(typeof hint).toBe('string')
-        expect(hint!.trim().length).toBeGreaterThan(0)
-      }
-    }
-  })
-
-  it('does not have hints for levels past arrays', () => {
-    const extraHints = new Set(['rebinding-2', 'rebinding-8'])
-    const remainingLevels = levels.slice(3)
-    for (const lvl of remainingLevels) {
-      for (const problem of lvl.problems) {
-        if (extraHints.has(problem.id)) continue
-        expect(problem.hint).toBeUndefined()
-        for (const language of LANGUAGES) {
-          expect(problemHint(problem, language)).toBeUndefined()
+          expect(typeof hint, `${problem.id} ${language}`).toBe('string')
+          expect(hint!.trim().length, `${problem.id} ${language}`).toBeGreaterThan(0)
         }
       }
     }

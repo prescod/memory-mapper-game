@@ -151,6 +151,8 @@ export type SourceRule =
   | { kind: 'copy'; target: string; source: string }
   /** `target` is built from `source` by `concat` (JavaScript) or `+` (Python). */
   | { kind: 'combine'; target: string; source: string }
+  /** `target` is built from `source` either by copying it or by combining it into a new list. */
+  | { kind: 'copyOrCombine'; target: string; source: string }
 
 export const multiplies = (target: string, ...operands: string[]): SourceRule => ({
   kind: 'multiply',
@@ -164,6 +166,11 @@ export const callsMethod = (
 ): SourceRule => ({ kind: 'method', target, receiver, method })
 export const copiesFrom = (target: string, source: string): SourceRule => ({ kind: 'copy', target, source })
 export const combines = (target: string, source: string): SourceRule => ({ kind: 'combine', target, source })
+export const copiesOrCombinesFrom = (target: string, source: string): SourceRule => ({
+  kind: 'copyOrCombine',
+  target,
+  source,
+})
 
 /**
  * The learner's code is run again after other starter code. Its result must

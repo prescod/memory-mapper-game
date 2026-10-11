@@ -76,10 +76,20 @@ export const CONTAINER_NAMES: Record<Language, { array: string; object: string }
   python: { array: 'list', object: 'dict' },
 }
 
-/** Targeted explanation shown when a learner draws or builds a known mistaken value. */
+/** Targeted explanation shown when a learner draws or builds a known mistake. */
 export interface DiagnosticHint {
   variable: string
-  value: string | number | boolean | null | (string | number | boolean | null)[]
+  /**
+   * The mistaken scalar value this hint explains. Absent on aliasing hints,
+   * which explain sharing instead of a value.
+   */
+  value?: string | number | boolean | null | (string | number | boolean | null)[]
+  /**
+   * Which aliasing mistake this hint explains: `shared` when the learner
+   * merged names onto one container that should be separate, `separate` when
+   * they split names across containers that should be shared.
+   */
+  aliasing?: 'shared' | 'separate'
   message: string
 }
 

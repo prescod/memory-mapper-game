@@ -79,6 +79,13 @@ export function verify(
   const userToExpected = new Map<NodeId, NodeId>()
   const expectedToUser = new Map<NodeId, NodeId>()
 
+  const aliasMessage = (kind: 'shared' | 'separate', variableName?: string): string | undefined => {
+    const exact = hints?.find(
+      (candidate) => candidate.aliasing === kind && (!variableName || candidate.variable === variableName),
+    )
+    return exact?.message ?? hints?.find((candidate) => candidate.aliasing === kind)?.message
+  }
+
   const checkTarget = (
     slot: Slot,
     expectedTarget: NodeId | null,
@@ -117,11 +124,19 @@ export function verify(
       const mappedExpected = userToExpected.get(userId)
       const mappedUser = expectedToUser.get(expectedId)
       if (mappedExpected !== undefined && mappedExpected !== expectedId) {
-        report(`These references should point to different ${name(userNode.type)}s, but they share one.`, origin)
+        report(
+          aliasMessage('shared', variableName) ??
+            `These references should point to different ${name(userNode.type)}s, but they share one.`,
+          origin,
+        )
         return
       }
       if (mappedUser !== undefined && mappedUser !== userId) {
-        report(`These references should share one ${name(userNode.type)}, but they point to different ones.`, origin)
+        report(
+          aliasMessage('separate', variableName) ??
+            `These references should share one ${name(userNode.type)}, but they point to different ones.`,
+          origin,
+        )
         return
       }
       if (mappedExpected === expectedId) return
@@ -148,6 +163,7 @@ export function verify(
         }
         const hint = hints?.find((candidate) => {
           if (variableName && candidate.variable !== variableName) return false
+          if (candidate.value === undefined) return false
           if (Array.isArray(candidate.value)) {
             return candidate.value.some((val) => String(val) === userNode.value)
           }
