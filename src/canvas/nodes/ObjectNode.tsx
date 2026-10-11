@@ -6,7 +6,6 @@ import {
   useUpdateNodeInternals,
   type NodeProps,
 } from '@xyflow/react'
-import { CONTAINER_NAMES } from '../../model/types'
 import { removeEdgesFromHandle } from '../connections'
 import { handleKey, useFeedback } from '../FeedbackContext'
 import { useLanguage } from '../LanguageContext'
@@ -19,6 +18,8 @@ import {
   type MemFlowNode,
   type ObjectFlowNode,
 } from '../types'
+import { CONTAINER_NAMES } from '../../model/types'
+import { NodeHeader } from './NodeHeader'
 
 export function ObjectNode({ id, data, selected }: NodeProps<ObjectFlowNode>) {
   const { updateNodeData, setEdges } = useReactFlow<MemFlowNode, MemFlowEdge>()
@@ -56,36 +57,40 @@ export function ObjectNode({ id, data, selected }: NodeProps<ObjectFlowNode>) {
     <div
       className={`mem-node object-node${selected ? ' selected' : ''}${flagged ? ' flagged' : ''}`}
     >
-      <Handle id={TARGET_HANDLE} type="target" position={Position.Left} />
-      <div className="mem-node-title">{CONTAINER_NAMES[language].object}</div>
+      <Handle id={TARGET_HANDLE} type="target" position={Position.Top} />
+      <NodeHeader>{CONTAINER_NAMES[language].object}</NodeHeader>
       {data.entries.length === 0 && <div className="mem-empty">empty</div>}
       {data.entries.map((entry) => {
         const handle = entryHandle(entry.id)
         return (
-          <div className="mem-row" key={entry.id}>
-            <input
-              className="nodrag mem-input mem-key-input"
-              value={entry.key}
-              placeholder="key"
-              aria-label="Key"
-              spellCheck={false}
-              readOnly={readOnly}
-              onChange={(event) => renameEntry(entry.id, event.target.value)}
-            />
-            {!readOnly && (
-              <button
-                type="button"
-                className="nodrag mem-icon-button"
-                aria-label="Remove entry"
-                onClick={() => removeEntry(entry.id)}
-              >
-                ×
-              </button>
-            )}
+          <div className="mem-row mem-row-slot" key={entry.id}>
+            <div className="mem-row-main">
+              <input
+                className="nodrag mem-input mem-key-input"
+                value={entry.key}
+                placeholder="key"
+                aria-label="Key"
+                spellCheck={false}
+                autoCapitalize="off"
+                autoCorrect="off"
+                readOnly={readOnly}
+                onChange={(event) => renameEntry(entry.id, event.target.value)}
+              />
+              {!readOnly && (
+                <button
+                  type="button"
+                  className="nodrag mem-icon-button"
+                  aria-label="Remove entry"
+                  onClick={() => removeEntry(entry.id)}
+                >
+                  ×
+                </button>
+              )}
+            </div>
             <Handle
               id={handle}
               type="source"
-              position={Position.Right}
+              position={Position.Bottom}
               className={feedback.handleKeys.has(handleKey(id, handle)) ? 'handle-error' : ''}
             />
           </div>

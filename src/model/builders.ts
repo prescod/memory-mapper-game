@@ -12,10 +12,13 @@ export type Value = number | string | boolean | null | Ref
 export type ContainerSpec =
   | { kind: 'array'; items: Value[] }
   | { kind: 'object'; entries: Record<string, Value> }
+  | { kind: 'pet'; label: string }
 
 export const ref = (id: string): Ref => ({ ref: id })
 export const list = (...items: Value[]): ContainerSpec => ({ kind: 'array', items })
 export const dict = (entries: Record<string, Value>): ContainerSpec => ({ kind: 'object', entries })
+/** An opaque `Pet` instance named `label` (e.g. a pet's name), for the identity level. */
+export const pet = (label: string): ContainerSpec => ({ kind: 'pet', label })
 
 const isRef = (value: Value): value is Ref => typeof value === 'object' && value !== null
 
@@ -45,16 +48,22 @@ export function graph(
   }
 
   for (const [name, spec] of Object.entries(containers)) {
-    nodes[`container:${name}`] =
-      spec.kind === 'array'
-        ? { type: 'array', slots: spec.items.map((item) => ({ target: target(item) })) }
-        : {
-            type: 'object',
-            entries: Object.entries(spec.entries).map(([key, item]) => ({
-              key,
-              slot: { target: target(item) },
-            })),
-          }
+    if (spec.kind === 'pet') {
+      nodes[`container:${name}`] = { type: 'instance', className: 'Pet', label: spec.label }
+    } else if (spec.kind === 'array') {
+      nodes[`container:${name}`] = {
+        type: 'array',
+        slots: spec.items.map((item) => ({ target: target(item) })),
+      }
+    } else {
+      nodes[`container:${name}`] = {
+        type: 'object',
+        entries: Object.entries(spec.entries).map(([key, item]) => ({
+          key,
+          slot: { target: target(item) },
+        })),
+      }
+    }
   }
 
   return {

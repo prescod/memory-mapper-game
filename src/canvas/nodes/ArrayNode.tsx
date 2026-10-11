@@ -6,7 +6,6 @@ import {
   useUpdateNodeInternals,
   type NodeProps,
 } from '@xyflow/react'
-import { CONTAINER_NAMES } from '../../model/types'
 import { removeEdgesFromHandle } from '../connections'
 import { handleKey, useFeedback } from '../FeedbackContext'
 import { useLanguage } from '../LanguageContext'
@@ -19,6 +18,8 @@ import {
   type MemFlowEdge,
   type MemFlowNode,
 } from '../types'
+import { CONTAINER_NAMES } from '../../model/types'
+import { NodeHeader } from './NodeHeader'
 
 export function ArrayNode({ id, data, selected }: NodeProps<ArrayFlowNode>) {
   const { updateNodeData, setEdges } = useReactFlow<MemFlowNode, MemFlowEdge>()
@@ -49,29 +50,31 @@ export function ArrayNode({ id, data, selected }: NodeProps<ArrayFlowNode>) {
     <div
       className={`mem-node array-node${selected ? ' selected' : ''}${flagged ? ' flagged' : ''}`}
     >
-      <Handle id={TARGET_HANDLE} type="target" position={Position.Left} />
-      <div className="mem-node-title">{CONTAINER_NAMES[language].array}</div>
+      <Handle id={TARGET_HANDLE} type="target" position={Position.Top} />
+      <NodeHeader>{CONTAINER_NAMES[language].array}</NodeHeader>
       {data.slots.length === 0 && <div className="mem-empty">empty</div>}
       {data.slots.map((slot, index) => {
         const handle = slotHandle(slot.id)
         return (
-          <div className="mem-row" key={slot.id}>
-            <span className="mem-index">{index}</span>
-            <span className="mem-spacer" />
-            {!readOnly && (
-              <button
-                type="button"
-                className="nodrag mem-icon-button"
-                aria-label={`Remove slot ${index}`}
-                onClick={() => removeSlot(slot.id)}
-              >
-                ×
-              </button>
-            )}
+          <div className="mem-row mem-row-slot" key={slot.id}>
+            <div className="mem-row-main">
+              <span className="mem-index">{index}</span>
+              <span className="mem-spacer" />
+              {!readOnly && (
+                <button
+                  type="button"
+                  className="nodrag mem-icon-button"
+                  aria-label={`Remove slot ${index}`}
+                  onClick={() => removeSlot(slot.id)}
+                >
+                  ×
+                </button>
+              )}
+            </div>
             <Handle
               id={handle}
               type="source"
-              position={Position.Right}
+              position={Position.Bottom}
               className={feedback.handleKeys.has(handleKey(id, handle)) ? 'handle-error' : ''}
             />
           </div>

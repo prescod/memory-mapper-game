@@ -48,10 +48,10 @@ height = 5;
 
 **Level 2: Objects with Identity and Multiple References**
 ```javascript
-let a = makeObject("Alice");
+let a = Pet("Alice");
 let b = a;
 ```
-*Expected Graph:* Variables `a` and `b` both point to the *exact same* Object node, tagged `"Alice"`. Two `makeObject("Alice")` calls would build two separate objects with the same tag. `makeObject` (`make_object` in Python) is built in for this level; learners see calls to it, never its definition, which the grader prepends at run time only.
+*Expected Graph:* Variables `a` and `b` both point to the *exact same* Pet node named `"Alice"`. Two `Pet("Alice")` calls would build two separate Pets with the same name. `Pet` is built in for this level (an alias for `Symbol` in JavaScript, a minimal class in Python); learners see calls to it, never its definition, which the grader prepends at run time only. Pet nodes are opaque: the diagram shows the name and nothing else.
 
 **Level 3: Arrays (Python: Lists)**
 ```javascript

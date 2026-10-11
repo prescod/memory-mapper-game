@@ -6,6 +6,7 @@ import {
   type MemFlowNode,
 } from '../canvas/types'
 import { scalarFromData } from '../canvas/scalarData'
+import { stripSurroundingQuotes } from '../model/scalar'
 import type { Language, MemNode, MemoryGraph, Slot, VariableEntry } from '../model/types'
 
 /**
@@ -34,7 +35,7 @@ export function toGraph(nodes: MemFlowNode[], edges: MemFlowEdge[], language: La
     switch (node.type) {
       case 'variable':
         variables.push({
-          name: node.data.name.trim(),
+          name: stripSurroundingQuotes(node.data.name),
           nodeId: node.id,
           slot: slotFor(node.id, VARIABLE_HANDLE),
         })
@@ -55,6 +56,13 @@ export function toGraph(nodes: MemFlowNode[], edges: MemFlowEdge[], language: La
             key: entry.key.trim(),
             slot: slotFor(node.id, entryHandle(entry.id)),
           })),
+        }
+        break
+      case 'pet':
+        memory[node.id] = {
+          type: 'instance',
+          className: 'Pet',
+          label: stripSurroundingQuotes(node.data.label),
         }
         break
     }

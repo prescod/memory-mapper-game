@@ -1,4 +1,4 @@
-import type { MemNode, MemoryGraph, NodeId, Slot } from '../model/types'
+import type { MemNode, MemoryGraph, NodeId } from '../model/types'
 import {
   TARGET_HANDLE,
   VARIABLE_HANDLE,
@@ -17,19 +17,15 @@ const SCALAR_HEIGHT = TITLE_HEIGHT + ROW_HEIGHT
 
 function heightOf(node: MemNode | undefined): number {
   if (!node) return SIMPLE_HEIGHT
-  if (node.type === 'scalar') return SCALAR_HEIGHT
+  if (node.type === 'scalar' || node.type === 'instance') return SCALAR_HEIGHT
   const rows = node.type === 'array' ? node.slots.length : node.entries.length
   return TITLE_HEIGHT + Math.max(rows, 1) * ROW_HEIGHT
 }
 
 const targetsOf = (node: MemNode): (NodeId | null)[] => {
-  const slots: Slot[] =
-    node.type === 'array'
-      ? node.slots
-      : node.type === 'object'
-        ? node.entries.map((entry) => entry.slot)
-        : []
-  return slots.map((slot) => slot.target)
+  if (node.type === 'array') return node.slots.map((slot) => slot.target)
+  if (node.type === 'object') return node.entries.map((entry) => entry.slot.target)
+  return []
 }
 
 /**
@@ -98,6 +94,8 @@ export function toFlow(memory: MemoryGraph): { nodes: MemFlowNode[]; edges: MemF
       const slots = node.slots.map((_, index) => ({ id: `${id}:s${index}` }))
       nodes.push({ id, type: 'array', position, data: { slots } })
       node.slots.forEach((slot, index) => link(id, slotHandle(slots[index].id), slot.target))
+    } else if (node.type === 'instance') {
+      nodes.push({ id, type: 'pet', position, data: { label: node.label } })
     } else {
       const entries = node.entries.map((entry, index) => ({ id: `${id}:e${index}`, key: entry.key }))
       nodes.push({ id, type: 'object', position, data: { entries } })

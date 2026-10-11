@@ -58,12 +58,22 @@ export function runJavaScript(given: string, code: string, names: string[], chec
 
   const brokenRules = tracker?.broken(read)
 
-  const ids = new Map<object, string>()
+  const ids = new Map<object | symbol, string>()
   const containers: Record<string, ContainerSpec> = {}
 
   const encode = (value: unknown): Value => {
     if (value === null || ['number', 'string', 'boolean'].includes(typeof value)) {
       return value as Value
+    }
+    if (typeof value === 'symbol') {
+      // A `Pet` from the hidden prelude (an alias for `Symbol`): opaque, unique
+      // by construction, labelled by its description. Never shown as an object.
+      const existing = ids.get(value)
+      if (existing) return { ref: existing }
+      const id = `c${ids.size}`
+      ids.set(value, id)
+      containers[id] = { kind: 'pet', label: value.description ?? '' }
+      return { ref: id }
     }
     if (typeof value !== 'object' || (!Array.isArray(value) && !isPlainObject(value))) {
       throw new UserCodeError(`A value of this kind can't be shown: ${describeUnsupported(value)}. ${SUPPORTED_NOTE}`)

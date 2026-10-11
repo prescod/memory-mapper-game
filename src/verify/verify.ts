@@ -28,7 +28,7 @@ export const CANNOT_REFER_TO_VARIABLES =
  * graph-isomorphism search is never needed. Nodes unreachable from a variable
  * (garbage) are never inspected.
  *
- * Only arrays and objects have identity. Scalars are immutable, so a program
+ * Only arrays, objects, and instances have identity. Scalars are immutable, so a program
  * cannot distinguish a copied value from a shared one and either diagram is
  * accepted; only the scalar's type and value are compared.
  *
@@ -43,7 +43,8 @@ export function verify(
 ): VerifyResult {
   const errors: VerifyError[] = []
   const report = (message: string, origin: Origin = {}) => errors.push({ message, ...origin })
-  const name = (type: MemNode['type']) => (type === 'scalar' ? 'scalar' : CONTAINER_NAMES[language][type])
+  const name = (type: MemNode['type']) =>
+    type === 'scalar' ? 'scalar' : type === 'instance' ? 'Pet' : CONTAINER_NAMES[language][type]
 
   const isVariableTarget = (target: NodeId | null): boolean => {
     if (target === null) return false
@@ -190,6 +191,16 @@ export function verify(
         const slot = userNode.slots[index]
         checkTarget(slot, expectedSlot.target, { nodeId: userId, handle: slot.handle }, `Slot ${index}`)
       })
+      return
+    }
+
+    if (userNode.type === 'instance' && expectedNode.type === 'instance') {
+      if (userNode.className !== expectedNode.className || userNode.label !== expectedNode.label) {
+        report(
+          `This ${userNode.className} is tagged "${userNode.label}" but should be tagged "${expectedNode.label}".`,
+          { nodeId: userId },
+        )
+      }
       return
     }
 

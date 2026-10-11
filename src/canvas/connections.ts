@@ -6,15 +6,16 @@ type ConnectionLike = Pick<Connection, 'source' | 'target' | 'sourceHandle' | 't
 
 /**
  * A reference may start from a Variable, an Array slot or an Object entry, and
- * must end on a Variable, Scalar, Array or Object. Containers may point at themselves:
- * `a.append(a)` is legal and produces a cycle.
+ * must end on a Variable, Scalar, Array, Object or Pet. Pets and Scalars never
+ * originate references: a Pet shows nothing of its insides. Containers may
+ * point at themselves: `a.append(a)` is legal and produces a cycle.
  */
 export function isValidConnection(connection: ConnectionLike, nodes: MemFlowNode[]): boolean {
   const source = nodes.find((node) => node.id === connection.source)
   const target = nodes.find((node) => node.id === connection.target)
   if (!source || !target) return false
 
-  if (source.type === 'scalar') return false
+  if (source.type === 'scalar' || source.type === 'pet') return false
   if (!connection.sourceHandle || connection.sourceHandle === TARGET_HANDLE) return false
   if (connection.targetHandle !== TARGET_HANDLE) return false
 

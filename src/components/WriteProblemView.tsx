@@ -11,8 +11,8 @@ import { progressKey, useAppStore } from '../store/useAppStore'
 import { buildRunRequest, gradeRun } from '../verify/grade'
 import { CheckBar } from './CheckBar'
 import { CodeEditor } from './CodeEditor'
-import { CodePanel } from './CodePanel'
-import { ProblemNavigation } from './ProblemNavigation'
+import { ProblemHeader } from './ProblemHeader'
+import { ProblemPanel } from './ProblemPanel'
 
 interface WriteProblemViewProps {
   location: ProblemLocation<WriteProblem>
@@ -81,26 +81,20 @@ export function WriteProblemView({
     resetProblem(key)
   }
 
-  const handleRevealAnswer = () => {
-    setIsAnswerRevealed((prev) => !prev)
-  }
-
   const next = nextProblem(problem.id)
 
   return (
-    <div className="level-view">
-      <aside className="sidebar">
-        <ProblemNavigation problemId={problem.id} onNavigate={onNavigate} />
-        <CodePanel
-          level={level}
-          levelNumber={levels.indexOf(level) + 1}
-          problem={problem}
-          problemNumber={index + 1}
-          revealed={revealed}
-          language={language}
-          focusHeading={focusProblemHeading}
-        />
-      </aside>
+    <div className="problem-screen">
+      <ProblemHeader problemId={problem.id} onNavigate={onNavigate} />
+      <ProblemPanel
+        level={level}
+        levelNumber={levels.indexOf(level) + 1}
+        problem={problem}
+        problemNumber={index + 1}
+        revealed={revealed}
+        language={language}
+        focusHeading={focusProblemHeading}
+      />
       <main className="workspace">
         <Canvas
           readOnly
@@ -120,51 +114,47 @@ export function WriteProblemView({
               <pre className="code-snippet given-code">
                 <code>{given}</code>
               </pre>
-              <p className="editor-caption">
-                Your code runs after it <span className="editor-hint">(refer to existing variables by name — do not re-type their values)</span>:
-              </p>
+              <p className="editor-caption">Your code runs after it:</p>
             </>
           )}
           <CodeEditor value={code} language={language} onChange={edit} />
         </div>
-        <CheckBar
-          problemId={problem.id}
-          result={result}
-          hasNext={next !== undefined}
-          busy={busy}
-          onCheck={check}
-          onReset={reset}
-          onNext={() => next && onNavigate(next.id)}
-          onBack={() => onNavigate(null)}
-          successMessage="Correct! Your code builds exactly this picture."
-          failureHeading="Not quite:"
-          hint={problemHint(problem, language)}
-          onRevealAnswer={handleRevealAnswer}
-          isAnswerRevealed={isAnswerRevealed}
-          revealedAnswer={
-            isAnswerRevealed ? (
-              <div className="check-result answer-box" role="status">
-                <div className="answer-box-header">
-                  <span className="answer-tag">Solution ({LANGUAGE_LABELS[language]}):</span>
-                  <button
-                    type="button"
-                    className="secondary-button copy-solution-button"
-                    onClick={() => edit(problem.solution[language])}
-                  >
-                    Copy to Editor
-                  </button>
-                </div>
-                <pre className="code-snippet solution-code">
-                  <code>{problem.solution[language]}</code>
-                </pre>
-                <p className="answer-note">
-                  Actual answer revealed (not marked as complete).
-                </p>
-              </div>
-            ) : undefined
-          }
-        />
       </main>
+      <CheckBar
+        problemId={problem.id}
+        result={result}
+        hasNext={next !== undefined}
+        busy={busy}
+        onCheck={check}
+        onReset={reset}
+        onNext={() => next && onNavigate(next.id)}
+        onBack={() => onNavigate(null)}
+        successMessage="Correct! Your code builds exactly this picture."
+        failureHeading="Not quite:"
+        hint={problemHint(problem, language)}
+        onRevealAnswer={() => setIsAnswerRevealed((prev) => !prev)}
+        isAnswerRevealed={isAnswerRevealed}
+        revealedAnswer={
+          isAnswerRevealed ? (
+            <div className="check-result answer-box" role="status">
+              <div className="answer-box-header">
+                <span className="answer-tag">Solution ({LANGUAGE_LABELS[language]}):</span>
+                <button
+                  type="button"
+                  className="secondary-button copy-solution-button"
+                  onClick={() => edit(problem.solution[language])}
+                >
+                  Copy to editor
+                </button>
+              </div>
+              <pre className="code-snippet">
+                <code>{problem.solution[language]}</code>
+              </pre>
+              <p className="answer-note">Answer revealed (not marked as complete).</p>
+            </div>
+          ) : undefined
+        }
+      />
     </div>
   )
 }

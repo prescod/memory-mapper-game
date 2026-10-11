@@ -1,6 +1,4 @@
 import { Handle, Position, useReactFlow, type NodeProps } from '@xyflow/react'
-import { formatScalar, scalarKindName, stringQuote } from '../../model/scalar'
-import type { ScalarKind } from '../../model/types'
 import { useFeedback } from '../FeedbackContext'
 import { useLanguage } from '../LanguageContext'
 import { useReadOnly } from '../ReadOnlyContext'
@@ -12,6 +10,10 @@ import {
   type ScalarData,
   type ScalarFlowNode,
 } from '../types'
+import { QuotedLiteralInput } from '../QuotedLiteralInput'
+import { formatScalar, scalarKindName, stringQuote } from '../../model/scalar'
+import type { ScalarKind } from '../../model/types'
+import { NodeHeader } from './NodeHeader'
 
 const KINDS: ScalarKind[] = ['number', 'string', 'boolean', 'null']
 
@@ -38,27 +40,28 @@ export function ScalarNode({ id, data, selected }: NodeProps<ScalarFlowNode>) {
           inputMode={data.kind === 'number' ? 'decimal' : undefined}
           aria-label="Scalar value"
           spellCheck={false}
+          autoCapitalize="off"
+          autoCorrect="off"
           readOnly={readOnly}
           onChange={(event) => setText(event.target.value)}
         />
       )
       break
-    case 'string':
-      editor = (
-        <span className="scalar-string">
-          <span className="scalar-quote" aria-hidden="true">{stringQuote(language)}</span>
-          <input
-            className="nodrag mem-input"
-            value={data.text}
-            aria-label="String value"
-            spellCheck={false}
-            readOnly={readOnly}
-            onChange={(event) => setText(event.target.value)}
-          />
-          <span className="scalar-quote" aria-hidden="true">{stringQuote(language)}</span>
-        </span>
+    case 'string': {
+      const q = stringQuote(language)
+      editor = readOnly ? (
+        <span className="scalar-fixed">{formatScalar(scalar, language)}</span>
+      ) : (
+        <QuotedLiteralInput
+          value={data.text}
+          onChange={setText}
+          language={language}
+          ariaLabel="String value"
+          placeholder={`${q}text${q}`}
+        />
       )
       break
+    }
     case 'boolean':
       editor = readOnly ? (
         <span className="scalar-fixed">{formatScalar(scalar, language)}</span>
@@ -86,8 +89,8 @@ export function ScalarNode({ id, data, selected }: NodeProps<ScalarFlowNode>) {
     <div
       className={`mem-node scalar-node${selected ? ' selected' : ''}${flagged ? ' flagged' : ''}`}
     >
-      <Handle id={TARGET_HANDLE} type="target" position={Position.Left} />
-      <div className="mem-node-title">
+      <Handle id={TARGET_HANDLE} type="target" position={Position.Top} />
+      <NodeHeader>
         {readOnly ? (
           kindName
         ) : (
@@ -105,7 +108,7 @@ export function ScalarNode({ id, data, selected }: NodeProps<ScalarFlowNode>) {
             ))}
           </select>
         )}
-      </div>
+      </NodeHeader>
       {editor}
     </div>
   )

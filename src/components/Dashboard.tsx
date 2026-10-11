@@ -34,9 +34,17 @@ export function Dashboard({ onOpen }: { onOpen: (problemId: string) => void }) {
             >
               <span className="problem-chip-number">{problemIndex + 1}</span>
               <span className="problem-chip-title">
-                <ProblemTitle problem={problem} visible={!problem.mystery || done} language={language} />
+                <ProblemTitle
+                  problem={problem}
+                  visible={!problem.mystery || done}
+                  language={language}
+                />
               </span>
-              {done && <span className="problem-chip-check" aria-label="Completed">✓</span>}
+              {done && (
+                <span className="problem-chip-check" aria-label="Completed">
+                  ✓
+                </span>
+              )}
             </button>
           </li>
         )
@@ -48,14 +56,14 @@ export function Dashboard({ onOpen }: { onOpen: (problemId: string) => void }) {
     <div className="dashboard">
       <h1>The Data Game</h1>
       <p className="dashboard-intro">
-        Read a snippet, then build the diagram of variables, values, lists or arrays, and
-        objects or dictionaries that exists in memory once it has run. Some problems go the
-        diagram and write the code that produces it. Every problem is available in both
+        Read a snippet, then build the diagram of variables, values, lists or arrays, and objects
+        or dictionaries that exists in memory once it has run. Some problems go the other way: you
+        see the diagram and write the code that produces it. Every problem is available in both
         languages, and progress is tracked separately for each.
       </p>
       <p className="dashboard-intro">
-        Each level ends with mystery problems that test its ideas on new examples without
-        naming them. Their titles appear once you solve them.
+        Each level ends with mystery problems that test its ideas on new examples without naming
+        them. Their titles appear once you solve them.
       </p>
       <div className="dashboard-controls">
         <LanguageToggle />
@@ -64,7 +72,7 @@ export function Dashboard({ onOpen }: { onOpen: (problemId: string) => void }) {
         </p>
         <button
           type="button"
-          className="link-button dashboard-reset"
+          className="text-button dashboard-reset"
           onClick={confirmReset}
           disabled={!hasProgress}
         >

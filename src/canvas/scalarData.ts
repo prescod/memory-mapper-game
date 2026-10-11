@@ -1,4 +1,10 @@
-import { canonicalNumber, formatScalar, parseScalar } from '../model/scalar'
+import {
+  canonicalNumber,
+  formatScalar,
+  hasSurroundingQuotes,
+  parseScalar,
+  stripSurroundingQuotes,
+} from '../model/scalar'
 import type { Language, ScalarMem } from '../model/types'
 import type { ScalarData } from './types'
 
@@ -7,7 +13,7 @@ export function scalarFromData(data: ScalarData, language: Language): ScalarMem 
     case 'auto':
       return parseScalar(data.text, language)
     case 'string':
-      return { type: 'scalar', kind: 'string', value: data.text }
+      return { type: 'scalar', kind: 'string', value: stripSurroundingQuotes(data.text) }
     case 'number':
       return { type: 'scalar', kind: 'number', value: canonicalNumber(data.text) ?? data.text.trim() }
     case 'boolean':
@@ -25,10 +31,9 @@ export function changeKind(data: ScalarData, kind: ScalarData['kind'], language:
     case 'auto':
       return { kind, text: data.kind === 'auto' ? data.text : formatScalar(current, language) }
     case 'string':
-      return {
-        kind,
-        text: current.kind === 'string' ? current.value : current.kind === 'null' ? '' : formatScalar(current, language),
-      }
+      if (data.kind === 'string') return { kind, text: data.text }
+      if (hasSurroundingQuotes(data.text)) return { kind, text: data.text.trim() }
+      return { kind, text: current.kind === 'null' ? '' : formatScalar(current, language) }
     case 'number':
       return { kind, text: meant.kind === 'number' ? meant.value : (canonicalNumber(meant.value) ?? '') }
     case 'boolean':

@@ -48,6 +48,11 @@ export class Diagram {
     return this
   }
 
+  pet(id: string, label: string): this {
+    this.nodes.push({ id, type: 'pet', position: this.place(), data: { label } })
+    return this
+  }
+
   link(source: string, sourceHandle: string, target: string): this {
     this.edges.push({
       id: `${source}:${sourceHandle}->${target}`,

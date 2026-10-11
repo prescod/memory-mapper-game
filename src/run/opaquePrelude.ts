@@ -1,22 +1,19 @@
 import type { Language } from '../model/types'
 
 /**
- * Defines the `makeObject` / `make_object` helper used by the identity level.
- * It builds a plain object holding one curriculum-only tag entry, so the
- * existing snapshot encoders accept it with no new node type. The definition
- * is prepended at run time only; learners just see calls to it.
+ * Defines the `Pet` helper used by the identity level. In JavaScript it is an
+ * alias for `Symbol`, so every call builds a genuinely unique value whose
+ * description is its label, with identical call syntax to Python and no `new`.
+ * In Python it is a minimal class holding the label privately. Either way the
+ * snapshot encoders read only the label: a Pet is never shown as a transparent
+ * object or dict, and learners only ever see calls to it, never this definition.
  */
 export const OPAQUE_PRELUDE: Record<Language, string> = {
-  javascript: 'function makeObject(label) { return { $: label }; }',
-  python: 'def make_object(label):\n    return {"$": label}',
+  javascript: 'const Pet = Symbol;',
+  python: 'class Pet:\n    def __init__(self, name):\n        self._pet_label = name',
 }
 
 /** `source` with the hidden prelude prepended, for execution but never display. */
 export function withOpaquePrelude(language: Language, source: string): string {
   return `${OPAQUE_PRELUDE[language]}\n${source}`
-}
-
-/** How many hidden lines `withOpaquePrelude` adds, for error line attribution. */
-export function opaquePreludeLineCount(language: Language): number {
-  return OPAQUE_PRELUDE[language].split('\n').length
 }

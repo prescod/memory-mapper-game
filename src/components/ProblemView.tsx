@@ -7,11 +7,12 @@ import type { MemFlowEdge, MemFlowNode } from '../canvas/types'
 import { levels, nextProblem, problemHint, type ProblemLocation } from '../model/levels'
 import type { DrawProblem, Language, VerifyResult } from '../model/types'
 import { progressKey, useAppStore } from '../store/useAppStore'
+import { quotedLiteralErrors } from '../canvas/quotedLiteral'
 import { toGraph } from '../verify/toGraph'
 import { verify } from '../verify/verify'
 import { CheckBar } from './CheckBar'
-import { CodePanel } from './CodePanel'
-import { ProblemNavigation } from './ProblemNavigation'
+import { ProblemHeader } from './ProblemHeader'
+import { ProblemPanel } from './ProblemPanel'
 
 const AUTOSAVE_DELAY_MS = 300
 
@@ -98,7 +99,11 @@ export function ProblemView({
 
   const check = () => {
     if (isAnswerRevealed) return
-    const outcome = verify(toGraph(nodes, edges, language), problem.expected, problem.hints, language)
+    const formatErrors = quotedLiteralErrors(nodes, language)
+    const outcome =
+      formatErrors.length > 0
+        ? { ok: false, errors: formatErrors }
+        : verify(toGraph(nodes, edges, language), problem.expected, problem.hints, language)
     setResult(outcome)
     if (outcome.ok) markCompleted(key)
   }
@@ -136,19 +141,17 @@ export function ProblemView({
   const next = nextProblem(problem.id)
 
   return (
-    <div className="level-view">
-      <aside className="sidebar">
-        <ProblemNavigation problemId={problem.id} onNavigate={onNavigate} />
-        <CodePanel
-          level={level}
-          levelNumber={levels.indexOf(level) + 1}
-          problem={problem}
-          problemNumber={index + 1}
-          revealed={revealed}
-          language={language}
-          focusHeading={focusProblemHeading}
-        />
-      </aside>
+    <div className="problem-screen">
+      <ProblemHeader problemId={problem.id} onNavigate={onNavigate} />
+      <ProblemPanel
+        level={level}
+        levelNumber={levels.indexOf(level) + 1}
+        problem={problem}
+        problemNumber={index + 1}
+        revealed={revealed}
+        language={language}
+        focusHeading={focusProblemHeading}
+      />
       <main className="workspace">
         <Canvas
           nodes={nodes}
@@ -160,31 +163,31 @@ export function ProblemView({
           feedback={feedback}
           language={language}
         />
-        <CheckBar
-          problemId={problem.id}
-          result={result}
-          hasNext={next !== undefined}
-          onCheck={check}
-          onReset={reset}
-          onNext={() => next && onNavigate(next.id)}
-          onBack={() => onNavigate(null)}
-          hint={problemHint(problem, language)}
-          onRevealAnswer={handleRevealAnswer}
-          isAnswerRevealed={isAnswerRevealed}
-          disableCheck={isAnswerRevealed}
-          revealedAnswer={
-            isAnswerRevealed ? (
-              <div className="check-result answer-box" role="status">
-                <span className="answer-tag">Actual Answer Revealed</span>
-                <p className="answer-note">
-                  The canvas shows the expected diagram. This problem is not marked as complete.
-                  Click &ldquo;Hide Answer&rdquo; to return to your work.
-                </p>
-              </div>
-            ) : undefined
-          }
-        />
       </main>
+      <CheckBar
+        problemId={problem.id}
+        result={result}
+        hasNext={next !== undefined}
+        onCheck={check}
+        onReset={reset}
+        onNext={() => next && onNavigate(next.id)}
+        onBack={() => onNavigate(null)}
+        hint={problemHint(problem, language)}
+        onRevealAnswer={handleRevealAnswer}
+        isAnswerRevealed={isAnswerRevealed}
+        disableCheck={isAnswerRevealed}
+        revealedAnswer={
+          isAnswerRevealed ? (
+            <div className="check-result answer-box" role="status">
+              <span className="answer-tag">Answer revealed</span>
+              <p className="answer-note">
+                The canvas shows the expected diagram. This problem is not marked as complete. Tap
+                &ldquo;Answer&rdquo; again to return to your work.
+              </p>
+            </div>
+          ) : undefined
+        }
+      />
     </div>
   )
 }

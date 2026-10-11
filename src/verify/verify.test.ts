@@ -270,7 +270,7 @@ describe('changeKind', () => {
     [{ kind: 'auto', text: '"5"' }, 'number', { kind: 'number', text: '5' }],
     [{ kind: 'auto', text: 'True' }, 'boolean', { kind: 'boolean', text: 'true' }],
     [{ kind: 'auto', text: 'true' }, 'boolean', { kind: 'boolean', text: 'true' }],
-    [{ kind: 'auto', text: "'hi'" }, 'string', { kind: 'string', text: 'hi' }],
+    [{ kind: 'auto', text: "'hi'" }, 'string', { kind: 'string', text: "'hi'" }],
     [{ kind: 'boolean', text: 'false' }, 'string', { kind: 'string', text: 'False' }],
     [{ kind: 'string', text: 'hi' }, 'auto', { kind: 'auto', text: "'hi'" }],
     [{ kind: 'number', text: '3' }, 'null', { kind: 'null', text: '' }],

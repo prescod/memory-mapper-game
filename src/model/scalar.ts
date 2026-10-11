@@ -87,3 +87,22 @@ export function scalarKindName(kind: ScalarKind, language: Language): string {
 export function stringQuote(language: Language): string {
   return language === 'python' ? "'" : '"'
 }
+
+/** Inner text when `raw` is wrapped in matching quotes; otherwise `raw` trimmed. */
+export function stripSurroundingQuotes(raw: string): string {
+  const text = raw.trim()
+  const quoted = /^(['"`])(.*)\1$/s.exec(text)
+  return quoted ? quoted[2] : text
+}
+
+/** True when `raw` is empty or wrapped in a matching pair of `'`, `"`, or `` ` ``. */
+export function hasSurroundingQuotes(raw: string): boolean {
+  const text = raw.trim()
+  if (text === '') return true
+  return /^(['"`])(.*)\1$/s.test(text)
+}
+
+export function quotedLiteralMessage(language: Language): string {
+  const q = stringQuote(language)
+  return `Surround the value with ${q} quotes, like ${q}text${q}.`
+}

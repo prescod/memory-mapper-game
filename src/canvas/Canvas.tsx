@@ -7,21 +7,40 @@ import {
   ReactFlowProvider,
   useNodesInitialized,
   useReactFlow,
+  useStore,
+  useStoreApi,
   type Connection,
   type Edge,
+  type NodeMouseHandler,
   type OnEdgesChange,
   type OnNodesChange,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { useCallback, useEffect, useMemo, useRef, type Dispatch, type DragEvent, type SetStateAction } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  type Dispatch,
+  type DragEvent,
+  type SetStateAction,
+} from 'react'
 import { connectReplacing, isValidConnection } from './connections'
 import { FeedbackContext, handleKey, type Feedback } from './FeedbackContext'
-import type { Language } from '../model/types'
 import { LanguageContext } from './LanguageContext'
-import { nodeTypes } from './nodes'
 import { ReadOnlyContext } from './ReadOnlyContext'
-import { Toolbar, DRAG_MIME } from './Toolbar'
-import { createNode, newId, type MemFlowEdge, type MemFlowNode, type MemNodeType } from './types'
+import {
+  createNode,
+  newId,
+  type MemFlowEdge,
+  type MemFlowNode,
+  type MemNodeType,
+} from './types'
+import type { Language } from '../model/types'
+import { nodeTypes } from './nodes'
+import { defaultPositionForType, freePosition } from './placement'
+import { tapConnection } from './tapConnect'
+import { DRAG_MIME, Toolbar } from './Toolbar'
 
 export interface CanvasProps {
   nodes: MemFlowNode[]
@@ -37,6 +56,8 @@ export interface CanvasProps {
 }
 
 const defaultEdgeOptions = { markerEnd: { type: MarkerType.ArrowClosed } }
+/** Width of the invisible stroke around each arrow that a finger can hit. */
+const EDGE_TAP_WIDTH = 32
 
 function CanvasInner({
   nodes,
@@ -50,8 +71,10 @@ function CanvasInner({
   readOnly = false,
 }: CanvasProps) {
   const wrapper = useRef<HTMLDivElement>(null)
-  const { screenToFlowPosition, fitView } = useReactFlow<MemFlowNode, MemFlowEdge>()
+  const { screenToFlowPosition, fitView, deleteElements } = useReactFlow<MemFlowNode, MemFlowEdge>()
   const nodesMeasured = useNodesInitialized()
+  const store = useStoreApi<MemFlowNode, MemFlowEdge>()
+  const pending = useStore((state) => state.connectionClickStartHandle)
 
   // The picture is wider than the learner's own diagrams, so fit it again once every node has its real size.
   useEffect(() => {
@@ -65,18 +88,21 @@ function CanvasInner({
     [setNodes],
   )
 
-  const addAtCenter = useCallback(
+  const addInView = useCallback(
     (type: MemNodeType) => {
       const bounds = wrapper.current?.getBoundingClientRect()
       if (!bounds) return
-      const jitter = () => (Math.random() - 0.5) * 80
-      const position = screenToFlowPosition({
-        x: bounds.left + bounds.width / 2 + jitter(),
-        y: bounds.top + bounds.height / 2 + jitter(),
-      })
-      addNode(type, position)
+      const topLeft = screenToFlowPosition({ x: bounds.left + 8, y: bounds.top + 48 })
+      const bottomRight = screenToFlowPosition({ x: bounds.right - 8, y: bounds.bottom - 8 })
+      const region = {
+        x: topLeft.x,
+        y: topLeft.y,
+        width: bottomRight.x - topLeft.x,
+        height: bottomRight.y - topLeft.y,
+      }
+      addNode(type, defaultPositionForType(type, nodes, region))
     },
-    [addNode, screenToFlowPosition],
+    [addNode, screenToFlowPosition, nodes],
   )
 
   const onDragOver = useCallback((event: DragEvent) => {
@@ -89,9 +115,10 @@ function CanvasInner({
       event.preventDefault()
       const type = event.dataTransfer.getData(DRAG_MIME) as MemNodeType
       if (!type) return
-      addNode(type, screenToFlowPosition({ x: event.clientX, y: event.clientY }))
+      const point = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+      addNode(type, freePosition(point, nodes))
     },
-    [addNode, screenToFlowPosition],
+    [addNode, screenToFlowPosition, nodes],
   )
 
   const onConnect = useCallback(
@@ -115,15 +142,50 @@ function CanvasInner({
     [nodes],
   )
 
+  const cancelTapConnection = useCallback(
+    () => store.setState({ connectionClickStartHandle: null }),
+    [store],
+  )
+
+  // React Flow only finishes a tap connection on a handle; tapping anywhere on the target block is easier on a phone.
+  const onNodeClick: NodeMouseHandler<MemFlowNode> = useCallback(
+    (event, node) => {
+      const start = store.getState().connectionClickStartHandle
+      if (!start) return
+      // A tap on a handle is handled by React Flow itself and then bubbles up to the node.
+      if ((event.target as Element).closest('.react-flow__handle')) return
+      const connection = tapConnection(start, node.id, nodes)
+      if (connection) onConnect(connection)
+      cancelTapConnection()
+    },
+    [store, nodes, onConnect, cancelTapConnection],
+  )
+
+  const displayedNodes = useMemo(
+    () =>
+      pending
+        ? nodes.map((node) =>
+            tapConnection(pending, node.id, nodes) ? { ...node, className: 'connect-target' } : node,
+          )
+        : nodes,
+    [nodes, pending],
+  )
+
   const displayedEdges = useMemo(
     () =>
-      edges.map((edge) =>
-        feedback.handleKeys.has(handleKey(edge.source, edge.sourceHandle ?? ''))
-          ? { ...edge, className: 'edge-error' }
-          : edge,
-      ),
+      edges.map((edge) => ({
+        ...edge,
+        interactionWidth: EDGE_TAP_WIDTH,
+        className: feedback.handleKeys.has(handleKey(edge.source, edge.sourceHandle ?? ''))
+          ? 'edge-error'
+          : undefined,
+      })),
     [edges, feedback],
   )
+
+  const selectedNodes = nodes.filter((node) => node.selected)
+  const selectedEdges = edges.filter((edge) => edge.selected)
+  const hasSelection = selectedNodes.length > 0 || selectedEdges.length > 0
 
   return (
     <FeedbackContext.Provider value={feedback}>
@@ -131,27 +193,52 @@ function CanvasInner({
         <ReadOnlyContext.Provider value={readOnly}>
           <div className="canvas" ref={wrapper}>
             <ReactFlow<MemFlowNode, MemFlowEdge>
-              nodes={nodes}
+              nodes={displayedNodes}
               edges={displayedEdges}
               nodeTypes={nodeTypes}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
+              onNodeClick={readOnly ? undefined : onNodeClick}
+              onPaneClick={readOnly ? undefined : cancelTapConnection}
               isValidConnection={checkConnection}
               onDragOver={onDragOver}
               onDrop={onDrop}
               defaultEdgeOptions={defaultEdgeOptions}
               deleteKeyCode={readOnly ? null : ['Backspace', 'Delete']}
               nodesConnectable={!readOnly}
+              connectionRadius={40}
+              zoomOnDoubleClick={false}
               minZoom={0.3}
-              fitView
-              fitViewOptions={{ maxZoom: 1 }}
+              fitView={readOnly}
+              fitViewOptions={readOnly ? { maxZoom: 1 } : undefined}
             >
               <Background />
-              <Controls showInteractive={false} />
+              <Controls position="bottom-right" showInteractive={false} />
               {!readOnly && (
-                <Panel position="top-left">
-                  <Toolbar language={language} onAdd={addAtCenter} />
+                <Panel position="top-left" className="toolbar-panel">
+                  <Toolbar language={language} onAdd={addInView} />
+                </Panel>
+              )}
+              {!readOnly && pending && (
+                <Panel position="bottom-center">
+                  <div className="connect-banner" role="status">
+                    <span>Tap what this points to</span>
+                    <button type="button" className="text-button" onClick={cancelTapConnection}>
+                      Cancel
+                    </button>
+                  </div>
+                </Panel>
+              )}
+              {!readOnly && !pending && hasSelection && (
+                <Panel position="bottom-left">
+                  <button
+                    type="button"
+                    className="canvas-delete"
+                    onClick={() => void deleteElements({ nodes: selectedNodes, edges: selectedEdges })}
+                  >
+                    Delete
+                  </button>
                 </Panel>
               )}
             </ReactFlow>

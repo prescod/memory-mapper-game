@@ -43,7 +43,18 @@ export interface ObjectMem {
   entries: { key: string; slot: Slot }[]
 }
 
-export type MemNode = ScalarMem | ArrayMem | ObjectMem
+/**
+ * An opaque instance of a built-in class (`Pet` in the identity level).
+ * Learners can tell instances apart by `label` but never see inside: no
+ * entries, slots, or attributes are shown or compared.
+ */
+export interface InstanceMem {
+  type: 'instance'
+  className: string
+  label: string
+}
+
+export type MemNode = ScalarMem | ArrayMem | ObjectMem | InstanceMem
 
 export interface VariableEntry {
   name: string

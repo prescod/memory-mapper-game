@@ -1,6 +1,6 @@
 import type { DragEvent } from 'react'
-import { CONTAINER_NAMES, type Language } from '../model/types'
 import type { MemNodeType } from './types'
+import { CONTAINER_NAMES, type Language } from '../model/types'
 
 export const DRAG_MIME = 'application/x-memory-node-type'
 
@@ -9,10 +9,11 @@ const capitalize = (word: string) => word.charAt(0).toUpperCase() + word.slice(1
 function palette(language: Language): { type: MemNodeType; label: string }[] {
   const names = CONTAINER_NAMES[language]
   return [
-    { type: 'variable', label: 'Add Variable' },
-    { type: 'scalar', label: 'Add Scalar' },
-    { type: 'array', label: `Add ${capitalize(names.array)}` },
-    { type: 'object', label: `Add ${capitalize(names.object)}` },
+    { type: 'variable', label: '+ Variable' },
+    { type: 'scalar', label: '+ Scalar' },
+    { type: 'array', label: `+ ${capitalize(names.array)}` },
+    { type: 'object', label: `+ ${capitalize(names.object)}` },
+    { type: 'pet', label: '+ Pet' },
   ]
 }
 
@@ -21,6 +22,7 @@ interface ToolbarProps {
   onAdd: (type: MemNodeType) => void
 }
 
+/** Tapping adds a block in view; on desktop a block can also be dragged into place. */
 export function Toolbar({ language, onAdd }: ToolbarProps) {
   const onDragStart = (event: DragEvent<HTMLButtonElement>, type: MemNodeType) => {
     event.dataTransfer.setData(DRAG_MIME, type)

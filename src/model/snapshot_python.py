@@ -136,6 +136,20 @@ def snapshot(code, names, checks=None):
     def encode(value):
         if value is None or isinstance(value, (bool, int, float, str)):
             return value
+        pet_class = namespace.get("Pet")
+        if pet_class is not None and type(value) is pet_class:
+            # A `Pet` from the hidden prelude: opaque, labelled by its private
+            # name. Never shown as a dict, even though it is an instance.
+            label = getattr(value, "_pet_label", None)
+            if not isinstance(label, str):
+                raise TypeError(f"Unsupported value in snapshot: {value!r}")
+            key = id(value)
+            if key in ids:
+                return {"ref": ids[key]}
+            container_id = f"c{len(ids)}"
+            ids[key] = container_id
+            containers[container_id] = {"kind": "pet", "label": label}
+            return {"ref": container_id}
         if not isinstance(value, (list, dict)):
             raise TypeError(f"Unsupported value in snapshot: {value!r}")
 

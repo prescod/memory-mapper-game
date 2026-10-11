@@ -1,6 +1,6 @@
 import { explainBrokenRules } from '../model/process'
 import type { Language, VerifyError, VerifyResult, WriteProblem } from '../model/types'
-import { OPAQUE_PRELUDE } from '../run/opaquePrelude'
+import { withOpaquePrelude } from '../run/opaquePrelude'
 import type { RunRequest } from '../run/protocol'
 import type { RunOutcome } from '../run/runCode'
 import { checkSource, findLiteralReusedHint } from './source'
@@ -8,16 +8,15 @@ import { verify } from './verify'
 
 /** What to run to grade `code` for `problem`: the starter code, the process rules and any alternate starters. */
 export function buildRunRequest(problem: WriteProblem, language: Language, code: string): RunRequest {
-  const hidden = problem.opaquePrelude ? `${OPAQUE_PRELUDE[language]}\n` : ''
+  const start = (source: string) =>
+    problem.opaquePrelude === true ? withOpaquePrelude(language, source) : source
   return {
     language,
-    given: `${hidden}${problem.given?.[language] ?? ''}`,
+    given: start(problem.given?.[language] ?? ''),
     code,
     names: problem.expected.variables.map((variable) => variable.name),
     checks: problem.process?.runtime,
-    alternateGivens: problem.process?.hidden?.map(
-      (alternate) => `${hidden}${alternate.given[language]}`,
-    ),
+    alternateGivens: problem.process?.hidden?.map((alternate) => start(alternate.given[language])),
   }
 }
 

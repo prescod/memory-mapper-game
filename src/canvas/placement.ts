@@ -1,0 +1,106 @@
+import type { XYPosition } from '@xyflow/react'
+import type { MemFlowNode, MemNodeType } from './types'
+
+interface Box {
+  position: XYPosition
+  measured?: { width?: number; height?: number }
+}
+
+/** Size assumed for a block that has not been measured yet, including a little breathing room. */
+const BLOCK = { width: 150, height: 76 }
+const GAP = 10
+
+export interface PlacementRegion {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+type Band = 'top' | 'middle' | 'bottom'
+
+export function bandForType(type: MemNodeType): Band {
+  switch (type) {
+    case 'variable':
+      return 'top'
+    case 'scalar':
+      return 'bottom'
+    case 'array':
+    case 'object':
+    case 'pet':
+      return 'middle'
+    default: {
+      const _unreachable: never = type
+      return _unreachable
+    }
+  }
+}
+
+const overlaps = (position: XYPosition, box: Box) => {
+  const width = box.measured?.width ?? BLOCK.width
+  const height = box.measured?.height ?? BLOCK.height
+  return (
+    position.x < box.position.x + width &&
+    position.x + BLOCK.width > box.position.x &&
+    position.y < box.position.y + height &&
+    position.y + BLOCK.height > box.position.y
+  )
+}
+
+function bandOrigin(band: Band, region: PlacementRegion): { y: number; rowStride: number } {
+  const { y, height } = region
+  switch (band) {
+    case 'top':
+      return { y: y + 8, rowStride: BLOCK.height + GAP }
+    case 'middle':
+      return { y: y + height * 0.36, rowStride: BLOCK.height + GAP }
+    case 'bottom':
+      return { y: y + height * 0.68, rowStride: BLOCK.height + GAP }
+  }
+}
+
+/**
+ * Where a new block of `type` should appear: variables along the top,
+ * scalars along the bottom, arrays and objects in the middle, each row
+ * filling left to right before wrapping.
+ */
+export function defaultPositionForType(
+  type: MemNodeType,
+  nodes: MemFlowNode[],
+  region: PlacementRegion,
+): XYPosition {
+  const band = bandForType(type)
+  const { y: bandY, rowStride } = bandOrigin(band, region)
+  const usableWidth = Math.max(BLOCK.width, region.width - 24)
+  const columns = Math.max(1, Math.floor(usableWidth / (BLOCK.width + GAP)))
+
+  for (let row = 0; row < 12; row++) {
+    for (let col = 0; col < columns; col++) {
+      const position = {
+        x: region.x + 12 + col * (BLOCK.width + GAP),
+        y: bandY + row * rowStride,
+      }
+      if (!nodes.some((node) => overlaps(position, node))) return position
+    }
+  }
+
+  return { x: region.x + 12, y: bandY }
+}
+
+/**
+ * Nudge `preferred` to the nearest free cell when dropping a block by hand.
+ */
+export function freePosition(preferred: XYPosition, existing: Box[]): XYPosition {
+  const COLUMN_STEPS = [0, 1, -1, 2, -2]
+  const ROW_STEPS = [0, 1, 2, 3, 4, 5, -1, -2]
+  for (const column of COLUMN_STEPS) {
+    for (const row of ROW_STEPS) {
+      const position = {
+        x: preferred.x + column * (BLOCK.width + GAP),
+        y: preferred.y + row * (BLOCK.height + GAP),
+      }
+      if (!existing.some((box) => overlaps(position, box))) return position
+    }
+  }
+  return preferred
+}
