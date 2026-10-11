@@ -106,8 +106,10 @@ describe('source feedback', () => {
     const upper = callsMethod('up', 's', { javascript: 'toUpperCase', python: 'upper' })
     expect(checkSource('python', 'up = "HI"', [upper])).toEqual(['Build "up" by calling s.upper().'])
     expect(checkSource('javascript', 'let up = "HI";', [upper])).toEqual(['Build "up" by calling s.toUpperCase().'])
-    expect(checkSource('python', 'b = [1]', [combines('b', 'b')])).toEqual(['Build "b" by adding to "b" with +.'])
-    expect(checkSource('javascript', 'b = [1];', [combines('b', 'b')])).toEqual(['Build "b" by calling concat on "b".'])
+    expect(checkSource('python', 'b = [1]', [combines('b', 'b')])).toEqual(['Build "b" with "b + [...]".'])
+    expect(checkSource('javascript', 'b = [1];', [combines('b', 'b')])).toEqual([
+      'Build "b" with "b.concat([...])".',
+    ])
   })
 
   it('reports each rule that is not met and no others', () => {

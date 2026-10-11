@@ -188,7 +188,10 @@ export const levels: Level[] = [
         process: {
           hidden: [{ given: { js: 'let a = 5;', py: 'a = 5' }, expected: graph({ a: 5, b: 5 }) }],
         },
-        hint: 'Assign variable a to a new variable b instead of typing the number 8 again.',
+        hint: {
+          js: 'Declare b and assign it from a instead of typing 8 again.',
+          py: 'Set b from a instead of typing 8 again.',
+        },
       }),
       draw({
         title: 'Area after a change',
@@ -219,7 +222,10 @@ export const levels: Level[] = [
             },
           ],
         },
-        hint: 'Create a new variable z and assign x to it so it matches x.',
+        hint: {
+          js: 'Declare z and assign it from x.',
+          py: 'Set z from x.',
+        },
       }),
       draw({
         title: 'Reassigning a copy',
@@ -277,7 +283,8 @@ export const levels: Level[] = [
         js: lines('let t = a;', 'a = b;', 'b = c;', 'c = t;'),
         py: lines('t = a', 'a = b', 'b = c', 'c = t'),
         expected: graph({ a: 2, b: 3, c: 1 }),
-        hint: 'Save the value of a in a temporary variable before assigning b to a.',
+        hint:
+          'Use a temporary variable to hold a, then set a = b, b = c, and c to that saved value.',
         process: {
           hidden: [
             {
@@ -400,7 +407,7 @@ export const levels: Level[] = [
         js: 'let full = first + " " + last;',
         py: 'full = first + " " + last',
         expected: graph({ first: 'Ada', last: 'Lovelace', full: 'Ada Lovelace' }),
-        hint: 'Concatenate first, a space " ", and last to build full.',
+        hint: 'Join first, a space " ", and last to build full.',
         process: {
           hidden: [
             {
@@ -441,7 +448,7 @@ export const levels: Level[] = [
         js: 'let n = "1" + "2";',
         py: 'n = "1" + "2"',
         expected: graph({ n: '12' }),
-        hint: 'Concatenating the strings "1" and "2" results in the string node "12".',
+        hint: 'Joining the strings "1" and "2" produces the string node "12".',
       }),
       draw({
         title: 'A copied boolean',
@@ -475,7 +482,7 @@ export const levels: Level[] = [
   level(
     'arrays',
     'Arrays and Lists',
-    'An array (JavaScript) or list (Python) is a separate object in memory with numbered slots. A variable holds only a reference to it, so two variables can refer to the same array. Two arrays with equal contents are still two separate objects.',
+    'An array (JavaScript) or list (Python) is a separate object in memory with numbered slots. A variable holds only a reference to it, so two variables can refer to the same list or array. Two lists or arrays with equal contents are still two separate objects.',
     [
       draw({
         title: 'A list of numbers',
@@ -502,7 +509,7 @@ export const levels: Level[] = [
         expected: graph({ mixed: ref('mixed') }, { mixed: list(1, 'two', true) }),
       }),
       write({
-        title: 'Nulls in a list',
+        title: 'Null and None in a list',
         js: 'let cells = [null, 0, null];',
         py: 'cells = [None, 0, None]',
         expected: graph({ cells: ref('cells') }, { cells: list(null, 0, null) }),
@@ -596,7 +603,7 @@ export const levels: Level[] = [
   level(
     'objects',
     'Objects and Dictionaries',
-    'An object (JavaScript) or dictionary (Python) stores values under named keys. Like an array, it is a separate object in memory, and variables hold references to it.',
+    'An object (JavaScript) or dictionary (Python) stores values under named keys. Like a list or array, it is a separate object or dictionary in memory, and variables hold references to it.',
     [
       draw({
         title: 'One key',
@@ -714,7 +721,7 @@ export const levels: Level[] = [
   level(
     'mutating-arrays',
     'Changing Arrays',
-    'Adding, removing or overwriting an item changes the array itself, so every variable that refers to it sees the change. Assigning a new array to a variable is different: it repoints only that variable and leaves the old array as it was.',
+    'Adding, removing or overwriting an item changes the list or array itself, so every variable that refers to it sees the change. Assigning a new list or array to a variable is different: it repoints only that variable and leaves the previous one as it was.',
     [
       draw({
         title: 'Appending',
@@ -803,7 +810,7 @@ export const levels: Level[] = [
         process: { runtime: runtime(preserve('a')) },
       }),
       draw({
-        title: 'Push once, pop twice',
+        title: 'Grow once, pop twice',
         js: lines('let a = [4, 5];', 'a.push(6);', 'a.pop();', 'a.pop();'),
         py: lines('a = [4, 5]', 'a.append(6)', 'a.pop()', 'a.pop()'),
         expected: graph({ a: ref('a') }, { a: list(4) }),
@@ -976,7 +983,7 @@ export const levels: Level[] = [
   level(
     'nesting',
     'Nested Structures',
-    'Arrays and objects can hold references to other arrays and objects. Each inner array or object is a separate object in memory, and the same one can be referred to from several places.',
+    'Lists (arrays) and objects (dictionaries) can hold references to other lists and objects. Each inner list or object is a separate object in memory, and the same one can be referred to from several places.',
     [
       draw({
         title: 'A grid',
@@ -1158,7 +1165,7 @@ export const levels: Level[] = [
   level(
     'copies',
     'Copies and Aliases',
-    'Copying with spread (JavaScript) or list() and dict() (Python) makes a new outer array or object, but any arrays or objects inside are shared with the original, not copied. That is a shallow copy. Repeating an item, as with fill() or *, repeats the same reference.',
+    'Copying with spread (JavaScript) or list() and dict() (Python) makes a new outer list or array or object or dictionary, but any inner lists or objects inside are shared with the original, not copied. That is a shallow copy. Repeating an item, as with fill() or *, repeats the same reference.',
     [
       draw({
         title: 'A copy of a list',
@@ -1427,7 +1434,7 @@ export const levels: Level[] = [
         expected: graph({ a: null, b: null }),
       }),
       write({
-        title: 'Concat leaves the original',
+        title: 'Combine without changing the original',
         given: { js: lines('let a = [1, 2];', 'let b = a;'), py: lines('a = [1, 2]', 'b = a') },
         js: 'b = b.concat([3, 4]);',
         py: 'b = b + [3, 4]',
@@ -1528,7 +1535,7 @@ export const levels: Level[] = [
         expected: graph({ a: ref('a') }, { a: list(5) }),
       }),
       draw({
-        title: 'Concat makes a new list',
+        title: 'Combine, then grow the copy',
         js: lines('let a = [1];', 'let b = a;', 'b = b.concat([2]);', 'b.push(3);'),
         py: lines('a = [1]', 'b = a', 'b = b + [2]', 'b.append(3)'),
         expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1), b: list(1, 2, 3) }),
@@ -1539,7 +1546,7 @@ export const levels: Level[] = [
   level(
     'cycles',
     'Cycles and Linked Data',
-    'Objects can be chained into a linked list, where each one refers to the next and the last refers to null (None in Python). References can also loop back: an array or object can contain a reference to itself, and two objects can refer to each other.',
+    'Objects can be chained into a linked list, where each one refers to the next and the last refers to null (None in Python). References can also loop back: a list or array or object or dictionary can refer to itself, and two objects can refer to each other.',
     [
       draw({
         title: 'A linked list',

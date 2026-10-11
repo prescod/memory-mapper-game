@@ -48,8 +48,8 @@ export function Dashboard({ onOpen }: { onOpen: (problemId: string) => void }) {
     <div className="dashboard">
       <h1>The Data Game</h1>
       <p className="dashboard-intro">
-        Read a snippet, then build the diagram of variables, values, arrays and objects that
-        exists in memory once it has run. Some problems go the other way: you are shown the
+        Read a snippet, then build the diagram of variables, values, lists or arrays, and
+        objects or dictionaries that exists in memory once it has run. Some problems go the
         diagram and write the code that produces it. Every problem is available in both
         languages, and progress is tracked separately for each.
       </p>

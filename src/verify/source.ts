@@ -175,8 +175,8 @@ function explain(rule: SourceRule, language: Language): string {
       return `Build ${target} by copying "${rule.source}" instead of writing its contents out again.`
     case 'combine':
       return language === 'javascript'
-        ? `Build ${target} by calling concat on "${rule.source}".`
-        : `Build ${target} by adding to "${rule.source}" with +.`
+        ? `Build ${target} with "${rule.source}.concat([...])".`
+        : `Build ${target} with "${rule.source} + [...]".`
   }
 }
 

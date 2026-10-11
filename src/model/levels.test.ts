@@ -403,7 +403,7 @@ describe('shortcuts that match the picture but miss the point', () => {
       'lo = "hi"\nup = "HI"',
       /by calling s\.(toLowerCase|lower)\(\)/,
     ],
-    ['rebinding-8', 'b = [1, 2, 3, 4];', 'b = [1, 2, 3, 4]', /Build "b" by (calling concat on|adding to) "b"/],
+    ['rebinding-8', 'b = [1, 2, 3, 4];', 'b = [1, 2, 3, 4]', /Build "b" with "b(\.concat\(\[\.\.\.\]\)| \+ \[\.\.\.\])"/],
     ['rebinding-9', 'a = [9];\nb = [1, 2];', 'a = [9]\nb = [1, 2]', /"b" afterward should be the same object as "a" at the start/],
     [
       'rebinding-10',
