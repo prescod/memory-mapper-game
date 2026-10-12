@@ -54,6 +54,7 @@ export const arraysLevel: Level = level(
     write({
       title: { js: 'An array of strings', py: 'A list of strings' },
       js: 'let colors = ["red", "green"];',
+      ts: 'let colors: string[] = ["red", "green"];',
       py: 'colors = ["red", "green"]',
       expected: graph({ colors: ref('colors') }, { colors: list('red', 'green') }),
       hint: {
@@ -178,6 +179,7 @@ export const arraysLevel: Level = level(
     write({
       title: { js: 'Null in an array', py: 'None in a list' },
       js: 'let cells = [null, 0, null];',
+      ts: 'let cells: (number | null)[] = [null, 0, null];',
       py: 'cells = [None, 0, None]',
       expected: graph({ cells: ref('cells') }, { cells: list(null, 0, null) }),
       hint: {
@@ -274,6 +276,7 @@ export const arraysLevel: Level = level(
     write({
       title: 'A repeated number',
       js: 'let pair = [3, 3];',
+      ts: 'let pair: number[] = [3, 3];',
       py: 'pair = [3, 3]',
       expected: graph({ pair: ref('pair') }, { pair: list(3, 3) }),
       hint: {
@@ -319,8 +322,9 @@ export const arraysLevel: Level = level(
     }),
     write({
       title: { js: 'An array from a variable', py: 'A list from a variable' },
-      given: { js: 'let n = 5;', py: 'n = 5' },
+      given: { js: 'let n = 5;', ts: 'let n: number = 5;', py: 'n = 5' },
       js: 'let row = [n];',
+      ts: 'let row: number[] = [n];',
       py: 'row = [n]',
       expected: graph({ n: 5, row: ref('row') }, { row: list(5) }),
       constraints: [
@@ -329,7 +333,7 @@ export const arraysLevel: Level = level(
           cases: [
             {
               change: 'n starts at 7',
-              given: { js: 'let n = 7;', py: 'n = 7' },
+              given: { js: 'let n = 7;', ts: 'let n: number = 7;', py: 'n = 7' },
               expected: graph({ n: 7, row: ref('row') }, { row: list(7) }),
             },
           ],
@@ -445,6 +449,7 @@ export const arraysLevel: Level = level(
     write({
       title: { js: 'Two arrays from literals', py: 'Two lists from literals' },
       js: lines('let p = [0];', 'let q = [0];'),
+      ts: lines('let p: number[] = [0];', 'let q: number[] = [0];'),
       py: lines('p = [0]', 'q = [0]'),
       expected: graph({ p: ref('p'), q: ref('q') }, { p: list(0), q: list(0) }),
       hint: {
@@ -499,7 +504,10 @@ export const arraysLevel: Level = level(
     write({
       title: 'Every kind of value',
       js: lines('let empty = [];', 'let full = [1, "1", true, null];'),
-      ts: lines('let empty: unknown[] = [];', 'let full = [1, "1", true, null];'),
+      ts: lines(
+        'let empty: unknown[] = [];',
+        'let full: (number | string | boolean | null)[] = [1, "1", true, null];',
+      ),
       py: lines('empty = []', 'full = [1, "1", True, None]'),
       expected: graph(
         { empty: ref('empty'), full: ref('full') },

@@ -57,6 +57,7 @@ export const objectsLevel: Level = level(
     write({
       title: { js: 'A key pointing to null', py: 'A key pointing to None' },
       js: 'let game = { winner: null };',
+      ts: 'let game: { winner: null } = { winner: null };',
       py: 'game = {"winner": None}',
       expected: graph({ game: ref('game') }, { game: dict({ winner: null }) }),
       hint: {
@@ -151,6 +152,7 @@ export const objectsLevel: Level = level(
     write({
       title: 'Settings',
       js: 'let settings = { dark: true, size: 12 };',
+      ts: 'let settings: { dark: boolean; size: number } = { dark: true, size: 12 };',
       py: 'settings = {"dark": True, "size": 12}',
       expected: graph({ settings: ref('settings') }, { settings: dict({ dark: true, size: 12 }) }),
       hint: {
@@ -240,6 +242,7 @@ export const objectsLevel: Level = level(
     write({
       title: 'A book',
       js: 'let book = { title: "Dune", year: 1965, read: false };',
+      ts: 'let book: { title: string; year: number; read: boolean } = { title: "Dune", year: 1965, read: false };',
       py: 'book = {"title": "Dune", "year": 1965, "read": False}',
       expected: graph(
         { book: ref('book') },
@@ -423,6 +426,7 @@ export const objectsLevel: Level = level(
     write({
       title: { js: 'Three names, one object', py: 'Three names, one dictionary' },
       js: lines('let x = { n: 0 };', 'let y = x;', 'let z = x;'),
+      ts: lines('let x: { n: number } = { n: 0 };', 'let y: { n: number } = x;', 'let z: { n: number } = x;'),
       py: lines('x = {"n": 0}', 'y = x', 'z = x'),
       expected: graph(
         { x: ref('shared'), y: ref('shared'), z: ref('shared') },
@@ -490,6 +494,7 @@ export const objectsLevel: Level = level(
     write({
       title: 'One alone, two together',
       js: lines('let a = { id: 1 };', 'let b = { id: 2 };', 'let c = b;'),
+      ts: lines('let a: { id: number } = { id: 1 };', 'let b: { id: number } = { id: 2 };', 'let c: { id: number } = b;'),
       py: lines('a = {"id": 1}', 'b = {"id": 2}', 'c = b'),
       expected: graph(
         { a: ref('alone'), b: ref('pair'), c: ref('pair') },
@@ -557,6 +562,7 @@ export const objectsLevel: Level = level(
     write({
       title: { js: 'Same keys, different objects', py: 'Same keys, different dictionaries' },
       js: lines('let ann = { name: "Ann" };', 'let bob = { name: "Bob" };'),
+      ts: lines('let ann: { name: string } = { name: "Ann" };', 'let bob: { name: string } = { name: "Bob" };'),
       py: lines('ann = {"name": "Ann"}', 'bob = {"name": "Bob"}'),
       expected: graph(
         { ann: ref('ann'), bob: ref('bob') },
@@ -726,6 +732,10 @@ export const objectsLevel: Level = level(
     write({
       title: 'Settings under another name',
       js: lines('let config = { debug: false, name: "app", retries: 0 };', 'let settings = config;'),
+      ts: lines(
+        'let config: { debug: boolean; name: string; retries: number } = { debug: false, name: "app", retries: 0 };',
+        'let settings: { debug: boolean; name: string; retries: number } = config;',
+      ),
       py: lines('config = {"debug": False, "name": "app", "retries": 0}', 'settings = config'),
       expected: graph(
         { config: ref('shared'), settings: ref('shared') },

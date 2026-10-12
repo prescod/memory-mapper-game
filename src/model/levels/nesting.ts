@@ -210,6 +210,7 @@ export const nestingLevel: Level = level(
     write({
       title: { js: 'An object holding an object', py: 'A dictionary holding a dictionary' },
       js: 'let home = { address: { city: "Oslo" } };',
+      ts: 'let home: { address: { city: string } } = { address: { city: "Oslo" } };',
       py: 'home = {"address": {"city": "Oslo"}}',
       expected: graph(
         { home: ref('home') },
@@ -338,6 +339,11 @@ export const nestingLevel: Level = level(
     write({
       title: 'Parent and child',
       js: lines('let parent = { kids: [] };', 'let kid = { parent: parent };', 'parent.kids.push(kid);'),
+      ts: lines(
+        'let parent: { kids: unknown[] } = { kids: [] };',
+        'let kid: { parent: unknown } = { parent: parent };',
+        'parent.kids.push(kid);',
+      ),
       py: lines('parent = {"kids": []}', 'kid = {"parent": parent}', 'parent["kids"].append(kid)'),
       expected: graph(
         { parent: ref('parent'), kid: ref('kid') },
@@ -482,6 +488,10 @@ export const nestingLevel: Level = level(
     write({
       title: { js: 'Two properties, one array', py: 'Two keys, one list' },
       js: lines('let nums = [0];', 'let box = { left: nums, right: nums };'),
+      ts: lines(
+        'let nums: number[] = [0];',
+        'let box: { left: number[]; right: number[] } = { left: nums, right: nums };',
+      ),
       py: lines('nums = [0]', 'box = {"left": nums, "right": nums}'),
       expected: graph(
         { box: ref('box') },
@@ -559,6 +569,11 @@ export const nestingLevel: Level = level(
     write({
       title: { js: 'Two arrays, one object', py: 'Two lists, one dictionary' },
       js: lines('let o = { v: 1 };', 'let a = [o];', 'let b = [o];'),
+      ts: lines(
+        'let o: { v: number } = { v: 1 };',
+        'let a: { v: number }[] = [o];',
+        'let b: { v: number }[] = [o];',
+      ),
       py: lines('o = {"v": 1}', 'a = [o]', 'b = [o]'),
       expected: graph(
         { a: ref('a'), b: ref('b') },
@@ -700,6 +715,7 @@ export const nestingLevel: Level = level(
     write({
       title: 'One row, used twice',
       js: lines('let row = [null, null];', 'let board = [row, row];'),
+      ts: lines('let row: null[] = [null, null];', 'let board: null[][] = [row, row];'),
       py: lines('row = [None, None]', 'board = [row, row]'),
       expected: graph(
         { board: ref('board') },
@@ -833,6 +849,7 @@ export const nestingLevel: Level = level(
     write({
       title: 'Two points in a line',
       js: 'let line = { start: { x: 0, y: 0 }, end: { x: 3, y: 4 } };',
+      ts: 'let line: { start: { x: number; y: number }; end: { x: number; y: number } } = { start: { x: 0, y: 0 }, end: { x: 3, y: 4 } };',
       py: 'line = {"start": {"x": 0, "y": 0}, "end": {"x": 3, "y": 4}}',
       expected: graph(
         { line: ref('line') },

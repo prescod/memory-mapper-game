@@ -195,7 +195,7 @@ export const mutatingArraysLevel: Level = level(
     }),
     write({
       title: 'Change the middle',
-      given: { js: 'let a = [1, 2, 3];', py: 'a = [1, 2, 3]' },
+      given: { js: 'let a = [1, 2, 3];', ts: 'let a: number[] = [1, 2, 3];', py: 'a = [1, 2, 3]' },
       js: 'a[1] = 5;',
       py: 'a[1] = 5',
       expected: graph({ a: ref('a') }, { a: list(1, 5, 3) }),
@@ -281,7 +281,11 @@ export const mutatingArraysLevel: Level = level(
     }),
     write({
       title: 'Empty it for both',
-      given: { js: lines('let a = [4, 5];', 'let b = a;'), py: lines('a = [4, 5]', 'b = a') },
+      given: {
+        js: lines('let a = [4, 5];', 'let b = a;'),
+        ts: lines('let a: number[] = [4, 5];', 'let b: number[] = a;'),
+        py: lines('a = [4, 5]', 'b = a'),
+      },
       js: lines('a.pop();', 'a.pop();'),
       py: lines('a.pop()', 'a.pop()'),
       expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: list() }),
@@ -341,7 +345,11 @@ export const mutatingArraysLevel: Level = level(
     }),
     write({
       title: 'Add for both',
-      given: { js: lines('let a = ["x"];', 'let b = a;'), py: lines('a = ["x"]', 'b = a') },
+      given: {
+        js: lines('let a = ["x"];', 'let b = a;'),
+        ts: lines('let a: string[] = ["x"];', 'let b: string[] = a;'),
+        py: lines('a = ["x"]', 'b = a'),
+      },
       js: 'b.push("y");',
       py: 'b.append("y")',
       expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: list('x', 'y') }),
@@ -444,7 +452,11 @@ export const mutatingArraysLevel: Level = level(
     }),
     write({
       title: 'Split them apart',
-      given: { js: lines('let a = [1];', 'let b = a;'), py: lines('a = [1]', 'b = a') },
+      given: {
+        js: lines('let a = [1];', 'let b = a;'),
+        ts: lines('let a: number[] = [1];', 'let b: number[] = a;'),
+        py: lines('a = [1]', 'b = a'),
+      },
       js: 'b = [1, 2];',
       py: 'b = [1, 2]',
       expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1), b: list(1, 2) }),
@@ -511,6 +523,7 @@ export const mutatingArraysLevel: Level = level(
       title: 'Peel one off',
       given: {
         js: lines('let a = [1];', 'let b = a;', 'let c = a;'),
+        ts: lines('let a: number[] = [1];', 'let b: number[] = a;', 'let c: number[] = a;'),
         py: lines('a = [1]', 'b = a', 'c = a'),
       },
       js: lines('b = [];', 'c.push(2);'),
@@ -621,7 +634,7 @@ export const mutatingArraysLevel: Level = level(
     }),
     write({
       title: 'Fill the ends',
-      given: { js: 'let a = [0, 0, 0];', py: 'a = [0, 0, 0]' },
+      given: { js: 'let a = [0, 0, 0];', ts: 'let a: number[] = [0, 0, 0];', py: 'a = [0, 0, 0]' },
       js: lines('a[0] = 7;', 'a[2] = 8;'),
       py: lines('a[0] = 7', 'a[2] = 8'),
       expected: graph({ a: ref('a') }, { a: list(7, 0, 8) }),

@@ -156,7 +156,14 @@ export const functionsLevel: Level = level(
       title: { js: 'Call it on the right array', py: 'Call it on the right list' },
       given: {
         js: lines('function grow(arr) {', '  arr.push(0);', '}', 'let a = [1];', 'let b = [2];', 'let c = b;'),
-        ts: lines('function grow(arr: number[]): void {', '  arr.push(0);', '}', 'let a = [1];', 'let b = [2];', 'let c = b;'),
+        ts: lines(
+          'function grow(arr: number[]): void {',
+          '  arr.push(0);',
+          '}',
+          'let a: number[] = [1];',
+          'let b: number[] = [2];',
+          'let c: number[] = b;',
+        ),
         py: lines('def grow(arr):', '    arr.append(0)', '', 'a = [1]', 'b = [2]', 'c = b'),
       },
       js: 'grow(b);',
@@ -409,10 +416,16 @@ export const functionsLevel: Level = level(
       title: 'Pairing a row',
       given: {
         js: lines('function pair(x) {', '  return [x, x];', '}', 'let row = [8];'),
-        ts: lines('function pair(x: number[]): number[][] {', '  return [x, x];', '}', 'let row = [8];'),
+        ts: lines(
+          'function pair(x: number[]): number[][] {',
+          '  return [x, x];',
+          '}',
+          'let row: number[] = [8];',
+        ),
         py: lines('def pair(x):', '    return [x, x]', '', 'row = [8]'),
       },
       js: 'let grid = pair(row);',
+      ts: 'let grid: number[][] = pair(row);',
       py: 'grid = pair(row)',
       expected: graph(
         { row: ref('row'), grid: ref('grid') },
@@ -558,10 +571,12 @@ export const functionsLevel: Level = level(
       title: 'Add without changing it',
       given: {
         js: 'let cart = ["tea"];',
+        ts: 'let cart: string[] = ["tea"];',
         py: 'cart = ["tea"]',
       },
       then: {
         js: 'let order = withMilk(cart);',
+        ts: 'let order: string[] = withMilk(cart);',
         py: 'order = with_milk(cart)',
       },
       js: lines('function withMilk(items) {', '  return items.concat(["milk"]);', '}'),
@@ -580,7 +595,11 @@ export const functionsLevel: Level = level(
           cases: [
             {
               change: 'cart starts as ["coffee"]',
-              given: { js: 'let cart = ["coffee"];', py: 'cart = ["coffee"]' },
+              given: {
+                js: 'let cart = ["coffee"];',
+                ts: 'let cart: string[] = ["coffee"];',
+                py: 'cart = ["coffee"]',
+              },
               expected: graph(
                 { cart: ref('cart'), order: ref('order') },
                 { cart: list('coffee'), order: list('coffee', 'milk') },
@@ -654,6 +673,7 @@ export const functionsLevel: Level = level(
       title: 'Change it for everyone',
       given: {
         js: lines('let cart = ["tea"];', 'let saved = cart;'),
+        ts: lines('let cart: string[] = ["tea"];', 'let saved: string[] = cart;'),
         py: lines('cart = ["tea"]', 'saved = cart'),
       },
       then: {
@@ -672,6 +692,7 @@ export const functionsLevel: Level = level(
           {
             given: {
               js: lines('let cart = ["coffee"];', 'let saved = cart;'),
+              ts: lines('let cart: string[] = ["coffee"];', 'let saved: string[] = cart;'),
               py: lines('cart = ["coffee"]', 'saved = cart'),
             },
             then: { js: '', py: '' },
@@ -766,7 +787,7 @@ export const functionsLevel: Level = level(
       title: 'Moving a finished task',
       given: {
         js: lines('let todo = ["wash"];', 'let done = [];'),
-        ts: lines('let todo = ["wash"];', 'let done: string[] = [];'),
+        ts: lines('let todo: string[] = ["wash"];', 'let done: string[] = [];'),
         py: lines('todo = ["wash"]', 'done = []'),
       },
       then: {
@@ -785,7 +806,7 @@ export const functionsLevel: Level = level(
               change: 'todo starts as ["dry"]',
               given: {
                 js: lines('let todo = ["dry"];', 'let done = [];'),
-                ts: lines('let todo = ["dry"];', 'let done: string[] = [];'),
+                ts: lines('let todo: string[] = ["dry"];', 'let done: string[] = [];'),
                 py: lines('todo = ["dry"]', 'done = []'),
               },
               expected: graph({ todo: ref('todo'), done: ref('done') }, { todo: list(), done: list('dry') }),
@@ -798,7 +819,7 @@ export const functionsLevel: Level = level(
           {
             given: {
               js: lines('let todo = ["dry"];', 'let done = [];'),
-              ts: lines('let todo = ["dry"];', 'let done: string[] = [];'),
+              ts: lines('let todo: string[] = ["dry"];', 'let done: string[] = [];'),
               py: lines('todo = ["dry"]', 'done = []'),
             },
             then: { js: '', py: '' },
@@ -936,6 +957,10 @@ export const functionsLevel: Level = level(
       title: 'Restocking a shelf',
       given: {
         js: lines('let shelf = { items: ["jam"] };', 'let old = shelf.items;'),
+        ts: lines(
+          'let shelf: { items: string[] } = { items: ["jam"] };',
+          'let old: string[] = shelf.items;',
+        ),
         py: lines('shelf = {"items": ["jam"]}', 'old = shelf["items"]'),
       },
       then: {
@@ -955,6 +980,10 @@ export const functionsLevel: Level = level(
           {
             given: {
               js: lines('let shelf = { items: ["jam"] };', 'let old = shelf.items;'),
+              ts: lines(
+                'let shelf: { items: string[] } = { items: ["jam"] };',
+                'let old: string[] = shelf.items;',
+              ),
               py: lines('shelf = {"items": ["jam"]}', 'old = shelf["items"]'),
             },
             then: { js: '', py: '' },
@@ -1061,6 +1090,10 @@ export const functionsLevel: Level = level(
       title: 'Tagging in place',
       given: {
         js: lines('let a = { n: 1 };', 'let b = { n: 2 };'),
+        ts: lines(
+          'let a: { n: number; tagged?: boolean } = { n: 1 };',
+          'let b: { n: number; tagged?: boolean } = { n: 2 };',
+        ),
         py: lines('a = {"n": 1}', 'b = {"n": 2}'),
       },
       then: {
@@ -1082,6 +1115,10 @@ export const functionsLevel: Level = level(
               change: 'tag is called on b instead of a',
               given: {
                 js: lines('let a = { n: 1 };', 'let b = { n: 2 };'),
+                ts: lines(
+                  'let a: { n: number; tagged?: boolean } = { n: 1 };',
+                  'let b: { n: number; tagged?: boolean } = { n: 2 };',
+                ),
                 py: lines('a = {"n": 1}', 'b = {"n": 2}'),
               },
               then: { js: 'tag(b);', py: 'tag(b)' },

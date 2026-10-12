@@ -129,8 +129,9 @@ export const copiesLevel: Level = level(
     }),
     write({
       title: 'Copy and add a key',
-      given: { js: 'let p = { n: 1 };', py: 'p = {"n": 1}' },
+      given: { js: 'let p = { n: 1 };', ts: 'let p: { n: number } = { n: 1 };', py: 'p = {"n": 1}' },
       js: lines('let q = { ...p };', 'q.m = 2;'),
+      ts: lines('let q: { n: number; m?: number } = { ...p };', 'q.m = 2;'),
       py: lines('q = dict(p)', 'q["m"] = 2'),
       expected: graph({ p: ref('p'), q: ref('q') }, { p: dict({ n: 1 }), q: dict({ n: 1, m: 2 }) }),
       hint: {
@@ -153,7 +154,7 @@ export const copiesLevel: Level = level(
         source: [copiesFrom('q', 'p')],
         hidden: [
           {
-            given: { js: 'let p = { n: 4 };', py: 'p = {"n": 4}' },
+            given: { js: 'let p = { n: 4 };', ts: 'let p: { n: number } = { n: 4 };', py: 'p = {"n": 4}' },
             expected: graph({ p: ref('p'), q: ref('q') }, { p: dict({ n: 4 }), q: dict({ n: 4, m: 2 }) }),
           },
         ],
@@ -197,8 +198,9 @@ export const copiesLevel: Level = level(
     }),
     write({
       title: 'Copy, then grow the copy',
-      given: { js: 'let a = [1, 2];', py: 'a = [1, 2]' },
+      given: { js: 'let a = [1, 2];', ts: 'let a: number[] = [1, 2];', py: 'a = [1, 2]' },
       js: lines('let b = [...a];', 'b.push(3);'),
+      ts: lines('let b: number[] = [...a];', 'b.push(3);'),
       py: lines('b = list(a)', 'b.append(3)'),
       expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1, 2), b: list(1, 2, 3) }),
       hint: {
@@ -221,7 +223,7 @@ export const copiesLevel: Level = level(
         source: [copiesOrCombinesFrom('b', 'a')],
         hidden: [
           {
-            given: { js: 'let a = [5, 6];', py: 'a = [5, 6]' },
+            given: { js: 'let a = [5, 6];', ts: 'let a: number[] = [5, 6];', py: 'a = [5, 6]' },
             expected: graph({ a: ref('a'), b: ref('b') }, { a: list(5, 6), b: list(5, 6, 3) }),
           },
         ],
@@ -383,8 +385,9 @@ export const copiesLevel: Level = level(
     }),
     write({
       title: 'A shallow object copy',
-      given: { js: 'let p = { tags: ["x"] };', py: 'p = {"tags": ["x"]}' },
+      given: { js: 'let p = { tags: ["x"] };', ts: 'let p: { tags: string[] } = { tags: ["x"] };', py: 'p = {"tags": ["x"]}' },
       js: lines('let q = { ...p };', 'q.tags.push("y");'),
+      ts: lines('let q: { tags: string[] } = { ...p };', 'q.tags.push("y");'),
       py: lines('q = dict(p)', 'q["tags"].append("y")'),
       expected: graph(
         { p: ref('p'), q: ref('q') },
@@ -419,7 +422,7 @@ export const copiesLevel: Level = level(
         source: [copiesFrom('q', 'p')],
         hidden: [
           {
-            given: { js: 'let p = { tags: ["z"] };', py: 'p = {"tags": ["z"]}' },
+            given: { js: 'let p = { tags: ["z"] };', ts: 'let p: { tags: string[] } = { tags: ["z"] };', py: 'p = {"tags": ["z"]}' },
             expected: graph(
               { p: ref('p'), q: ref('q') },
               {
@@ -546,6 +549,7 @@ export const copiesLevel: Level = level(
     write({
       title: 'Rows that don\'t share',
       js: 'let grid = [[0], [0], [0]];',
+      ts: 'let grid: number[][] = [[0], [0], [0]];',
       py: 'grid = [[0], [0], [0]]',
       expected: graph(
         { grid: ref('grid') },
@@ -621,8 +625,9 @@ export const copiesLevel: Level = level(
     }),
     write({
       title: 'A copy that shares nothing',
-      given: { js: 'let a = [[1], [2]];', py: 'a = [[1], [2]]' },
+      given: { js: 'let a = [[1], [2]];', ts: 'let a: number[][] = [[1], [2]];', py: 'a = [[1], [2]]' },
       js: 'let b = [[...a[0]], [...a[1]]];',
+      ts: 'let b: number[][] = [[...a[0]], [...a[1]]];',
       py: 'b = [list(a[0]), list(a[1])]',
       expected: graph(
         { a: ref('a'), b: ref('b') },
@@ -654,7 +659,7 @@ export const copiesLevel: Level = level(
         runtime: runtime(preserve('a'), preserve('a', 0), preserve('a', 1)),
         hidden: [
           {
-            given: { js: 'let a = [[3], [4]];', py: 'a = [[3], [4]]' },
+            given: { js: 'let a = [[3], [4]];', ts: 'let a: number[][] = [[3], [4]];', py: 'a = [[3], [4]]' },
             expected: graph(
               { a: ref('a'), b: ref('b') },
               {
@@ -729,8 +734,9 @@ export const copiesLevel: Level = level(
   [
     write({
       title: 'A shallow copy, changed twice',
-      given: { js: 'let p = { tags: ["a"] };', py: 'p = {"tags": ["a"]}' },
+      given: { js: 'let p = { tags: ["a"] };', ts: 'let p: { tags: string[] } = { tags: ["a"] };', py: 'p = {"tags": ["a"]}' },
       js: lines('let q = { ...p };', 'q.extra = true;', 'q.tags.push("b");'),
+      ts: lines('let q: { tags: string[]; extra?: boolean } = { ...p };', 'q.extra = true;', 'q.tags.push("b");'),
       py: lines('q = dict(p)', 'q["extra"] = True', 'q["tags"].append("b")'),
       expected: graph(
         { p: ref('p'), q: ref('q') },
@@ -765,7 +771,7 @@ export const copiesLevel: Level = level(
         source: [copiesFrom('q', 'p')],
         hidden: [
           {
-            given: { js: 'let p = { tags: ["c"] };', py: 'p = {"tags": ["c"]}' },
+            given: { js: 'let p = { tags: ["c"] };', ts: 'let p: { tags: string[] } = { tags: ["c"] };', py: 'p = {"tags": ["c"]}' },
             expected: graph(
               { p: ref('p'), q: ref('q') },
               {
@@ -954,8 +960,9 @@ export const copiesLevel: Level = level(
     }),
     write({
       title: 'Copy, then add a row',
-      given: { js: 'let a = [[1], [2]];', py: 'a = [[1], [2]]' },
+      given: { js: 'let a = [[1], [2]];', ts: 'let a: number[][] = [[1], [2]];', py: 'a = [[1], [2]]' },
       js: lines('let b = [...a];', 'b.push([3]);'),
+      ts: lines('let b: number[][] = [...a];', 'b.push([3]);'),
       py: lines('b = list(a)', 'b.append([3])'),
       expected: graph(
         { a: ref('a'), b: ref('b') },

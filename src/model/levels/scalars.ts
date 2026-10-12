@@ -168,8 +168,9 @@ export const scalarsLevel: Level = level(
     }),
     write({
       title: 'Two equal values',
-      given: { js: 'let a = 8;', py: 'a = 8' },
+      given: { js: 'let a = 8;', ts: 'let a: number = 8;', py: 'a = 8' },
       js: 'let b = a;',
+      ts: 'let b: number = a;',
       py: 'b = a',
       expected: graph({ a: 8, b: 8 }),
       constraints: [
@@ -178,7 +179,7 @@ export const scalarsLevel: Level = level(
           cases: [
             {
               change: 'a starts at 3',
-              given: { js: 'let a = 3;', py: 'a = 3' },
+              given: { js: 'let a = 3;', ts: 'let a: number = 3;', py: 'a = 3' },
               expected: graph({ a: 3, b: 3 }),
             },
           ],
@@ -278,8 +279,9 @@ export const scalarsLevel: Level = level(
     }),
     write({
       title: 'Two teams',
-      given: { js: 'let players = 2;', py: 'players = 2' },
+      given: { js: 'let players = 2;', ts: 'let players: number = 2;', py: 'players = 2' },
       js: 'let teams = 2;',
+      ts: 'let teams: number = 2;',
       py: 'teams = 2',
       expected: graph({ players: 2, teams: 2 }),
       constraints: [
@@ -288,7 +290,7 @@ export const scalarsLevel: Level = level(
           cases: [
             {
               change: 'players starts at 6',
-              given: { js: 'let players = 6;', py: 'players = 6' },
+              given: { js: 'let players = 6;', ts: 'let players: number = 6;', py: 'players = 6' },
               expected: graph({ players: 6, teams: 2 }),
             },
           ],
@@ -400,8 +402,13 @@ export const scalarsLevel: Level = level(
     }),
     write({
       title: 'Swapped',
-      given: { js: lines('let a = 1;', 'let b = 2;'), py: lines('a = 1', 'b = 2') },
+      given: {
+        js: lines('let a = 1;', 'let b = 2;'),
+        ts: lines('let a: number = 1;', 'let b: number = 2;'),
+        py: lines('a = 1', 'b = 2'),
+      },
       js: lines('let t = a;', 'a = b;', 'b = t;'),
+      ts: lines('let t: number = a;', 'a = b;', 'b = t;'),
       py: lines('t = a', 'a = b', 'b = t'),
       expected: graph({ a: 2, b: 1 }),
       constraints: [
@@ -410,7 +417,11 @@ export const scalarsLevel: Level = level(
           cases: [
             {
               change: 'a starts at 5 and b starts at 9',
-              given: { js: lines('let a = 5;', 'let b = 9;'), py: lines('a = 5', 'b = 9') },
+              given: {
+                js: lines('let a = 5;', 'let b = 9;'),
+                ts: lines('let a: number = 5;', 'let b: number = 9;'),
+                py: lines('a = 5', 'b = 9'),
+              },
               expected: graph({ a: 9, b: 5 }),
             },
           ],
@@ -474,7 +485,11 @@ export const scalarsLevel: Level = level(
     }),
     write({
       title: 'Only one changes',
-      given: { js: lines('let x = 4;', 'let y = x;'), py: lines('x = 4', 'y = x') },
+      given: {
+        js: lines('let x = 4;', 'let y = x;'),
+        ts: lines('let x: number = 4;', 'let y: number = x;'),
+        py: lines('x = 4', 'y = x'),
+      },
       js: 'y = 9;',
       py: 'y = 9',
       expected: graph({ x: 4, y: 9 }),
@@ -531,6 +546,12 @@ export const scalarsLevel: Level = level(
     write({
       title: 'One of each',
       js: lines('let name = "Bo";', 'let age = 7;', 'let member = true;', 'let nickname = null;'),
+      ts: lines(
+        'let name: string = "Bo";',
+        'let age: number = 7;',
+        'let member: boolean = true;',
+        'let nickname: null = null;',
+      ),
       py: lines('name = "Bo"', 'age = 7', 'member = True', 'nickname = None'),
       expected: graph({ name: 'Bo', age: 7, member: true, nickname: null }),
       hint: {

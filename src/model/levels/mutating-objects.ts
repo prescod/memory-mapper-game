@@ -224,7 +224,14 @@ export const mutatingObjectsLevel: Level = level(
     }),
     write({
       title: 'Both see it',
-      given: { js: lines('let a = { n: 1 };', 'let b = a;'), py: lines('a = {"n": 1}', 'b = a') },
+      given: {
+        js: lines('let a = { n: 1 };', 'let b = a;'),
+        ts: lines(
+          'let a: { n: number; done?: boolean } = { n: 1 };',
+          'let b: { n: number; done?: boolean } = a;',
+        ),
+        py: lines('a = {"n": 1}', 'b = a'),
+      },
       js: 'b.done = true;',
       py: 'b["done"] = True',
       expected: graph(
@@ -345,7 +352,11 @@ export const mutatingObjectsLevel: Level = level(
     }),
     write({
       title: 'Rename a key',
-      given: { js: 'let p = { old: 1 };', py: 'p = {"old": 1}' },
+      given: {
+        js: 'let p = { old: 1 };',
+        ts: 'let p: { old?: number; renamed?: number } = { old: 1 };',
+        py: 'p = {"old": 1}',
+      },
       js: lines('p.renamed = p.old;', 'delete p.old;'),
       py: lines('p["renamed"] = p["old"]', 'del p["old"]'),
       expected: graph({ p: ref('p') }, { p: dict({ renamed: 1 }) }),
@@ -361,7 +372,11 @@ export const mutatingObjectsLevel: Level = level(
         runtime: runtime(preserve('p')),
         hidden: [
           {
-            given: { js: 'let p = { old: 7 };', py: 'p = {"old": 7}' },
+            given: {
+              js: 'let p = { old: 7 };',
+              ts: 'let p: { old?: number; renamed?: number } = { old: 7 };',
+              py: 'p = {"old": 7}',
+            },
             expected: graph({ p: ref('p') }, { p: dict({ renamed: 7 }) }),
           },
         ],
@@ -407,6 +422,10 @@ export const mutatingObjectsLevel: Level = level(
       title: 'Clear it out',
       given: {
         js: lines('let p = { a: 1, b: 2 };', 'let q = p;'),
+        ts: lines(
+          'let p: { a?: number; b?: number } = { a: 1, b: 2 };',
+          'let q: { a?: number; b?: number } = p;',
+        ),
         py: lines('p = {"a": 1, "b": 2}', 'q = p'),
       },
       js: lines('delete p.a;', 'delete p.b;'),
@@ -529,7 +548,14 @@ export const mutatingObjectsLevel: Level = level(
     }),
     write({
       title: 'Leave the old one behind',
-      given: { js: lines('let p = { n: 1 };', 'let q = p;'), py: lines('p = {"n": 1}', 'q = p') },
+      given: {
+        js: lines('let p = { n: 1 };', 'let q = p;'),
+        ts: lines(
+          'let p: { n: number; m?: number } = { n: 1 };',
+          'let q: { n: number; m?: number } = p;',
+        ),
+        py: lines('p = {"n": 1}', 'q = p'),
+      },
       js: lines('p.m = 3;', 'p = { n: 2 };'),
       py: lines('p["m"] = 3', 'p = {"n": 2}'),
       expected: graph(
@@ -667,8 +693,13 @@ export const mutatingObjectsLevel: Level = level(
     }),
     write({
       title: { js: 'Swap inside an object', py: 'Swap inside a dictionary' },
-      given: { js: 'let p = { a: 1, b: 2 };', py: 'p = {"a": 1, "b": 2}' },
+      given: {
+        js: 'let p = { a: 1, b: 2 };',
+        ts: 'let p: { a: number; b: number } = { a: 1, b: 2 };',
+        py: 'p = {"a": 1, "b": 2}',
+      },
       js: lines('let t = p.a;', 'p.a = p.b;', 'p.b = t;'),
+      ts: lines('let t: number = p.a;', 'p.a = p.b;', 'p.b = t;'),
       py: lines('t = p["a"]', 'p["a"] = p["b"]', 'p["b"] = t'),
       expected: graph({ p: ref('p') }, { p: dict({ a: 2, b: 1 }) }),
       hint: {
@@ -683,7 +714,11 @@ export const mutatingObjectsLevel: Level = level(
         runtime: runtime(preserve('p')),
         hidden: [
           {
-            given: { js: 'let p = { a: 5, b: 9 };', py: 'p = {"a": 5, "b": 9}' },
+            given: {
+              js: 'let p = { a: 5, b: 9 };',
+              ts: 'let p: { a: number; b: number } = { a: 5, b: 9 };',
+              py: 'p = {"a": 5, "b": 9}',
+            },
             expected: graph({ p: ref('p') }, { p: dict({ a: 9, b: 5 }) }),
           },
         ],
@@ -837,7 +872,14 @@ export const mutatingObjectsLevel: Level = level(
     }),
     write({
       title: 'Mark it, then move on',
-      given: { js: lines('let a = { score: 0 };', 'let b = a;'), py: lines('a = {"score": 0}', 'b = a') },
+      given: {
+        js: lines('let a = { score: 0 };', 'let b = a;'),
+        ts: lines(
+          'let a: { score: number; done?: boolean } = { score: 0 };',
+          'let b: { score: number; done?: boolean } = a;',
+        ),
+        py: lines('a = {"score": 0}', 'b = a'),
+      },
       js: lines('b.done = true;', 'a = { score: 5 };'),
       py: lines('b["done"] = True', 'a = {"score": 5}'),
       expected: graph(

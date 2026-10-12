@@ -70,8 +70,9 @@ export const rebindingLevel: Level = level(
     }),
     write({
       title: 'Upper and lower',
-      given: { js: 'let s = "Hi";', py: 's = "Hi"' },
+      given: { js: 'let s = "Hi";', ts: 'let s: string = "Hi";', py: 's = "Hi"' },
       js: lines('let lo = s.toLowerCase();', 'let up = s.toUpperCase();'),
+      ts: lines('let lo: string = s.toLowerCase();', 'let up: string = s.toUpperCase();'),
       py: lines('lo = s.lower()', 'up = s.upper()'),
       expected: graph({ s: 'Hi', lo: 'hi', up: 'HI' }),
       hint: {
@@ -105,7 +106,7 @@ export const rebindingLevel: Level = level(
         ],
         hidden: [
           {
-            given: { js: 'let s = "Yo";', py: 's = "Yo"' },
+            given: { js: 'let s = "Yo";', ts: 'let s: string = "Yo";', py: 's = "Yo"' },
             expected: graph({ s: 'Yo', lo: 'yo', up: 'YO' }),
           },
         ],
@@ -296,6 +297,7 @@ export const rebindingLevel: Level = level(
       title: 'Nobody points here',
       given: {
         js: lines('let a = { n: 1 };', 'let b = a;'),
+        ts: lines('let a: { n: number } | null = { n: 1 };', 'let b: { n: number } | null = a;'),
         py: lines('a = {"n": 1}', 'b = a'),
       },
       js: lines('a = null;', 'b = null;'),
@@ -353,7 +355,11 @@ export const rebindingLevel: Level = level(
     }),
     write({
       title: 'Combine without changing the original',
-      given: { js: lines('let a = [1, 2];', 'let b = a;'), py: lines('a = [1, 2]', 'b = a') },
+      given: {
+        js: lines('let a = [1, 2];', 'let b = a;'),
+        ts: lines('let a: number[] = [1, 2];', 'let b: number[] = a;'),
+        py: lines('a = [1, 2]', 'b = a'),
+      },
       js: 'b = b.concat([3, 4]);',
       py: 'b = b + [3, 4]',
       expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1, 2), b: list(1, 2, 3, 4) }),
@@ -368,7 +374,11 @@ export const rebindingLevel: Level = level(
         source: [combines('b', 'b')],
         hidden: [
           {
-            given: { js: lines('let a = [5];', 'let b = a;'), py: lines('a = [5]', 'b = a') },
+            given: {
+              js: lines('let a = [5];', 'let b = a;'),
+              ts: lines('let a: number[] = [5];', 'let b: number[] = a;'),
+              py: lines('a = [5]', 'b = a'),
+            },
             expected: graph({ a: ref('a'), b: ref('b') }, { a: list(5), b: list(5, 3, 4) }),
           },
         ],
@@ -479,7 +489,11 @@ export const rebindingLevel: Level = level(
     }),
     write({
       title: 'Mutate, then rebind',
-      given: { js: lines('let a = [1];', 'let b = a;'), py: lines('a = [1]', 'b = a') },
+      given: {
+        js: lines('let a = [1];', 'let b = a;'),
+        ts: lines('let a: number[] = [1];', 'let b: number[] = a;'),
+        py: lines('a = [1]', 'b = a'),
+      },
       js: lines('a.push(2);', 'a = [9];'),
       py: lines('a.append(2)', 'a = [9]'),
       expected: graph({ a: ref('new'), b: ref('old') }, { old: list(1, 2), new: list(9) }),
@@ -541,6 +555,7 @@ export const rebindingLevel: Level = level(
       title: 'Shout the name, keep the backup',
       given: {
         js: lines('let name = "ada";', 'let backup = name;'),
+        ts: lines('let name: string = "ada";', 'let backup: string = name;'),
         py: lines('name = "ada"', 'backup = name'),
       },
       js: 'name = name.toUpperCase();',
@@ -570,6 +585,7 @@ export const rebindingLevel: Level = level(
           {
             given: {
               js: lines('let name = "bo";', 'let backup = name;'),
+              ts: lines('let name: string = "bo";', 'let backup: string = name;'),
               py: lines('name = "bo"', 'backup = name'),
             },
             expected: graph({ name: 'BO', backup: 'bo' }),
@@ -725,6 +741,7 @@ export const rebindingLevel: Level = level(
       title: 'Let it go',
       given: {
         js: lines('let a = [1];', 'let b = [a];'),
+        ts: lines('let a: number[] | null = [1];', 'let b: (number[] | null)[] = [a];'),
         py: lines('a = [1]', 'b = [a]'),
       },
       js: 'a = null;',
@@ -835,7 +852,11 @@ export const rebindingLevel: Level = level(
     }),
     write({
       title: 'Two ways to grow',
-      given: { js: lines('let a = [4];', 'let b = a;'), py: lines('a = [4]', 'b = a') },
+      given: {
+        js: lines('let a = [4];', 'let b = a;'),
+        ts: lines('let a: number[] = [4];', 'let b: number[] = a;'),
+        py: lines('a = [4]', 'b = a'),
+      },
       js: lines('a.push(5);', 'b = b.concat([6]);'),
       py: lines('a.append(5)', 'b = b + [6]'),
       expected: graph({ a: ref('a'), b: ref('b') }, { a: list(4, 5), b: list(4, 5, 6) }),

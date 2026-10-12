@@ -92,6 +92,7 @@ export const identityLevel: Level = level(
     write({
       title: 'Three names, one object',
       js: lines('let a = Pet("Rex");', 'let b = a;', 'let c = a;'),
+      ts: lines('let a: Pet = Pet("Rex");', 'let b: Pet = a;', 'let c: Pet = a;'),
       py: lines('a = Pet("Rex")', 'b = a', 'c = a'),
       expected: graph(
         { a: ref('shared'), b: ref('shared'), c: ref('shared') },
@@ -152,6 +153,7 @@ export const identityLevel: Level = level(
     write({
       title: 'Two fresh objects',
       js: lines('let p = Pet("Luna");', 'let q = Pet("Coco");'),
+      ts: lines('let p: Pet = Pet("Luna");', 'let q: Pet = Pet("Coco");'),
       py: lines('p = Pet("Luna")', 'q = Pet("Coco")'),
       expected: graph({ p: ref('p'), q: ref('q') }, { p: pet('Luna'), q: pet('Coco') }),
       hint: {
@@ -249,6 +251,7 @@ export const identityLevel: Level = level(
     write({
       title: "Two share, one doesn't",
       js: lines('let a = Pet("Bella");', 'let b = a;', 'let c = Pet("Daisy");'),
+      ts: lines('let a: Pet = Pet("Bella");', 'let b: Pet = a;', 'let c: Pet = Pet("Daisy");'),
       py: lines('a = Pet("Bella")', 'b = a', 'c = Pet("Daisy")'),
       expected: graph(
         { a: ref('shared'), b: ref('shared'), c: ref('alone') },
@@ -307,9 +310,11 @@ export const identityLevel: Level = level(
       title: 'A full name',
       given: {
         js: lines('let first = "Ada";', 'let last = "Lovelace";'),
+        ts: lines('let first: string = "Ada";', 'let last: string = "Lovelace";'),
         py: lines('first = "Ada"', 'last = "Lovelace"'),
       },
       js: 'let full = first + " " + last;',
+      ts: 'let full: string = first + " " + last;',
       py: 'full = first + " " + last',
       expected: graph({ first: 'Ada', last: 'Lovelace', full: 'Ada Lovelace' }),
       hint: {
@@ -328,6 +333,7 @@ export const identityLevel: Level = level(
           {
             given: {
               js: lines('let first = "Grace";', 'let last = "Hopper";'),
+              ts: lines('let first: string = "Grace";', 'let last: string = "Hopper";'),
               py: lines('first = "Grace"', 'last = "Hopper"'),
             },
             expected: graph({ first: 'Grace', last: 'Hopper', full: 'Grace Hopper' }),
@@ -481,14 +487,15 @@ export const identityLevel: Level = level(
     }),
     write({
       title: 'Same Pet as a',
-      given: { js: 'let a = Pet("Duke");', py: 'a = Pet("Duke")' },
+      given: { js: 'let a = Pet("Duke");', ts: 'let a: Pet = Pet("Duke");', py: 'a = Pet("Duke")' },
       js: 'let b = a;',
+      ts: 'let b: Pet = a;',
       py: 'b = a',
       expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: pet('Duke') }),
       process: {
         hidden: [
           {
-            given: { js: 'let a = Pet("Rex");', py: 'a = Pet("Rex")' },
+            given: { js: 'let a = Pet("Rex");', ts: 'let a: Pet = Pet("Rex");', py: 'a = Pet("Rex")' },
             expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: pet('Rex') }),
           },
         ],
@@ -606,9 +613,11 @@ export const identityLevel: Level = level(
       title: 'Join the right Pet',
       given: {
         js: lines('let a = Pet("Rocky");', 'let b = Pet("Pepper");'),
+        ts: lines('let a: Pet = Pet("Rocky");', 'let b: Pet = Pet("Pepper");'),
         py: lines('a = Pet("Rocky")', 'b = Pet("Pepper")'),
       },
       js: lines('let c = b;', 'let d = a;', 'let e = c;'),
+      ts: lines('let c: Pet = b;', 'let d: Pet = a;', 'let e: Pet = c;'),
       py: lines('c = b', 'd = a', 'e = c'),
       expected: graph(
         { a: ref('rocky'), b: ref('pepper'), c: ref('pepper'), d: ref('rocky'), e: ref('pepper') },
@@ -619,6 +628,7 @@ export const identityLevel: Level = level(
           {
             given: {
               js: lines('let a = Pet("Max");', 'let b = Pet("Nala");'),
+              ts: lines('let a: Pet = Pet("Max");', 'let b: Pet = Pet("Nala");'),
               py: lines('a = Pet("Max")', 'b = Pet("Nala")'),
             },
             expected: graph(
@@ -809,6 +819,7 @@ export const identityLevel: Level = level(
       title: 'Clear one, keep the backup',
       given: {
         js: lines('let name = "Ada";', 'let backup = name;'),
+        ts: lines('let name: string = "Ada";', 'let backup: string = name;'),
         py: lines('name = "Ada"', 'backup = name'),
       },
       js: 'name = null;',
