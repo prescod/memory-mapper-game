@@ -294,6 +294,7 @@ export const copiesLevel: Level = level(
         { a: ref('a'), b: ref('b') },
         { a: list(ref('inner')), b: list(ref('inner')), inner: list(1) },
       ),
+      teaches: ['copy.shallow'],
       hint: {
         js: 'Copying makes a new outer array, but its one slot still points at the same inner array [1].',
         py: 'Copying makes a new outer list, but its one slot still points at the same inner list [1].',
@@ -421,7 +422,7 @@ export const copiesLevel: Level = level(
           tags: list('x', 'y'),
         },
       ),
-      reliesOn: ['copy.object', 'array.push'],
+      reliesOn: ['copy.object', 'copy.shallow', 'array.push'],
       hint: {
         js: 'Declare q as a copy of p, then grow the shared tags array in place so both end with ["x", "y"].',
         py: 'Assign q as a copy of p, then grow the shared tags list in place so both end with ["x", "y"].',
@@ -676,6 +677,7 @@ export const copiesLevel: Level = level(
           b1: list(2),
         },
       ),
+      reliesOn: ['copy.shallow', 'copy.array'],
       hint: {
         js: 'Declare b as a new outer array holding copies of each inner array, so no inner array is shared with a.',
         py: 'Assign b a new outer list holding copies of each inner list, so no inner list is shared with a.',
@@ -789,6 +791,7 @@ export const copiesLevel: Level = level(
           tags: list('a', 'b'),
         },
       ),
+      reliesOn: ['copy.object', 'copy.shallow', 'array.push'],
       hint: {
         js: 'Declare q as a copy of p, then add extra holding true to q and grow the shared tags array to ["a", "b"].',
         py: 'Assign q as a copy of p, then add extra holding True to q and grow the shared tags list to ["a", "b"].',
@@ -1044,10 +1047,33 @@ export const copiesLevel: Level = level(
           message: 'b must be a new outer container, not an alias of a; a should still have only two rows.',
         },
       ],
+      reliesOn: ['copy.shallow', 'copy.array', 'array.push'],
       about: {
-        js: 'Adding a row to a shallow copy gives only the copy an extra slot. The rows it got from the original are still shared with the original array.',
-        py: 'Adding a row to a shallow copy gives only the copy an extra slot. The rows it got from the original are still shared with the original list.',
+        js: 'Adding a row to a shallow copy gives only the copy an extra slot. The rows it got from the original are still shared with the original array. The special constraint says b must follow whatever a starts with, so build b by copying a instead of retyping its contents.',
+        py: 'Adding a row to a shallow copy gives only the copy an extra slot. The rows it got from the original are still shared with the original list. The special constraint says b must follow whatever a starts with, so build b by copying a instead of retyping its contents.',
       },
+      constraints: [
+        {
+          rule:
+            'Your boss said that b must be built from a, so if another programmer updates what a starts with, b must still be a shallow copy of that a with the new row [3] added.',
+          cases: [
+            {
+              change: 'a starts as [[5], [6]]',
+              given: { js: 'let a = [[5], [6]];', ts: 'let a: number[][] = [[5], [6]];', py: 'a = [[5], [6]]' },
+              expected: graph(
+                { a: ref('a'), b: ref('b') },
+                {
+                  a: list(ref('r1'), ref('r2')),
+                  b: list(ref('r1'), ref('r2'), ref('r3')),
+                  r1: list(5),
+                  r2: list(6),
+                  r3: list(3),
+                },
+              ),
+            },
+          ],
+        },
+      ],
       process: {
         runtime: runtime(preserve('a'), preserve('a', 0), preserve('a', 1)),
         source: [copiesOrCombinesFrom('b', 'a')],
@@ -1095,6 +1121,12 @@ export const copiesLevel: Level = level(
             py: 'Not correct: a shallow copy shares the existing inner lists with a instead of creating new ones.',
           },
           verdict: 'incorrect',
+        },
+        {
+          html: {
+            js: '<p><strong>Not accepted:</strong> <code>let b = [[1], [2], [3]];</code>. The checker reruns your code from another starting array to make sure you built <code>b</code> from <code>a</code>.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>b = [[1], [2], [3]]</code>. The checker reruns your code from another starting list to make sure you built <code>b</code> from <code>a</code>.</p>',
+          },
         },
       ],
     }),

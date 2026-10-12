@@ -1,4 +1,5 @@
 import type { MemNode, MemoryGraph, NodeId } from '../model/types'
+import { FLOW_NODE_GAP, FLOW_NODE_WIDTH, memNodeSize, separateFlowNodes } from './nodeGeometry'
 import {
   TARGET_HANDLE,
   VARIABLE_HANDLE,
@@ -11,26 +12,17 @@ import {
 const TITLE_HEIGHT = 36
 const ROW_HEIGHT = 34
 const SIMPLE_HEIGHT = 48
-const SCALAR_HEIGHT = TITLE_HEIGHT + ROW_HEIGHT
 
-const NODE_WIDTH = 140
-const ARRAY_WIDTH = 160
-const OBJECT_WIDTH = 170
-const COL_GAP = 28
+const NODE_WIDTH = FLOW_NODE_WIDTH
+const COL_GAP = FLOW_NODE_GAP
 const LAYER_GAP = 60
 
 function heightOf(node: MemNode | undefined): number {
-  if (!node) return SIMPLE_HEIGHT
-  if (node.type === 'scalar' || node.type === 'instance') return SCALAR_HEIGHT
-  const rows = node.type === 'array' ? node.slots.length : node.entries.length
-  return TITLE_HEIGHT + Math.max(rows, 1) * ROW_HEIGHT
+  return memNodeSize(node).height
 }
 
 function widthOf(node: MemNode | undefined): number {
-  if (!node) return NODE_WIDTH
-  if (node.type === 'object') return OBJECT_WIDTH
-  if (node.type === 'array') return ARRAY_WIDTH
-  return NODE_WIDTH
+  return memNodeSize(node).width
 }
 
 const targetsOf = (node: MemNode): (NodeId | null)[] => {
@@ -336,6 +328,8 @@ export function toFlow(memory: MemoryGraph): { nodes: MemFlowNode[]; edges: MemF
       node.entries.forEach((entry, index) => link(id, entryHandle(entries[index].id), entry.slot.target))
     }
   }
+
+  separateFlowNodes(nodes)
 
   return { nodes, edges }
 }

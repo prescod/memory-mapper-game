@@ -655,6 +655,24 @@ describe('explicit special constraints', () => {
     expect(unmigrated.map((problem) => problem.id)).toEqual([])
   })
 
+  it('states the boss rule when a puzzle requires copying or combining from a variable', () => {
+    const missing = writeProblems.filter(
+      (problem) =>
+        problem.process?.source?.some((r) => r.kind === 'copy' || r.kind === 'copyOrCombine' || r.kind === 'combine') &&
+        (!problem.constraints || problem.constraints.length === 0),
+    )
+    expect(missing.map((problem) => problem.id)).toEqual([])
+  })
+
+  it('moves combine alternate starters to constraints rather than silent hidden cases', () => {
+    const unmigrated = writeProblems.filter(
+      (problem) =>
+        problem.process?.source?.some((r) => r.kind === 'combine') &&
+        (problem.process?.hidden?.length ?? 0) > 0,
+    )
+    expect(unmigrated.map((problem) => problem.id)).toEqual([])
+  })
+
   it('states the boss rule when a puzzle requires calling a specific method', () => {
     const missing = writeProblems.filter(
       (problem) =>

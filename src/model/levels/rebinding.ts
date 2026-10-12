@@ -378,26 +378,6 @@ export const rebindingLevel: Level = level(
       py: 'b = b + [3, 4]',
       expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1, 2), b: list(1, 2, 3, 4) }),
       reliesOn: ['array.concat'],
-      process: {
-        runtime: runtime(
-          sameObject(
-            before('a'),
-            after('a'),
-            'Keep "a" referring to the container it started with, and build the new one for "b".',
-          ),
-        ),
-        source: [combines('b', 'b')],
-        hidden: [
-          {
-            given: {
-              js: lines('let a = [5];', 'let b = a;'),
-              ts: lines('let a: number[] = [5];', 'let b: number[] = a;'),
-              py: lines('a = [5]', 'b = a'),
-            },
-            expected: graph({ a: ref('a'), b: ref('b') }, { a: list(5), b: list(5, 3, 4) }),
-          },
-        ],
-      },
       hint: {
         js: 'Use b = b.concat([3, 4]) so b gets a new array and a keeps [1, 2].',
         py: 'Use b = b + [3, 4] so b gets a new list and a keeps [1, 2].',
@@ -411,8 +391,39 @@ export const rebindingLevel: Level = level(
         },
       ],
       about: {
-        js: 'Combine an array with additional elements to produce a larger array without mutating the original. Using concat builds a new array and leaves the array referenced by a unchanged.',
-        py: 'Combine a list with additional elements to produce a larger list without mutating the original. Using + builds a new list and leaves the list referenced by a unchanged.',
+        js: 'Combine an array with additional elements to produce a larger array without mutating the original. Using concat builds a new array and leaves the array referenced by a unchanged. The special constraint says b must be built by combining b so it follows whatever a starts with.',
+        py: 'Combine a list with additional elements to produce a larger list without mutating the original. Using + builds a new list and leaves the list referenced by a unchanged. The special constraint says b must be built by combining b so it follows whatever a starts with.',
+      },
+      constraints: [
+        {
+          rule: {
+            js:
+              'Your boss said that b must be built by combining b with [3, 4], so if another programmer updates what a starts with, b still receives the combined items and a stays untouched.',
+            py:
+              'Your boss said that b must be built by combining b with [3, 4], so if another programmer updates what a starts with, b still receives the combined items and a stays untouched.',
+          },
+          cases: [
+            {
+              change: 'a starts as [5]',
+              given: {
+                js: lines('let a = [5];', 'let b = a;'),
+                ts: lines('let a: number[] = [5];', 'let b: number[] = a;'),
+                py: lines('a = [5]', 'b = a'),
+              },
+              expected: graph({ a: ref('a'), b: ref('b') }, { a: list(5), b: list(5, 3, 4) }),
+            },
+          ],
+        },
+      ],
+      process: {
+        runtime: runtime(
+          sameObject(
+            before('a'),
+            after('a'),
+            'Keep "a" referring to the container it started with, and build the new one for "b".',
+          ),
+        ),
+        source: [combines('b', 'b')],
       },
       debrief: [
         {
@@ -896,13 +907,34 @@ export const rebindingLevel: Level = level(
             'a and b should not share a container. Grow the shared container in place first, then combine to give b a new container and leave a with [4, 5].',
         },
       ],
+      about: {
+        js: 'Growing a shared array in place with push is seen through every alias; combining with concat builds a new array, so only the variable it is assigned to moves to it. The special constraint says b must be built by combining b with [6].',
+        py: 'Growing a shared list in place with append is seen through every alias; combining with + builds a new list, so only the variable it is assigned to moves to it. The special constraint says b must be built by combining b with [6].',
+      },
+      constraints: [
+        {
+          rule: {
+            js:
+              'Your boss said that b must be built by combining b with [6], so if another programmer updates what a starts with, a still grows by 5 and b gets the combined items.',
+            py:
+              'Your boss said that b must be built by combining b with [6], so if another programmer updates what a starts with, a still grows by 5 and b gets the combined items.',
+          },
+          cases: [
+            {
+              change: 'a starts as [10]',
+              given: {
+                js: lines('let a = [10];', 'let b = a;'),
+                ts: lines('let a: number[] = [10];', 'let b: number[] = a;'),
+                py: lines('a = [10]', 'b = a'),
+              },
+              expected: graph({ a: ref('a'), b: ref('b') }, { a: list(10, 5), b: list(10, 5, 6) }),
+            },
+          ],
+        },
+      ],
       process: {
         runtime: runtime(preserve('a')),
         source: [combines('b', 'b')],
-      },
-      about: {
-        js: 'Growing a shared array in place with push is seen through every alias; combining with concat builds a new array, so only the variable it is assigned to moves to it.',
-        py: 'Growing a shared list in place with append is seen through every alias; combining with + builds a new list, so only the variable it is assigned to moves to it.',
       },
       debrief: [
         {
@@ -935,8 +967,8 @@ export const rebindingLevel: Level = level(
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> <code>a.push(5);</code> followed by <code>b.push(6);</code> leaves both variables sharing <code>[4, 5, 6]</code>. Typing <code>b = [4, 5, 6];</code> matches the picture, but the checker requires <code>b</code> to be built with <code>b.concat(...)</code>.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>a.append(5)</code> followed by <code>b.append(6)</code> leaves both variables sharing <code>[4, 5, 6]</code>. Typing <code>b = [4, 5, 6]</code> matches the picture, but the checker requires <code>b</code> to be built with <code>b + [...]</code>.</p>',
+            js: '<p><strong>Not accepted:</strong> <code>a.push(5);</code> followed by <code>b.push(6);</code> leaves both variables sharing <code>[4, 5, 6]</code>. Typing <code>b = [4, 5, 6];</code> matches the picture, but the checker reruns your code from another starting array to make sure you built <code>b</code> with <code>b.concat(...)</code>.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>a.append(5)</code> followed by <code>b.append(6)</code> leaves both variables sharing <code>[4, 5, 6]</code>. Typing <code>b = [4, 5, 6]</code> matches the picture, but the checker reruns your code from another starting list to make sure you built <code>b</code> with <code>b + [...]</code>.</p>',
           },
         },
       ],

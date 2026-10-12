@@ -4,6 +4,7 @@ import { problems } from '../model/levels'
 import { LANGUAGES } from '../model/types'
 import { verify } from '../verify/verify'
 import { toGraph } from '../verify/toGraph'
+import { findOverlappingFlowNodePairs } from './nodeGeometry'
 import { toFlow } from './layout'
 
 describe('toFlow', () => {
@@ -51,6 +52,15 @@ describe('toFlow', () => {
     expect(variable.position.y).toBe(0)
     expect(seven.position.y).toBeLessThan(five.position.y)
   })
+
+  it.each(problems.map((problem) => problem.id))(
+    'lays out %s without overlapping node boxes (horizontal or vertical)',
+    (problemId) => {
+      const problem = problems.find((candidate) => candidate.id === problemId)!
+      const { nodes } = toFlow(problem.expected)
+      expect(findOverlappingFlowNodePairs(nodes)).toEqual([])
+    },
+  )
 
   it('layers outer containers before inner containers when an outer container references an inner one', () => {
     const pairingProblem = problems.find((problem) => problem.id === 'functions-7')!
