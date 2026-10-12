@@ -1,5 +1,6 @@
 import { useEdgesState, useNodesState } from '@xyflow/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { Canvas } from '../canvas/Canvas'
 import { emptyFeedback } from '../canvas/FeedbackContext'
 import { toFlow } from '../canvas/layout'
@@ -73,14 +74,19 @@ export function WriteProblemView({
   }
 
   const check = async () => {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
     setBusy(true)
     setResult(null)
     const outcome = await runCode(buildRunRequest(problem, language, code))
     if (!mounted.current) return
-    setBusy(false)
     const verdict = gradeRun(problem, language, code, outcome)
-    setResult(verdict)
-    if (verdict.ok) markCompleted(key)
+    flushSync(() => {
+      setBusy(false)
+      setResult(verdict)
+      if (verdict.ok) markCompleted(key)
+    })
   }
 
   const reset = () => {
