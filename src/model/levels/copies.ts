@@ -1,9 +1,9 @@
 import { dict, graph, list, ref, scalar } from '../builders'
 import { copiesFrom, copiesOrCombinesFrom, preserve, runtime } from '../process'
-import type { Level } from '../types'
+import type { UnnumberedLevel } from '../types'
 import { draw, L, level, lines, write } from './common'
 
-export const copiesLevel: Level = level(
+export const copiesLevel: UnnumberedLevel = level(
   'copies',
   L('Copies and Aliases', 'Copies and Aliases'),
   L(

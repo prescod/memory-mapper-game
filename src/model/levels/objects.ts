@@ -1,8 +1,8 @@
 import { dict, graph, ref, scalar } from '../builders'
-import type { Level } from '../types'
+import type { UnnumberedLevel } from '../types'
 import { draw, L, level, lines, SHARING_REMINDER, write } from './common'
 
-export const objectsLevel: Level = level(
+export const objectsLevel: UnnumberedLevel = level(
   'objects',
   L('Objects', 'Dictionaries'),
   L(

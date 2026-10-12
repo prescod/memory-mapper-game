@@ -1,9 +1,9 @@
 import { dict, graph, ref, withGarbage } from '../builders'
 import { after, before, preserve, runtime, sameObject } from '../process'
-import type { Level } from '../types'
+import type { UnnumberedLevel } from '../types'
 import { draw, L, level, lines, write } from './common'
 
-export const mutatingObjectsLevel: Level = level(
+export const mutatingObjectsLevel: UnnumberedLevel = level(
   'mutating-objects',
   L('Changing Objects', 'Changing Dictionaries'),
   L(

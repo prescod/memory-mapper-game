@@ -1,4 +1,9 @@
-import { findProblem, levels, nextProblem, previousProblem, problems } from '../model/levels'
+import {
+  findProblem,
+  nextProblem,
+  previousProblem,
+  problemBatchPosition,
+} from '../model/levels'
 import { LanguageToggle } from './LanguageToggle'
 
 interface ProblemHeaderProps {
@@ -9,10 +14,11 @@ interface ProblemHeaderProps {
 export function ProblemHeader({ problemId, onNavigate }: ProblemHeaderProps) {
   const previous = previousProblem(problemId)
   const next = nextProblem(problemId)
-  const position = problems.findIndex((problem) => problem.id === problemId)
   const location = findProblem(problemId)
-  const levelIndex = location ? levels.indexOf(location.level) : -1
-  const backLabel = levelIndex !== -1 ? `‹ Level ${levelIndex + 1}` : '‹ Levels'
+  const batch = location
+    ? problemBatchPosition(location.level, location.problem)
+    : undefined
+  const backLabel = location ? `‹ Level ${location.level.number}` : '‹ Levels'
 
   return (
     <header className="problem-header">
@@ -30,7 +36,7 @@ export function ProblemHeader({ problemId, onNavigate }: ProblemHeaderProps) {
           ‹
         </button>
         <span className="header-position">
-          {position + 1} / {problems.length}
+          {batch ? `${batch.index} / ${batch.total}` : '—'}
         </span>
         <button
           type="button"

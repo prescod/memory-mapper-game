@@ -1,8 +1,8 @@
 import { dict, graph, list, ref } from '../builders'
-import type { Level } from '../types'
+import type { UnnumberedLevel } from '../types'
 import { draw, L, level, lines, write } from './common'
 
-export const nestingLevel: Level = level(
+export const nestingLevel: UnnumberedLevel = level(
   'nesting',
   L('Nested Arrays and Objects', 'Nested Lists and Dictionaries'),
   L(

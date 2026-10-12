@@ -1,8 +1,8 @@
 import { graph, pet, ref, scalar, withGarbage } from '../builders'
-import type { Level } from '../types'
+import type { UnnumberedLevel } from '../types'
 import { draw, L, level, lines, write } from './common'
 
-export const identityLevel: Level = level(
+export const identityLevel: UnnumberedLevel = level(
   'identity',
   L(
     'Objects with Identity and Multiple References',

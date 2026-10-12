@@ -1,8 +1,8 @@
 import { graph, list, ref, scalar } from '../builders'
-import type { Level } from '../types'
+import type { UnnumberedLevel } from '../types'
 import { draw, L, level, lines, SHARING_REMINDER, write } from './common'
 
-export const arraysLevel: Level = level(
+export const arraysLevel: UnnumberedLevel = level(
   'arrays',
   L('Arrays', 'Lists'),
   L(

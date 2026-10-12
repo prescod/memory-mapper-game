@@ -25,8 +25,6 @@ export function Home({ onOpenProblem, onOpenLevel }: HomeProps) {
 
   const continueTarget = nextUnsolved(problems, isSolved, lastProblemId ?? undefined)
   const targetLocation = continueTarget ? findProblem(continueTarget.id) : undefined
-  const targetLevelIndex = targetLocation ? levels.indexOf(targetLocation.level) : -1
-
   const confirmReset = () => {
     if (window.confirm('Clear all solved problems and diagrams in both languages?')) {
       resetAllProgress()
@@ -278,9 +276,10 @@ export function Home({ onOpenProblem, onOpenLevel }: HomeProps) {
               </span>
               {totalSolved > 0 && targetLocation && (
                 <span className="home-continue-subtext">
-                  Level {targetLevelIndex + 1}:{' '}
+                  Level {targetLocation.level.number}:{' '}
                   <ProblemTitle
                     problem={continueTarget}
+                    level={targetLocation.level}
                     visible={!continueTarget.challenge || isSolved(continueTarget.id)}
                     language={language}
                   />

@@ -208,12 +208,17 @@ export interface WriteProblem {
 export type Problem = DrawProblem | WriteProblem
 
 export interface Level {
+  /** Curriculum level number (1-based), shown in problem labels such as 9.7. */
+  number: number
   id: string
   title: LocalizedText
   description: LocalizedText
   /** Tutorial problems first, then challenge problems that retest the same ideas. */
   problems: Problem[]
 }
+
+/** Level content before `number` is assigned in `levels.ts`. */
+export type UnnumberedLevel = Omit<Level, 'number'>
 
 export interface VerifyError {
   message: string

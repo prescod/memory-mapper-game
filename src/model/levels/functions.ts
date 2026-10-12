@@ -1,9 +1,9 @@
 import { dict, graph, list, ref } from '../builders'
 import { before, call, preserve, runtime } from '../process'
-import type { Level } from '../types'
+import type { UnnumberedLevel } from '../types'
 import { draw, L, level, lines, write } from './common'
 
-export const functionsLevel: Level = level(
+export const functionsLevel: UnnumberedLevel = level(
   'functions',
   L(
     'Functions and Parameters',

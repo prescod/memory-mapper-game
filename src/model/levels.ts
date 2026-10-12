@@ -4,6 +4,7 @@ import {
   type Language,
   type Level,
   type Problem,
+  type UnnumberedLevel,
 } from './types'
 
 import {
@@ -49,7 +50,7 @@ export {
   type ConceptDependencyError,
 } from './concepts'
 
-export const levels: Level[] = [
+const numberedLevels: UnnumberedLevel[] = [
   scalarsLevel,
   identityLevel,
   arraysLevel,
@@ -61,6 +62,11 @@ export const levels: Level[] = [
   rebindingLevel,
   functionsLevel,
 ]
+
+export const levels: Level[] = numberedLevels.map((entry, index) => ({
+  ...entry,
+  number: index + 1,
+}))
 
 export const problems: Problem[] = levels.flatMap((entry) => entry.problems)
 
@@ -81,6 +87,29 @@ export function findProblem(id: string): ProblemLocation | undefined {
     if (index !== -1) return { problem: entry.problems[index], level: entry, index }
   }
   return undefined
+}
+
+export function problemsInBatch(level: Level, challenge: boolean): Problem[] {
+  return level.problems.filter((problem) => problem.challenge === challenge)
+}
+
+/** Position within tutorial or challenge batch (1-based index and batch size). */
+export function problemBatchPosition(
+  level: Level,
+  problem: Problem,
+): { index: number; total: number } {
+  const batch = problemsInBatch(level, problem.challenge)
+  const index = batch.indexOf(problem) + 1
+  return { index, total: batch.length }
+}
+
+/** Level-wide problem number: tutorials 1…n, then challenges n+1…. */
+export function problemDisplayNumber(level: Level, problem: Problem): number {
+  const tutorials = problemsInBatch(level, false)
+  if (!problem.challenge) {
+    return tutorials.indexOf(problem) + 1
+  }
+  return tutorials.length + problemsInBatch(level, true).indexOf(problem) + 1
 }
 
 export function nextUnsolved(
@@ -122,6 +151,8 @@ export function problemAbout(problem: Problem, language: Language): string | und
   return problem.about ? textIn(problem.about, language) : undefined
 }
 
-export function problemTitle(problem: Problem, language: Language): string {
-  return textIn(problem.title, language)
+export function problemTitle(problem: Problem, language: Language, level?: Level): string {
+  const title = textIn(problem.title, language)
+  if (!level) return title
+  return `${level.number}.${problemDisplayNumber(level, problem)} ${title}`
 }

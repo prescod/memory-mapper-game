@@ -1,9 +1,9 @@
 import { graph, list, ref, withGarbage } from '../builders'
 import { preserve, runtime } from '../process'
-import type { Level } from '../types'
+import type { UnnumberedLevel } from '../types'
 import { draw, L, level, lines, write } from './common'
 
-export const mutatingArraysLevel: Level = level(
+export const mutatingArraysLevel: UnnumberedLevel = level(
   'mutating-arrays',
   L('Changing Arrays', 'Changing Lists'),
   L(

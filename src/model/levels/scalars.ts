@@ -1,5 +1,5 @@
 import { graph, ref, scalar, withGarbage } from '../builders'
-import type { Level } from '../types'
+import type { UnnumberedLevel } from '../types'
 import {
   draw,
   L,
@@ -10,7 +10,7 @@ import {
   write,
 } from './common'
 
-export const scalarsLevel: Level = level(
+export const scalarsLevel: UnnumberedLevel = level(
   'scalars',
   L('Variables and Primitives', 'Variables and Scalars'),
   L(

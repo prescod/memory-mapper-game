@@ -49,7 +49,7 @@ export function ProblemPanel({
       </p>
       <div className="problem-title-row">
         <h2 className="problem-title" ref={heading} tabIndex={-1}>
-          <ProblemTitle problem={problem} visible={revealed} language={language} />
+          <ProblemTitle problem={problem} level={level} visible={revealed} language={language} />
         </h2>
       </div>
       {problem.kind === 'draw' && (

@@ -4,7 +4,7 @@ import type {
   DiagnosticHint,
   Hint,
   Language,
-  Level,
+  UnnumberedLevel,
   LocalizedText,
   MemoryGraph,
   Problem,
@@ -227,7 +227,7 @@ export function level(
   description: LocalizedText,
   tutorial: Spec[],
   challenges: Spec[],
-): Level {
+): UnnumberedLevel {
   let draws = 0
   let writes = 0
   const taught = tutorial.map((spec) =>

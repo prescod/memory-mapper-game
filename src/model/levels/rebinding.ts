@@ -8,10 +8,10 @@ import {
   runtime,
   sameObject,
 } from '../process'
-import type { Level } from '../types'
+import type { UnnumberedLevel } from '../types'
 import { draw, L, level, lines, write } from './common'
 
-export const rebindingLevel: Level = level(
+export const rebindingLevel: UnnumberedLevel = level(
   'rebinding',
   L('Building New Values', 'Building New Values'),
   L(

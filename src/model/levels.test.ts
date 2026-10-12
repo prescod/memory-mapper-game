@@ -8,7 +8,19 @@ import { loadNodePythonSnapshotter } from '../run/testRuntime'
 import { buildRunRequest, gradeRun } from '../verify/grade'
 import { verify } from '../verify/verify'
 import { graph, list, pet, ref } from './builders'
-import { checkConceptDependencies, findLevel, findProblem, nextProblem, nextUnsolved, previousProblem, problems } from './levels'
+import {
+  checkConceptDependencies,
+  findLevel,
+  findProblem,
+  levels,
+  nextProblem,
+  nextUnsolved,
+  previousProblem,
+  problemBatchPosition,
+  problemDisplayNumber,
+  problemTitle,
+  problems,
+} from './levels'
 import { perLanguage } from './levels/common'
 import { withOpaquePrelude } from '../run/opaquePrelude'
 import { checksFor } from './process'
@@ -91,6 +103,23 @@ describe('curriculum navigation', () => {
   it('does not navigate from an unknown problem', () => {
     expect(previousProblem('unknown')).toBeUndefined()
     expect(nextProblem('unknown')).toBeUndefined()
+  })
+
+  it('numbers levels in curriculum order', () => {
+    levels.forEach((level, index) => {
+      expect(level.number).toBe(index + 1)
+    })
+  })
+
+  it('counts position within tutorial and challenge batches separately', () => {
+    const rebinding = findLevel('rebinding')!
+    const seventhTutorial = rebinding.problems.filter((problem) => !problem.challenge)[6]
+    const challenge = findProblem('rebinding-11')!
+    expect(problemBatchPosition(rebinding, seventhTutorial)).toEqual({ index: 7, total: 10 })
+    expect(problemBatchPosition(rebinding, challenge.problem)).toEqual({ index: 1, total: 5 })
+    expect(problemDisplayNumber(rebinding, seventhTutorial)).toBe(7)
+    expect(problemDisplayNumber(rebinding, challenge.problem)).toBe(11)
+    expect(problemTitle(seventhTutorial, 'javascript', rebinding)).toMatch(/^9\.7 /)
   })
 })
 
