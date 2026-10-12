@@ -330,7 +330,7 @@ export const arraysLevel: UnnumberedLevel = level(
       constraints: [
         {
           rule:
-            'Your boss said that if another programmer updates the code so that n starts at a different number, the slot in row must point to that different number.',
+            'The boss says that if another programmer updates the code so that n starts at a different number, the slot in row must point to that different number.',
           cases: [
             {
               change: 'n starts at 7',

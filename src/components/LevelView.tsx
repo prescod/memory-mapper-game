@@ -53,7 +53,6 @@ export function LevelView({
               <span className="problem-chip-title">
                 <ProblemTitle
                   problem={problem}
-                  level={level}
                   visible={!problem.challenge || done}
                   language={language}
                 />

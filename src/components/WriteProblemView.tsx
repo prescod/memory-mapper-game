@@ -30,7 +30,7 @@ export function WriteProblemView({
   onNavigate,
   focusProblemHeading,
 }: WriteProblemViewProps) {
-  const { problem, level, index } = location
+  const { problem, level } = location
   const key = progressKey(problem.id, language)
   const given = problem.given?.[language] ?? ''
   const then = problem.then?.[language] ?? ''
@@ -112,7 +112,6 @@ export function WriteProblemView({
       <ProblemPanel
         level={level}
         problem={problem}
-        problemNumber={index + 1}
         revealed={revealed}
         language={language}
         focusHeading={focusProblemHeading}

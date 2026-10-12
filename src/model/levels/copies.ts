@@ -155,7 +155,7 @@ export const copiesLevel: UnnumberedLevel = level(
       constraints: [
         {
           rule:
-            'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a copy of that p with key m added and p left unchanged.',
+            'The boss says that q must be built by copying p, so if another programmer updates what p starts with, q must still be a copy of that p with key m added and p left unchanged.',
           cases: [
             {
               change: 'p starts with { n: 4 }',
@@ -232,7 +232,7 @@ export const copiesLevel: UnnumberedLevel = level(
       constraints: [
         {
           rule:
-            'Your boss said that b must be built by copying a, so if another programmer updates what a starts with, b must still be a separate copy with 3 added and a unchanged.',
+            'The boss says that b must be built by copying a, so if another programmer updates what a starts with, b must still be a separate copy with 3 added and a unchanged.',
           cases: [
             {
               change: 'a starts as [5, 6]',
@@ -447,9 +447,9 @@ export const copiesLevel: UnnumberedLevel = level(
         {
           rule: {
             js:
-              'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p and the shared tags array must end with "y".',
+              'The boss says that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p and the shared tags array must end with "y".',
             py:
-              'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p and the shared tags list must end with "y".',
+              'The boss says that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p and the shared tags list must end with "y".',
           },
           cases: [
             {
@@ -696,7 +696,7 @@ export const copiesLevel: UnnumberedLevel = level(
       constraints: [
         {
           rule:
-            'Your boss said that b must be built from a, so if another programmer updates what a starts with, b must still be a separate copy that shares nothing with a.',
+            'The boss says that b must be built from a, so if another programmer updates what a starts with, b must still be a separate copy that shares nothing with a.',
           cases: [
             {
               change: 'a starts as [[3], [4]]',
@@ -816,9 +816,9 @@ export const copiesLevel: UnnumberedLevel = level(
         {
           rule: {
             js:
-              'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p with extra added and the shared tags array ending with "b".',
+              'The boss says that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p with extra added and the shared tags array ending with "b".',
             py:
-              'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p with extra added and the shared tags list ending with "b".',
+              'The boss says that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p with extra added and the shared tags list ending with "b".',
           },
           cases: [
             {
@@ -1055,7 +1055,7 @@ export const copiesLevel: UnnumberedLevel = level(
       constraints: [
         {
           rule:
-            'Your boss said that b must be built from a, so if another programmer updates what a starts with, b must still be a shallow copy of that a with the new row [3] added.',
+            'The boss says that b must be built from a, so if another programmer updates what a starts with, b must still be a shallow copy of that a with the new row [3] added.',
           cases: [
             {
               change: 'a starts as [[5], [6]]',

@@ -5,11 +5,11 @@ describe('wrapCurriculumIdentifiers', () => {
   it('wraps known identifiers in plain prose', () => {
     expect(
       wrapCurriculumIdentifiers(
-        'Your boss said that lo and up must be built using string methods on s.',
+        'The boss says that lo and up must be built using string methods on s.',
         ['lo', 'up', 's'],
       ),
     ).toBe(
-      'Your boss said that <code>lo</code> and <code>up</code> must be built using string methods on <code>s</code>.',
+      'The boss says that <code>lo</code> and <code>up</code> must be built using string methods on <code>s</code>.',
     )
   })
 
@@ -26,9 +26,9 @@ describe('wrapCurriculumIdentifiers', () => {
 
   it('does not nest code tags when the same identifier appears many times', () => {
     const rule =
-      'Your boss said that name must be converted using string methods, so if another programmer updates what name starts with, name will still become uppercase and backup will stay untouched.'
+      'The boss says that name must be converted using string methods, so if another programmer updates what name starts with, name will still become uppercase and backup will stay untouched.'
     expect(wrapCurriculumIdentifiers(rule, ['name', 'backup'])).toBe(
-      'Your boss said that <code>name</code> must be converted using string methods, so if another programmer updates what <code>name</code> starts with, <code>name</code> will still become uppercase and <code>backup</code> will stay untouched.',
+      'The boss says that <code>name</code> must be converted using string methods, so if another programmer updates what <code>name</code> starts with, <code>name</code> will still become uppercase and <code>backup</code> will stay untouched.',
     )
   })
 })

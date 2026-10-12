@@ -140,7 +140,7 @@ Numbers, strings, booleans, and `null`/`None` cannot be changed in place, so no 
 
 Sometimes two answers build the same picture and the only difference is what the code *means*: should `b` follow `a` if someone edits a's starting value, or should it stay put? The picture cannot say, and it is not a hidden rule of the game; it is a design decision. A constraint states that decision as an instruction from the learner's boss:
 
-> Your boss said that if another programmer updates the code so that a starts at a different number, b must also use that different number.
+> The boss says that if another programmer updates the code so that a starts at a different number, b must also use that different number.
 
 Guidelines:
 

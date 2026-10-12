@@ -110,7 +110,7 @@ export const rebindingLevel: UnnumberedLevel = level(
       constraints: [
         {
           rule:
-            'Your boss said that lo and up must be built using string methods on s, so if another programmer updates what s starts with, lo and up still become lowercase and uppercase versions of that string.',
+            'The boss says that lo and up must be built using string methods on s, so if another programmer updates what s starts with, lo and up still become lowercase and uppercase versions of that string.',
           cases: [
             {
               change: 's starts as "Yo"',
@@ -398,9 +398,9 @@ export const rebindingLevel: UnnumberedLevel = level(
         {
           rule: {
             js:
-              'Your boss said that b must be built by combining b with [3, 4], so if another programmer updates what a starts with, b still receives the combined items and a stays untouched.',
+              'The boss says that b must be built by combining b with [3, 4], so if another programmer updates what a starts with, b still receives the combined items and a stays untouched.',
             py:
-              'Your boss said that b must be built by combining b with [3, 4], so if another programmer updates what a starts with, b still receives the combined items and a stays untouched.',
+              'The boss says that b must be built by combining b with [3, 4], so if another programmer updates what a starts with, b still receives the combined items and a stays untouched.',
           },
           cases: [
             {
@@ -613,7 +613,7 @@ export const rebindingLevel: UnnumberedLevel = level(
       constraints: [
         {
           rule:
-            'Your boss said that name must be converted using string methods, so if another programmer updates what name starts with, name will still become uppercase and backup will stay untouched.',
+            'The boss says that name must be converted using string methods, so if another programmer updates what name starts with, name will still become uppercase and backup will stay untouched.',
           cases: [
             {
               change: 'name starts as "bo"',
@@ -915,9 +915,9 @@ export const rebindingLevel: UnnumberedLevel = level(
         {
           rule: {
             js:
-              'Your boss said that b must be built by combining b with [6], so if another programmer updates what a starts with, a still grows by 5 and b gets the combined items.',
+              'The boss says that b must be built by combining b with [6], so if another programmer updates what a starts with, a still grows by 5 and b gets the combined items.',
             py:
-              'Your boss said that b must be built by combining b with [6], so if another programmer updates what a starts with, a still grows by 5 and b gets the combined items.',
+              'The boss says that b must be built by combining b with [6], so if another programmer updates what a starts with, a still grows by 5 and b gets the combined items.',
           },
           cases: [
             {

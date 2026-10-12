@@ -10,7 +10,6 @@ import { ProblemTitle } from './ProblemTitle'
 interface ProblemPanelProps {
   level: Level
   problem: Problem
-  problemNumber: number
   /** False for an unsolved challenge problem, whose title and level description would give the answer away. */
   revealed: boolean
   language: Language
@@ -20,15 +19,10 @@ interface ProblemPanelProps {
 export function ProblemPanel({
   level,
   problem,
-  problemNumber,
   revealed,
   language,
   focusHeading,
 }: ProblemPanelProps) {
-  const challenges = level.problems.filter((candidate) => candidate.challenge)
-  const position = problem.challenge
-    ? `challenge problem ${challenges.indexOf(problem) + 1} of ${challenges.length}`
-    : `problem ${problemNumber} of ${level.problems.length - challenges.length}`
   const heading = useRef<HTMLHeadingElement>(null)
   const summaryRef = useRef<HTMLElement>(null)
   const wide = useMediaQuery('(min-width: 900px)')
@@ -44,9 +38,6 @@ export function ProblemPanel({
 
   return (
     <section className="problem-panel">
-      <p className="problem-position">
-        {textIn(level.title, language)}: {position}
-      </p>
       <div className="problem-title-row">
         <h2 className="problem-title" ref={heading} tabIndex={-1}>
           <ProblemTitle problem={problem} level={level} visible={revealed} language={language} />

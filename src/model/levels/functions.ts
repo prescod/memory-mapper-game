@@ -590,9 +590,9 @@ export const functionsLevel: UnnumberedLevel = level(
         {
           rule: {
             js:
-              'Your boss said withMilk must work for any cart. If another programmer updates the code so that the cart starts as ["coffee"], order must be ["coffee", "milk"].',
+              'The boss says withMilk must work for any cart. If another programmer updates the code so that the cart starts as ["coffee"], order must be ["coffee", "milk"].',
             py:
-              'Your boss said with_milk must work for any cart. If another programmer updates the code so that the cart starts as ["coffee"], order must be ["coffee", "milk"].',
+              'The boss says with_milk must work for any cart. If another programmer updates the code so that the cart starts as ["coffee"], order must be ["coffee", "milk"].',
           },
           cases: [
             {
@@ -803,7 +803,7 @@ export const functionsLevel: UnnumberedLevel = level(
       constraints: [
         {
           rule:
-            'Your boss said finish must work for any task. If another programmer updates the code so that todo starts as ["dry"], done must end up as ["dry"] and todo must end up empty.',
+            'The boss says finish must work for any task. If another programmer updates the code so that todo starts as ["dry"], done must end up as ["dry"] and todo must end up empty.',
           cases: [
             {
               change: 'todo starts as ["dry"]',
@@ -1113,7 +1113,7 @@ export const functionsLevel: UnnumberedLevel = level(
       constraints: [
         {
           rule:
-            'Your boss said tag must tag whichever object it is given. If another programmer updates the code so that tag is called on b instead of a, b must be tagged and a must not be.',
+            'The boss says tag must tag whichever object it is given. If another programmer updates the code so that tag is called on b instead of a, b must be tagged and a must not be.',
           cases: [
             {
               change: 'tag is called on b instead of a',

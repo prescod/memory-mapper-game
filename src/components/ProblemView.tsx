@@ -31,7 +31,7 @@ export function ProblemView({
   onNavigate,
   focusProblemHeading,
 }: ProblemViewProps) {
-  const { problem, level, index } = location
+  const { problem, level } = location
   const key = progressKey(problem.id, language)
 
   const draft = useAppStore((state) => state.drafts[key])
@@ -154,7 +154,6 @@ export function ProblemView({
       <ProblemPanel
         level={level}
         problem={problem}
-        problemNumber={index + 1}
         revealed={revealed}
         language={language}
         focusHeading={focusProblemHeading}
