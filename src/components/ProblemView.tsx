@@ -4,7 +4,7 @@ import { Canvas } from '../canvas/Canvas'
 import { emptyFeedback, feedbackFromErrors } from '../canvas/FeedbackContext'
 import { toFlow } from '../canvas/layout'
 import type { MemFlowEdge, MemFlowNode } from '../canvas/types'
-import { levels, nextProblem, problemHint, type ProblemLocation } from '../model/levels'
+import { nextProblem, problemHint, type ProblemLocation } from '../model/levels'
 import type { DrawProblem, Language, VerifyResult } from '../model/types'
 import { progressKey, useAppStore } from '../store/useAppStore'
 import { quotedLiteralErrors } from '../canvas/quotedLiteral'
@@ -45,7 +45,7 @@ export function ProblemView({
   isAnswerRevealedRef.current = isAnswerRevealed
 
   const revealed =
-    useAppStore((state) => !problem.mystery || state.completed[key] === true) || isAnswerRevealed
+    useAppStore((state) => !problem.challenge || state.completed[key] === true) || isAnswerRevealed
 
   const [nodes, setNodes, onNodesChange] = useNodesState<MemFlowNode>(draft?.nodes ?? [])
   const [edges, setEdges, onEdgesChange] = useEdgesState<MemFlowEdge>(draft?.edges ?? [])
@@ -152,7 +152,6 @@ export function ProblemView({
       <ProblemHeader problemId={problem.id} onNavigate={onNavigate} />
       <ProblemPanel
         level={level}
-        levelNumber={levels.indexOf(level) + 1}
         problem={problem}
         problemNumber={index + 1}
         revealed={revealed}

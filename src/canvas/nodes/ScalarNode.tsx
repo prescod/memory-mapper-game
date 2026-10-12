@@ -32,7 +32,9 @@ export function ScalarNode({ id, data, selected }: NodeProps<ScalarFlowNode>) {
   switch (data.kind) {
     case 'auto':
     case 'number':
-      editor = (
+      editor = readOnly ? (
+        <span className="scalar-fixed">{formatScalar(scalar, language)}</span>
+      ) : (
         <input
           className="nodrag mem-input"
           value={data.text}
@@ -42,7 +44,6 @@ export function ScalarNode({ id, data, selected }: NodeProps<ScalarFlowNode>) {
           spellCheck={false}
           autoCapitalize="off"
           autoCorrect="off"
-          readOnly={readOnly}
           onChange={(event) => setText(event.target.value)}
         />
       )

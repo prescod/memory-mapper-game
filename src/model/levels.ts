@@ -1,8 +1,9 @@
-import type {
-  Hint,
-  Language,
-  Level,
-  Problem,
+import {
+  textIn,
+  type Hint,
+  type Language,
+  type Level,
+  type Problem,
 } from './types'
 import { scalarsLevel } from './levels/scalars'
 import { identityLevel } from './levels/identity'
@@ -71,17 +72,17 @@ export function nextProblem(id: string): Problem | undefined {
 }
 
 export function hintIn(hint: Hint, language: Language): string {
-  return typeof hint === 'string' ? hint : hint[language]
+  return textIn(hint, language)
 }
 
 export function problemHint(problem: Problem, language: Language): string | undefined {
-  return problem.hint && hintIn(problem.hint, language)
+  return problem.hint ? textIn(problem.hint, language) : undefined
 }
 
 export function problemAbout(problem: Problem, language: Language): string | undefined {
-  return problem.about && hintIn(problem.about, language)
+  return problem.about ? textIn(problem.about, language) : undefined
 }
 
 export function problemTitle(problem: Problem, language: Language): string {
-  return typeof problem.title === 'string' ? problem.title : problem.title[language]
+  return textIn(problem.title, language)
 }

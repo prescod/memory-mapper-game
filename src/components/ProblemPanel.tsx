@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { textIn } from '../model/languages'
 import { hintIn, problemAbout } from '../model/levels'
 import type { Language, Level, Problem } from '../model/types'
 import { useMediaQuery } from '../useMediaQuery'
@@ -6,10 +7,9 @@ import { ProblemTitle } from './ProblemTitle'
 
 interface ProblemPanelProps {
   level: Level
-  levelNumber: number
   problem: Problem
   problemNumber: number
-  /** False for an unsolved mystery problem, whose title and level description would give the answer away. */
+  /** False for an unsolved challenge problem, whose title and level description would give the answer away. */
   revealed: boolean
   language: Language
   focusHeading: boolean
@@ -17,17 +17,16 @@ interface ProblemPanelProps {
 
 export function ProblemPanel({
   level,
-  levelNumber,
   problem,
   problemNumber,
   revealed,
   language,
   focusHeading,
 }: ProblemPanelProps) {
-  const mysteries = level.problems.filter((candidate) => candidate.mystery)
-  const position = problem.mystery
-    ? `Mystery ${mysteries.indexOf(problem) + 1} of ${mysteries.length}`
-    : `Problem ${problemNumber} of ${level.problems.length - mysteries.length}`
+  const challenges = level.problems.filter((candidate) => candidate.challenge)
+  const position = problem.challenge
+    ? `challenge problem ${challenges.indexOf(problem) + 1} of ${challenges.length}`
+    : `problem ${problemNumber} of ${level.problems.length - challenges.length}`
   const heading = useRef<HTMLHeadingElement>(null)
   const summaryRef = useRef<HTMLElement>(null)
   const wide = useMediaQuery('(min-width: 900px)')
@@ -44,7 +43,7 @@ export function ProblemPanel({
   return (
     <section className="problem-panel">
       <p className="problem-position">
-        Level {levelNumber} · {position}
+        {textIn(level.title, language)}: {position}
       </p>
       <div className="problem-title-row">
         <h2 className="problem-title" ref={heading} tabIndex={-1}>
@@ -84,12 +83,12 @@ export function ProblemPanel({
             </span>
           )}
         </summary>
-        <h3 className="level-heading">{level.title[language]}</h3>
+        <h3 className="level-heading">{textIn(level.title, language)}</h3>
         {revealed ? (
-          <p className="level-description">{problemAbout(problem, language) ?? level.description[language]}</p>
+          <p className="level-description">{problemAbout(problem, language) ?? textIn(level.description, language)}</p>
         ) : (
           <p className="level-description">
-            A mystery problem: it uses only ideas from this level, without naming them. The title
+            A challenge problem: it uses only ideas from this level, without naming them. The title
             and explanation appear once you solve it.
           </p>
         )}

@@ -13,6 +13,7 @@ import {
 } from '../model/process'
 import { execute } from './execute'
 import { joinProgram, PYTHON_CHECKPOINT } from './protocol'
+import { perLanguage } from '../model/levels/common'
 import type { Language } from '../model/types'
 import { loadNodePythonSnapshotter } from './testRuntime'
 
@@ -174,10 +175,10 @@ const scenarios: Scenario[] = [
   },
 ]
 
-const sources = (language: Language, scenario: Scenario) => {
-  const key = language === 'javascript' ? 'js' : 'py'
-  return { given: scenario.given[key], code: scenario.code[key] }
-}
+const sources = (language: Language, scenario: Scenario) => ({
+  given: perLanguage(scenario.given)[language],
+  code: perLanguage(scenario.code)[language],
+})
 
 describe('identity and call rules', () => {
   it.each(scenarios.map((scenario) => [scenario.name, scenario] as const))(
@@ -185,6 +186,18 @@ describe('identity and call rules', () => {
     async (_name, scenario) => {
       const [snapshot] = await execute(
         { language: 'javascript', ...sources('javascript', scenario), names: scenario.names, checks: scenario.checks },
+        () => micropython,
+        () => {},
+      )
+      expect(snapshot.brokenRules).toEqual(scenario.broken)
+    },
+  )
+
+  it.each(scenarios.map((scenario) => [scenario.name, scenario] as const))(
+    '%s, in TypeScript',
+    async (_name, scenario) => {
+      const [snapshot] = await execute(
+        { language: 'typescript', ...sources('typescript', scenario), names: scenario.names, checks: scenario.checks },
         () => micropython,
         () => {},
       )

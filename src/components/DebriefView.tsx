@@ -1,8 +1,15 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEdgesState, useNodesState } from '@xyflow/react'
 import { Canvas } from '../canvas/Canvas'
 import { emptyFeedback } from '../canvas/FeedbackContext'
 import { toFlow } from '../canvas/layout'
+import type { MemFlowEdge, MemFlowNode } from '../canvas/types'
 import type { DebriefBlock, Hint, Language, MemoryGraph } from '../model/types'
+import { textIn } from '../model/languages'
+
+const DEFAULT_HEIGHT = 240
+const MIN_HEIGHT = 160
+const MAX_HEIGHT = 800
 
 function DebriefDiagram({
   diagram,
@@ -15,8 +22,56 @@ function DebriefDiagram({
   verdict?: 'correct' | 'incorrect'
   language: Language
 }) {
-  const { nodes, edges } = useMemo(() => toFlow(diagram), [diagram])
-  const captionText = typeof caption === 'string' ? caption : caption[language]
+  const flow = useMemo(() => toFlow(diagram), [diagram])
+  const [nodes, setNodes, onNodesChange] = useNodesState<MemFlowNode>(flow.nodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState<MemFlowEdge>(flow.edges)
+  const [height, setHeight] = useState(DEFAULT_HEIGHT)
+  const [isResizing, setIsResizing] = useState(false)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setNodes(flow.nodes)
+    setEdges(flow.edges)
+  }, [flow, setNodes, setEdges])
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault()
+    const currentActualHeight = wrapperRef.current
+      ? wrapperRef.current.getBoundingClientRect().height
+      : height
+    const startY = e.clientY
+    const startHeight = currentActualHeight
+    setIsResizing(true)
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      const delta = moveEvent.clientY - startY
+      const next = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, startHeight + delta))
+      setHeight(next)
+    }
+
+    const onPointerUp = () => {
+      setIsResizing(false)
+      window.removeEventListener('pointermove', onPointerMove)
+      window.removeEventListener('pointerup', onPointerUp)
+      window.removeEventListener('pointercancel', onPointerUp)
+    }
+
+    window.addEventListener('pointermove', onPointerMove)
+    window.addEventListener('pointerup', onPointerUp)
+    window.addEventListener('pointercancel', onPointerUp)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setHeight((h) => Math.min(MAX_HEIGHT, h + 20))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setHeight((h) => Math.max(MIN_HEIGHT, h - 20))
+    }
+  }
+
+  const captionText = textIn(caption, language)
 
   return (
     <figure className="debrief-figure">
@@ -25,18 +80,35 @@ function DebriefDiagram({
           {verdict === 'correct' ? 'Correct' : 'Not correct'}
         </span>
       )}
-      <div className="debrief-canvas-wrapper">
+      <div
+        ref={wrapperRef}
+        className="debrief-canvas-wrapper"
+        style={{ height: `${height}px` }}
+      >
         <Canvas
           nodes={nodes}
           edges={edges}
-          onNodesChange={() => {}}
-          onEdgesChange={() => {}}
-          setNodes={() => {}}
-          setEdges={() => {}}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          setNodes={setNodes}
+          setEdges={setEdges}
           feedback={emptyFeedback}
           language={language}
           compact
         />
+      </div>
+      <div
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label="Resize diagram"
+        title="Drag or use up/down arrows to resize, double-click to reset"
+        tabIndex={0}
+        className={`debrief-resize-handle${isResizing ? ' resizing' : ''}`}
+        onPointerDown={handlePointerDown}
+        onKeyDown={handleKeyDown}
+        onDoubleClick={() => setHeight(DEFAULT_HEIGHT)}
+      >
+        <span className="debrief-resize-grip" aria-hidden="true" />
       </div>
       <figcaption className="debrief-caption">{captionText}</figcaption>
     </figure>
@@ -61,7 +133,7 @@ export function DebriefView({ debrief, language }: DebriefViewProps) {
       <div className="debrief-body">
         {debrief.map((block, index) => {
           if ('html' in block) {
-            const html = typeof block.html === 'string' ? block.html : block.html[language]
+            const html = textIn(block.html, language)
             return (
               <div
                 key={index}

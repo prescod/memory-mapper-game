@@ -72,23 +72,23 @@ export interface MemoryGraph {
   nodes: Record<NodeId, MemNode>
 }
 
-export type Language = 'javascript' | 'python'
+export {
+  CONTAINER_NAMES,
+  isLanguage,
+  LANGUAGE_LABELS,
+  LANGUAGES,
+  languageProfile,
+  textIn,
+  type Language,
+  type LanguageProfile,
+  type Runtime,
+  type RuntimeTraits,
+} from './languages'
 
-export const LANGUAGES: Language[] = ['javascript', 'python']
+import type { Language } from './languages'
 
 /** The same text in each language mode, e.g. level titles that name arrays or lists. */
 export type LocalizedText = Record<Language, string>
-
-export const LANGUAGE_LABELS: Record<Language, string> = {
-  javascript: 'JavaScript',
-  python: 'Python',
-}
-
-/** What each language calls the two container types, in lower case. */
-export const CONTAINER_NAMES: Record<Language, { array: string; object: string }> = {
-  javascript: { array: 'array', object: 'object' },
-  python: { array: 'list', object: 'dict' },
-}
 
 /** Targeted explanation shown when a learner draws or builds a known mistake. */
 export interface DiagnosticHint {
@@ -99,12 +99,19 @@ export interface DiagnosticHint {
    */
   value?: string | number | boolean | null | (string | number | boolean | null)[]
   /**
+   * The mistaken number of slots this hint explains, when the variable refers
+   * to an array or list of the wrong length.
+   */
+  length?: number
+  /** The key an object is missing, when the learner's object left it out. */
+  missingKey?: string
+  /**
    * Which aliasing mistake this hint explains: `shared` when the learner
    * merged names onto one container that should be separate, `separate` when
    * they split names across containers that should be shared.
    */
   aliasing?: 'shared' | 'separate'
-  message: string
+  message: Hint
 }
 
 export type Hint = string | Record<Language, string>
@@ -123,7 +130,7 @@ export interface DrawProblem {
   id: string
   title: string | LocalizedText
   /** Title and level description stay hidden until solved, since they would give the answer away. */
-  mystery: boolean
+  challenge: boolean
   code: Record<Language, string>
   expected: MemoryGraph
   hints?: DiagnosticHint[]
@@ -176,8 +183,8 @@ export interface WriteProblem {
   kind: 'write'
   id: string
   title: string | LocalizedText
-  /** See `DrawProblem.mystery`. */
-  mystery: boolean
+  /** See `DrawProblem.challenge`. */
+  challenge: boolean
   expected: MemoryGraph
   given?: Record<Language, string>
   then?: Record<Language, string>
@@ -199,7 +206,7 @@ export interface Level {
   id: string
   title: LocalizedText
   description: LocalizedText
-  /** Tutorial problems first, then mystery problems that retest the same ideas. */
+  /** Tutorial problems first, then challenge problems that retest the same ideas. */
   problems: Problem[]
 }
 

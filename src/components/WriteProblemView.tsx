@@ -4,7 +4,7 @@ import { Canvas } from '../canvas/Canvas'
 import { emptyFeedback } from '../canvas/FeedbackContext'
 import { toFlow } from '../canvas/layout'
 import type { MemFlowEdge, MemFlowNode } from '../canvas/types'
-import { levels, nextProblem, problemHint, type ProblemLocation } from '../model/levels'
+import { nextProblem, problemHint, type ProblemLocation } from '../model/levels'
 import { LANGUAGE_LABELS, type Language, type VerifyResult, type WriteProblem } from '../model/types'
 import { runCode } from '../run/runCode'
 import { progressKey, useAppStore } from '../store/useAppStore'
@@ -41,10 +41,10 @@ export function WriteProblemView({
 
   const [isAnswerRevealed, setIsAnswerRevealed] = useState(false)
   const revealed =
-    useAppStore((state) => !problem.mystery || state.completed[key] === true) || isAnswerRevealed
+    useAppStore((state) => !problem.challenge || state.completed[key] === true) || isAnswerRevealed
 
   const picture = useMemo(() => toFlow(problem.expected), [problem])
-  const [nodes, , onNodesChange] = useNodesState<MemFlowNode>(picture.nodes)
+  const [nodes, setNodes, onNodesChange] = useNodesState<MemFlowNode>(picture.nodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState<MemFlowEdge>(picture.edges)
   const [result, setResult] = useState<VerifyResult | null>(null)
   const [busy, setBusy] = useState(false)
@@ -61,6 +61,11 @@ export function WriteProblemView({
   useEffect(() => {
     setIsAnswerRevealed(false)
   }, [problem.id, language])
+
+  useEffect(() => {
+    setNodes(picture.nodes)
+    setEdges(picture.edges)
+  }, [picture, setNodes, setEdges])
 
   const edit = (value: string) => {
     saveCodeDraft(key, value)
@@ -82,6 +87,9 @@ export function WriteProblemView({
     setIsAnswerRevealed(false)
     setResult(null)
     resetProblem(key)
+    const fresh = toFlow(problem.expected)
+    setNodes(fresh.nodes)
+    setEdges(fresh.edges)
   }
 
   const next = nextProblem(problem.id)
@@ -96,7 +104,6 @@ export function WriteProblemView({
       <ProblemHeader problemId={problem.id} onNavigate={onNavigate} />
       <ProblemPanel
         level={level}
-        levelNumber={levels.indexOf(level) + 1}
         problem={problem}
         problemNumber={index + 1}
         revealed={revealed}
@@ -114,7 +121,7 @@ export function WriteProblemView({
               edges={edges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
-              setNodes={() => {}}
+              setNodes={setNodes}
               setEdges={setEdges}
               feedback={emptyFeedback}
               language={language}

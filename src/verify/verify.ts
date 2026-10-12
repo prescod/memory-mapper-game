@@ -2,6 +2,7 @@ import { formatScalar } from '../model/scalar'
 import {
   CONTAINER_NAMES,
   LANGUAGE_LABELS,
+  textIn,
   type DiagnosticHint,
   type Language,
   type MemNode,
@@ -80,11 +81,14 @@ export function verify(
   const userToExpected = new Map<NodeId, NodeId>()
   const expectedToUser = new Map<NodeId, NodeId>()
 
+  const say = (hint: DiagnosticHint | undefined): string | undefined =>
+    hint && textIn(hint.message, language)
+
   const aliasMessage = (kind: 'shared' | 'separate', variableName?: string): string | undefined => {
     const exact = hints?.find(
       (candidate) => candidate.aliasing === kind && (!variableName || candidate.variable === variableName),
     )
-    return exact?.message ?? hints?.find((candidate) => candidate.aliasing === kind)?.message
+    return say(exact) ?? say(hints?.find((candidate) => candidate.aliasing === kind))
   }
 
   const checkTarget = (
@@ -171,7 +175,7 @@ export function verify(
           return String(candidate.value) === userNode.value
         })
         if (hint) {
-          report(hint.message, { nodeId: userId })
+          report(say(hint)!, { nodeId: userId })
         } else {
           report(`The value ${formatScalar(userNode, language)} is not correct here.`, { nodeId: userId })
         }
@@ -181,8 +185,13 @@ export function verify(
 
     if (userNode.type === 'array' && expectedNode.type === 'array') {
       if (userNode.slots.length !== expectedNode.slots.length) {
+        const hint = hints?.find(
+          (candidate) =>
+            candidate.length === userNode.slots.length && (!variableName || candidate.variable === variableName),
+        )
         report(
-          `This ${name('array')} has ${plural(userNode.slots.length, 'slot')} but should have ${expectedNode.slots.length}.`,
+          say(hint) ??
+            `This ${name('array')} has ${plural(userNode.slots.length, 'slot')} but should have ${expectedNode.slots.length}.`,
           { nodeId: userId },
         )
         return
@@ -228,7 +237,13 @@ export function verify(
       for (const expectedEntry of expectedNode.entries) {
         const entry = userNode.entries.find((candidate) => candidate.key === expectedEntry.key)
         if (!entry) {
-          report(`This ${name('object')} is missing the key "${expectedEntry.key}".`, { nodeId: userId })
+          const hint = hints?.find(
+            (candidate) =>
+              candidate.missingKey === expectedEntry.key && (!variableName || candidate.variable === variableName),
+          )
+          report(say(hint) ?? `This ${name('object')} is missing the key "${expectedEntry.key}".`, {
+            nodeId: userId,
+          })
           continue
         }
         checkTarget(

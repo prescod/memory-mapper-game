@@ -24,7 +24,7 @@ export function PetNode({ id, data, selected }: NodeProps<PetFlowNode>) {
       className={`mem-node pet-node${readOnly ? ' read-only' : ''}${selected ? ' selected' : ''}${flagged ? ' flagged' : ''}`}
     >
       <Handle id={TARGET_HANDLE} type="target" position={Position.Top} />
-      {readOnly ? <div className="mem-node-title">Pet</div> : <NodeHeader>Pet</NodeHeader>}
+      <NodeHeader>Pet</NodeHeader>
       {readOnly ? (
         <span className="scalar-fixed">
           {data.label === ''

@@ -1,7 +1,32 @@
+import { languageProfile, type Runtime } from '../model/languages'
+import type { RuntimeChecks } from '../model/process'
 import { describeError, UserCodeError } from './errors'
 import { joinProgram, PYTHON_CHECKPOINT, type RunRequest } from './protocol'
 import { runJavaScript, type Snapshot } from './snapshotJs'
 import type { PythonSnapshotter } from './snapshotPy'
+import { stripTypes } from './stripTypes'
+
+type Runner = (start: string, after: string, index: number) => Snapshot
+
+interface RunnerContext {
+  code: string
+  names: string[]
+  checks?: RuntimeChecks
+  loadPython: () => Promise<PythonSnapshotter> | PythonSnapshotter
+}
+
+const RUNNERS: Record<Runtime, (context: RunnerContext) => Promise<Runner> | Runner> = {
+  javascript: ({ code, names, checks }) =>
+    (start, after, index) => runJavaScript(start, code, names, index === 0 ? checks : undefined, after),
+  python: async ({ code, names, checks, loadPython }) => {
+    const snapshotter = await loadPython()
+    return (start, after, index) => {
+      const ruled = index === 0 ? checks : undefined
+      const { source, skippedLines } = joinProgram(start, code, ruled && PYTHON_CHECKPOINT, after)
+      return snapshotter(source, names, skippedLines, ruled)
+    }
+  },
+}
 
 /**
  * Runs the learner's code once after `given` and once after each alternate
@@ -17,21 +42,20 @@ export async function execute(
   loadPython: () => Promise<PythonSnapshotter> | PythonSnapshotter,
   started: () => void,
 ): Promise<Snapshot[]> {
-  const starts = [given, ...alternateGivens]
-  const thens = [then ?? '', ...alternateThens]
+  const profile = languageProfile(language)
+  const clean = (s: string) => (profile.typed && s ? stripTypes(s) : s)
 
-  let runOne: (start: string, after: string, index: number) => Snapshot
-  if (language === 'javascript') {
-    runOne = (start, after, index) => runJavaScript(start, code, names, index === 0 ? checks : undefined, after)
-  } else {
-    // The engine is only fetched once someone checks Python code.
-    const snapshotter = await loadPython()
-    runOne = (start, after, index) => {
-      const ruled = index === 0 ? checks : undefined
-      const { source, skippedLines } = joinProgram(start, code, ruled && PYTHON_CHECKPOINT, after)
-      return snapshotter(source, names, skippedLines, ruled)
-    }
-  }
+  const activeGiven = clean(given)
+  const activeCode = clean(code)
+  const activeThen = then !== undefined ? clean(then) : undefined
+  const activeAlternateGivens = alternateGivens.map(clean)
+  const activeAlternateThens = alternateThens.map(clean)
+
+  const starts = [activeGiven, ...activeAlternateGivens]
+  const thens = [activeThen ?? '', ...activeAlternateThens]
+
+  const createRunner = RUNNERS[profile.runtime]
+  const runOne = await createRunner({ code: activeCode, names, checks, loadPython })
 
   started()
   return starts.map((start, index) => {

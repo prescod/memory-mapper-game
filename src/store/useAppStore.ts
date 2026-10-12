@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import type { Language } from '../model/types'
+import { isLanguage, type Language } from '../model/languages'
 import { toPersistableDraft, type Draft } from './draft'
 
 export interface AppState {
@@ -14,7 +14,7 @@ export interface AppState {
   markCompleted: (key: string) => void
   saveDraft: (key: string, draft: Draft) => void
   saveCodeDraft: (key: string, code: string) => void
-  /** Clears the draft and the solved state, so a mystery problem's title is hidden again. */
+  /** Clears the draft and the solved state, so a challenge problem's title is hidden again. */
   resetProblem: (key: string) => void
   resetAllProgress: () => void
 }
@@ -60,7 +60,7 @@ export const useAppStore = create<AppState>()(
           const lang = (persisted as Partial<AppState>).language
           return {
             ...initialState,
-            ...(lang === 'javascript' || lang === 'python' ? { language: lang } : {}),
+            ...(isLanguage(lang) ? { language: lang } : {}),
           }
         }
         const { hints: _hints, ...kept } = persisted as Partial<AppState> & { hints?: boolean }

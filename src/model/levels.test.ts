@@ -3,12 +3,15 @@ import { execute } from '../run/execute'
 import { joinProgram, PYTHON_CHECKPOINT } from '../run/protocol'
 import { outcomeOf, type RunOutcome } from '../run/runCode'
 import { snapshotJavaScript, snapshotToGraph } from '../run/snapshotJs'
+import { stripTypes } from '../run/stripTypes'
 import { loadNodePythonSnapshotter } from '../run/testRuntime'
 import { buildRunRequest, gradeRun } from '../verify/grade'
 import { verify } from '../verify/verify'
-import { graph, pet, ref } from './builders'
+import { graph, list, pet, ref } from './builders'
 import { findProblem, nextProblem, previousProblem, problems } from './levels'
+import { perLanguage } from './levels/common'
 import { withOpaquePrelude } from '../run/opaquePrelude'
+import { checksFor } from './process'
 import { snapshotPython } from './snapshot'
 import {
   LANGUAGES,
@@ -136,6 +139,14 @@ describe('expected graphs match real execution', () => {
     expect(verify(execution.expected, actual).errors).toEqual([])
   })
 
+  it.each(all)('%s in TypeScript', (_key, execution) => {
+    const names = execution.expected.variables.map((variable) => variable.name)
+    const stripped = stripTypes(programFor(execution, 'typescript'))
+    const actual = snapshotToGraph(snapshotJavaScript(stripped, names))
+    expect(verify(actual, execution.expected).errors).toEqual([])
+    expect(verify(execution.expected, actual).errors).toEqual([])
+  })
+
   const python = snapshotPython(
     executions.map((execution) => ({
       id: execution.key,
@@ -192,17 +203,19 @@ describe('code-to-picture problems', () => {
     for (const problem of problems) {
       if (problem.kind !== 'draw') continue
       const names = problem.expected.variables.map((variable) => variable.name)
-      const declared = [...problem.code.javascript.matchAll(pattern)].map((match) => match[1])
-      for (const name of declared) {
-        expect(names, problem.id).toContain(name)
+      for (const lang of ['javascript', 'typescript'] as const) {
+        const declared = [...problem.code[lang].matchAll(pattern)].map((match) => match[1])
+        for (const name of declared) {
+          expect(names, `${problem.id} in ${lang}`).toContain(name)
+        }
       }
     }
   })
 })
 
-describe('mystery problems', () => {
+describe('challenge problems', () => {
   it('show pictures that no other problem shows', () => {
-    for (const problem of problems.filter((candidate) => candidate.mystery)) {
+    for (const problem of problems.filter((candidate) => candidate.challenge)) {
       const twin = problems.find(
         (other) => other !== problem && matches(anonymous(other.expected), anonymous(problem.expected)),
       )
@@ -253,7 +266,9 @@ describe('process rules', () => {
       const starter = problem.given?.javascript ?? ''
       for (const alternate of [...(problem.process?.hidden ?? []), ...constraintCasesOf(problem)]) {
         expect(alternate.expected.variables.map((variable) => variable.name)).toEqual(namesOf(problem))
-        expect(alternate.given.javascript, `${problem.id} alternate starter`).not.toBe(problem.given?.javascript)
+        const startsDifferently = alternate.given.javascript !== problem.given?.javascript
+        const endsDifferently = alternate.then?.javascript !== undefined && alternate.then.javascript !== problem.then?.javascript
+        expect(startsDifferently || endsDifferently, `${problem.id} alternate starter`).toBe(true)
       }
       const rules = problem.process?.runtime
       const locations = [
@@ -298,7 +313,7 @@ describe('process rules', () => {
           hiddenAfter(problem, 'python'),
         ).source,
         names: namesOf(problem),
-        checks: problem.process?.runtime,
+        checks: problem.process?.runtime && checksFor(problem.process.runtime, 'python'),
       })),
     )
     it.skipIf(cpython === undefined).each(processed.map((problem) => [problem.id] as const))(
@@ -400,26 +415,43 @@ describe('shortcuts that match the picture but miss the point', () => {
     [
       'functions-8',
       'function withMilk(list) {\n  return ["tea", "milk"];\n}',
-      'def withMilk(list):\n    return ["tea", "milk"]',
+      'def with_milk(list):\n    return ["tea", "milk"]',
+      /breaks the special constraint/,
+    ],
+    [
+      'functions-9',
+      'cart.push("milk");\nfunction addMilk(items) {}',
+      'cart.append("milk")\ndef add_milk(items):\n    pass',
+      /Put the change inside (addMilk|add_milk)/,
+    ],
+    [
+      'functions-10',
+      'function finish(tasks, finished) {\n  finished.push("wash");\n  tasks.pop();\n}',
+      'def finish(tasks, finished):\n    finished.append("wash")\n    tasks.pop()',
       /breaks the special constraint/,
     ],
     [
       'functions-10',
-      'let a = [];\nlet b = [];\na.push(0);\na.push(0);\nb.push(0);',
-      'a = []\nb = []\na.append(0)\na.append(0)\nb.append(0)',
-      /Call fill\(a\) 2 times/,
+      'done.push(todo[0]);\ntodo.pop();\nfunction finish(tasks, finished) {}',
+      'done.append(todo[0])\ntodo.pop()\ndef finish(tasks, finished):\n    pass',
+      /Put the changes inside finish/,
     ],
-    ['functions-12', 'b[0] = "new";', 'b[0] = "new"', /Call touch\(b\) once/],
+    [
+      'functions-12',
+      'shelf.items = [];\nfunction restock(s) {}',
+      'shelf["items"] = []\ndef restock(s):\n    pass',
+      /Put the change inside restock/,
+    ],
     [
       'functions-13',
-      'let a = { n: 1, tagged: true };\nlet b = { n: 2 };',
-      'a = {"n": 1, "tagged": True}\nb = {"n": 2}',
-      /Call tag\(a\) once/,
+      'function tag(o) {\n  a.tagged = true;\n}',
+      'def tag(o):\n    a["tagged"] = True',
+      /breaks the special constraint/,
     ],
   ]
 
   const cases = shortcuts.flatMap(([id, js, py, complaint]) =>
-    LANGUAGES.map((language) => [`${id} in ${language}`, id, language === 'javascript' ? js : py, language, complaint] as const),
+    LANGUAGES.map((language) => [`${id} in ${language}`, id, perLanguage({ js, py })[language], language, complaint] as const),
   )
 
   it.each(cases)('%s is rejected', async (_label, id, code, language, complaint) => {
@@ -467,6 +499,72 @@ describe('diagnostic hints', () => {
     expect(result.ok).toBe(false)
     expect(result.errors[0].message).toMatch(/separate Pet calls/)
   })
+
+  it.each([
+    ['javascript', 'function finish(tasks, finished) {\n  finished.push(tasks[0]);\n  tasks = [];\n}'],
+    ['python', 'def finish(tasks, finished):\n    finished.append(tasks[0])\n    tasks = []'],
+  ] as const)('explains that reassigning a parameter cannot empty the caller\'s list on Moving a finished task in %s', async (language, code) => {
+    const problem = writeProblems.find((candidate) => candidate.id === 'functions-10')!
+    const verdict = await grade(problem, language, code)
+    expect(verdict.ok).toBe(false)
+    expect(verdict.errors.map((error) => error.message).join('\n')).toMatch(/only repoints the parameter/)
+  })
+
+  const mistakes: [id: string, js: string, py: string, explanation: RegExp][] = [
+    [
+      'functions-9',
+      'function addMilk(items) {\n  items = items.concat(["milk"]);\n}',
+      'def add_milk(items):\n    items = items + ["milk"]',
+      /only repoints items/,
+    ],
+    [
+      'functions-12',
+      'function restock(s) {\n  s = { items: [] };\n}',
+      'def restock(s):\n    s = {"items": []}',
+      /only repoints the parameter/,
+    ],
+    [
+      'functions-12',
+      'function restock(s) {\n  s.items.length = 0;\n}',
+      'def restock(s):\n    s["items"].clear()',
+      /should be separate lists/,
+    ],
+    [
+      'functions-13',
+      'function tag(o) {\n  o = { ...o, tagged: true };\n}',
+      'def tag(o):\n    o = dict(o)\n    o["tagged"] = True',
+      /only repoints the parameter/,
+    ],
+  ]
+
+  it.each(
+    mistakes.flatMap(([id, js, py, explanation]) =>
+      LANGUAGES.map((language) => [id, language, perLanguage({ js, py })[language], explanation] as const),
+    ),
+  )('explains the reassigned-parameter mistake on %s in %s', async (id, language, code, explanation) => {
+    const problem = writeProblems.find((candidate) => candidate.id === id)!
+    const verdict = await grade(problem, language, code)
+    expect(verdict.ok).toBe(false)
+    expect(verdict.errors.map((error) => error.message).join('\n')).toMatch(explanation)
+  })
+
+  it.each([
+    [0, /box = \[\] moves only the parameter box/],
+    [1, /box\.(push|append)\(1\) changes/],
+  ])('explains a drawing of a with %i items on Changing a parameter, then reassigning it', (count, explanation) => {
+    const problem = findProblem('functions-2')!.problem
+    const slots = [0, 9].slice(0, count)
+    const mistaken = graph({ a: ref('a') }, { a: list(...slots) })
+    const result = verify(mistaken, problem.expected, problem.hints, 'javascript')
+    expect(result.ok).toBe(false)
+    expect(result.errors[0].message).toMatch(explanation)
+  })
+
+  it('names the Python function when a call rule is broken', async () => {
+    const problem = writeProblems.find((candidate) => candidate.id === 'functions-6')!
+    const verdict = await grade(problem, 'python', 'b.append(0)')
+    expect(verdict.errors.map((error) => error.message)).toEqual(['Call grow(b) once.'])
+  })
 })
 
 describe('debrief diagrams', () => {
@@ -492,6 +590,14 @@ describe('debrief alternate answers', () => {
   const alternates: [id: string, code: string, language: Language][] = [
     ['scalars-8', '[a, b] = [b, a];', 'javascript'],
     ['scalars-8', 'a, b = b, a', 'python'],
+    ['functions-10', 'function finish(tasks, finished) {\n  finished.push(tasks.pop());\n}', 'javascript'],
+    ['functions-10', 'def finish(tasks, finished):\n    finished.append(tasks.pop())', 'python'],
+    ['functions-10', 'def finish(tasks, finished):\n    finished.append(tasks[0])\n    tasks.clear()', 'python'],
+    ['functions-12', 'function restock(s) {\n  Object.assign(s, { items: [] });\n}', 'javascript'],
+    ['functions-12', 'def restock(s):\n    s.update({"items": []})', 'python'],
+    ['functions-12', 'def restock(s):\n    s["items"] = list()', 'python'],
+    ['functions-13', 'function tag(o) {\n  Object.assign(o, { tagged: true });\n}', 'javascript'],
+    ['functions-13', 'def tag(o):\n    o.update({"tagged": True})', 'python'],
   ]
 
   it.each(alternates)('%s accepts %j in %s', async (id, code, language) => {
@@ -527,7 +633,7 @@ describe('special constraints', () => {
   ]
 
   const cases = broken.flatMap(([id, js, py, complaint]) =>
-    LANGUAGES.map((language) => [`${id} in ${language}`, id, language === 'javascript' ? js : py, language, complaint] as const),
+    LANGUAGES.map((language) => [`${id} in ${language}`, id, perLanguage({ js, py })[language], language, complaint] as const),
   )
 
   it.each(cases)('%s rejects an answer that breaks it', async (_label, id, code, language, complaint) => {
@@ -555,5 +661,13 @@ describe('debrief rejected answers', () => {
     )
     expect(verdict.ok).toBe(false)
     expect(verdict.errors.map((e) => e.message).join('\n')).toMatch(/has no value/)
+  })
+})
+
+describe('TypeScript overrides', () => {
+  it('rejects a ts override identical to js', () => {
+    expect(() => perLanguage({ js: 'let a = 1;', py: 'a = 1', ts: 'let a = 1;' })).toThrow(
+      /identical to JavaScript/,
+    )
   })
 })

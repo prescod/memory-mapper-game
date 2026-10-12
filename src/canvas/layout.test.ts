@@ -35,21 +35,31 @@ describe('toFlow', () => {
     expect(nodes).toHaveLength(cyclic.expected.variables.length + Object.keys(cyclic.expected.nodes).length)
   })
 
-  it('puts variables in the first column and what they point to further right', () => {
+  it('puts variables in the top row and what they point to further down', () => {
     const { nodes } = toFlow(problems.find((problem) => problem.id === 'arrays-1')!.expected)
     const variable = nodes.find((node) => node.type === 'variable')!
     const array = nodes.find((node) => node.type === 'array')!
-    expect(variable.position.x).toBeLessThan(array.position.x)
+    expect(variable.position.y).toBeLessThan(array.position.y)
   })
 
-  it('places unreached nodes in a column after the reachable ones', () => {
+  it('places unreached nodes in a row after the reachable ones', () => {
     const memory = withGarbage(graph({ x: 7 }), 5)
     const { nodes } = toFlow(memory)
     const variable = nodes.find((node) => node.type === 'variable')!
     const seven = nodes.find((node) => node.type === 'scalar' && node.data.text === '7')!
     const five = nodes.find((node) => node.type === 'scalar' && node.data.text === '5')!
-    expect(variable.position.x).toBe(0)
-    expect(seven.position.x).toBe(280)
-    expect(five.position.x).toBe(560)
+    expect(variable.position.y).toBe(0)
+    expect(seven.position.y).toBeLessThan(five.position.y)
+  })
+
+  it('layers outer containers before inner containers when an outer container references an inner one', () => {
+    const pairingProblem = problems.find((problem) => problem.id === 'functions-7')!
+    const { nodes } = toFlow(pairingProblem.expected)
+    const gridNode = nodes.find((node) => node.id === 'container:grid')!
+    const rowNode = nodes.find((node) => node.id === 'container:row')!
+    const scalarNode = nodes.find((node) => node.id === 'scalar:0')!
+
+    expect(gridNode.position.y).toBeLessThan(rowNode.position.y)
+    expect(rowNode.position.y).toBeLessThan(scalarNode.position.y)
   })
 })

@@ -56,27 +56,26 @@ export function ArrayNode({ id, data, selected }: NodeProps<ArrayFlowNode>) {
       {data.slots.map((slot, index) => {
         const handle = slotHandle(slot.id)
         return (
-          <div className="mem-row mem-row-slot" key={slot.id}>
-            <div className="mem-row-main">
-              <span className="mem-index">{index}</span>
-              <span className="mem-spacer" />
-              {!readOnly && (
-                <button
-                  type="button"
-                  className="nodrag mem-icon-button"
-                  aria-label={`Remove slot ${index}`}
-                  onClick={() => removeSlot(slot.id)}
-                >
-                  ×
-                </button>
-              )}
+          <div className="mem-row mem-array-slot" key={slot.id}>
+            <span className="mem-index">{index}</span>
+            <div className="mem-slot-cell">
+              <Handle
+                id={handle}
+                type="source"
+                position={Position.Bottom}
+                className={feedback.handleKeys.has(handleKey(id, handle)) ? 'handle-error' : ''}
+              />
             </div>
-            <Handle
-              id={handle}
-              type="source"
-              position={Position.Bottom}
-              className={feedback.handleKeys.has(handleKey(id, handle)) ? 'handle-error' : ''}
-            />
+            {!readOnly && (
+              <button
+                type="button"
+                className="nodrag mem-icon-button"
+                aria-label={`Remove slot ${index}`}
+                onClick={() => removeSlot(slot.id)}
+              >
+                ×
+              </button>
+            )}
           </div>
         )
       })}

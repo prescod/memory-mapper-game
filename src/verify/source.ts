@@ -1,8 +1,39 @@
 import type { SyntaxNode } from '@lezer/common'
 import { parser as javascriptParser } from '@lezer/javascript'
 import { parser as pythonParser } from '@lezer/python'
+import { languageProfile, type Language, type Runtime } from '../model/languages'
 import type { SourceRule } from '../model/process'
-import type { Language } from '../model/types'
+
+const typescriptParser = javascriptParser.configure({ dialect: 'ts' })
+
+const PARSERS: Record<Runtime, (typed: boolean) => typeof pythonParser | typeof javascriptParser> = {
+  javascript: (typed) => (typed ? typescriptParser : javascriptParser),
+  python: () => pythonParser,
+}
+
+function parserFor(language: Language) {
+  const profile = languageProfile(language)
+  return PARSERS[profile.runtime](profile.typed)
+}
+
+interface SyntaxOps {
+  copies: (rhs: SyntaxNode, source: string, read: (node: SyntaxNode) => string) => boolean
+  combines: (rhs: SyntaxNode, source: string, read: (node: SyntaxNode) => string) => boolean
+  combineHint: string
+}
+
+const SYNTAX: Record<Runtime, SyntaxOps> = {
+  javascript: {
+    copies: copiesInJavaScript,
+    combines: combinesInJavaScript,
+    combineHint: '.concat([...])',
+  },
+  python: {
+    copies: copiesInPython,
+    combines: combinesInPython,
+    combineHint: ' + [...]',
+  },
+}
 
 /**
  * Checks that variables are built the way a puzzle teaches, by reading the
@@ -13,7 +44,7 @@ import type { Language } from '../model/types'
  * this only answers whether the intended operation was used.
  */
 export function checkSource(language: Language, code: string, rules: SourceRule[]): string[] {
-  const parser = language === 'javascript' ? javascriptParser : pythonParser
+  const parser = parserFor(language)
   const root = parser.parse(code).topNode
   const read = (node: SyntaxNode) => code.slice(node.from, node.to)
   const assignments = assignmentsIn(root, read)
@@ -49,7 +80,9 @@ function assignmentsIn(root: SyntaxNode, read: (node: SyntaxNode) => string): As
   const found: Assignment[] = []
 
   for (const node of descendants(root)) {
-    const parts = children(node).filter((child) => child.name !== 'TypeDef')
+    const parts = children(node).filter(
+      (child) => child.name !== 'TypeDef' && child.name !== 'TypeAnnotation',
+    )
     const isEquals = (child: SyntaxNode) => (child.name === 'Equals' || child.name === 'AssignOp') && read(child) === '='
 
     if (node.name === 'VariableDeclaration') {
@@ -95,6 +128,9 @@ function holds(
   rhs: SyntaxNode,
   read: (node: SyntaxNode) => string,
 ): boolean {
+  const profile = languageProfile(language)
+  const syntax = SYNTAX[profile.runtime]
+
   switch (rule.kind) {
     case 'multiply':
       return [...descendants(rhs)].some(
@@ -107,23 +143,19 @@ function holds(
     case 'method':
       return [...methodCalls(rhs, read)].some(
         ({ receiver, method }) =>
-          receiver?.name === 'VariableName' && read(receiver) === rule.receiver && method === rule.method[language],
+          receiver?.name === 'VariableName' &&
+          read(receiver) === rule.receiver &&
+          method === rule.method[profile.runtime],
       )
 
     case 'copy':
-      return language === 'javascript'
-        ? copiesInJavaScript(rhs, rule.source, read)
-        : copiesInPython(rhs, rule.source, read)
+      return syntax.copies(rhs, rule.source, read)
 
     case 'combine':
-      return language === 'javascript'
-        ? combinesInJavaScript(rhs, rule.source, read)
-        : combinesInPython(rhs, rule.source, read)
+      return syntax.combines(rhs, rule.source, read)
 
     case 'copyOrCombine':
-      return language === 'javascript'
-        ? copiesInJavaScript(rhs, rule.source, read) || combinesInJavaScript(rhs, rule.source, read)
-        : copiesInPython(rhs, rule.source, read) || combinesInPython(rhs, rule.source, read)
+      return syntax.copies(rhs, rule.source, read) || syntax.combines(rhs, rule.source, read)
   }
 }
 
@@ -201,21 +233,20 @@ function copiesInPython(rhs: SyntaxNode, source: string, read: (node: SyntaxNode
 
 function explain(rule: SourceRule, language: Language): string {
   const target = `"${rule.target}"`
+  const profile = languageProfile(language)
+  const syntax = SYNTAX[profile.runtime]
+
   switch (rule.kind) {
     case 'multiply':
       return `Build ${target} by multiplying ${rule.operands.map((operand) => `"${operand}"`).join(' and ')}.`
     case 'method':
-      return `Build ${target} by calling ${rule.receiver}.${rule.method[language]}().`
+      return `Build ${target} by calling ${rule.receiver}.${rule.method[profile.runtime]}().`
     case 'copy':
       return `Build ${target} by copying "${rule.source}" instead of writing its contents out again.`
     case 'combine':
-      return language === 'javascript'
-        ? `Build ${target} with "${rule.source}.concat([...])".`
-        : `Build ${target} with "${rule.source} + [...]".`
+      return `Build ${target} with "${rule.source}${syntax.combineHint}".`
     case 'copyOrCombine':
-      return language === 'javascript'
-        ? `Build ${target} by copying "${rule.source}" or with "${rule.source}.concat([...])".`
-        : `Build ${target} by copying "${rule.source}" or with "${rule.source} + [...]".`
+      return `Build ${target} by copying "${rule.source}" or with "${rule.source}${syntax.combineHint}".`
   }
 }
 
@@ -230,7 +261,7 @@ export function findLiteralReusedHint(
 ): string | undefined {
   if (!given) return undefined
 
-  const parser = language === 'javascript' ? javascriptParser : pythonParser
+  const parser = parserFor(language)
   const readGiven = (node: SyntaxNode) => given.slice(node.from, node.to)
   const readCode = (node: SyntaxNode) => code.slice(node.from, node.to)
 

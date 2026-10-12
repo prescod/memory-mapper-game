@@ -46,7 +46,7 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 
 **Out of scope.** Number formats (negatives, decimals), string operations, and arithmetic beyond one multiplication. `undefined` appears only as the reason `let nickname;` is wrong.
 
-**Mysteries** retest reassignment order, chains, rotation, and the spreadsheet contrast with no hints.
+**Challenge problems** retest reassignment order, chains, rotation, and the spreadsheet contrast with no hints.
 
 ---
 
@@ -73,7 +73,7 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 
 **Out of scope.** What is inside a Pet. Pets are opaque: they have a name and an identity, nothing else. `Pet` is defined invisibly by the game; learners never see or write its definition.
 
-**Mysteries** retest chains of names, pairs, same-name Pets, and a string backup that survives reassignment.
+**Challenge problems** retest chains of names, pairs, same-name Pets, and a string backup that survives reassignment.
 
 **Gaps.** Puzzles have no `about` or `debrief` text yet.
 
@@ -100,7 +100,7 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 
 **Out of scope.** Changing an array after it is built, indexing expressions beyond literals, and array methods.
 
-**Mysteries** retest every kind of value in slots and separate arrays with equal contents.
+**Challenge problems** retest every kind of value in slots and separate arrays with equal contents.
 
 **Gaps.** "A list from a variable" (`row = [n]`) accepts `[5]` typed out, because nothing checks that the slot came from `n`. A constraint like Level 1's would make the point. No `about` or `debrief` text yet.
 
@@ -127,7 +127,7 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 
 **Out of scope.** Adding, changing, or removing keys after creation, and nested objects.
 
-**Mysteries** retest separate objects with matching keys, aliasing, and mixed value kinds.
+**Challenge problems** retest separate objects with matching keys, aliasing, and mixed value kinds.
 
 **Gaps.** No `about` or `debrief` text yet.
 
@@ -155,7 +155,7 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 **How the level checks it.** Writing puzzles require that the starter array is still the same array afterward (`preserve`), so rebuilding it as a literal fails with "Change what "a" already refers to instead of creating a new one."
 **Out of scope.** Methods that insert or remove in the middle, sorting, and methods that return new arrays.
 
-**Mysteries** retest sequences of changes, mixed mutation and repointing, and changes from two names to one array.
+**Challenge problems** retest sequences of changes, mixed mutation and repointing, and changes from two names to one array.
 
 **Gaps.** No `about` or `debrief` text yet.
 
@@ -182,7 +182,7 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 
 **Out of scope.** Iterating over keys, and key order.
 
-**Mysteries** retest two names making two changes, swapping inside an object, deleting through an alias, and changing an object after an alias was repointed.
+**Challenge problems** retest two names making two changes, swapping inside an object, deleting through an alias, and changing an object after an alias was repointed.
 
 **Gaps.** No `about` or `debrief` text yet.
 
@@ -211,7 +211,7 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 
 **Out of scope.** Copying nested structures (Level 8).
 
-**Mysteries** retest repeated rows, pairs, nested objects, changes to a shared inner container, and mutual references.
+**Challenge problems** retest repeated rows, pairs, nested objects, changes to a shared inner container, and mutual references.
 
 **Gaps.** No `about` or `debrief` text yet.
 
@@ -240,7 +240,7 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 
 **Out of scope.** Library deep-copy functions such as `structuredClone` and `copy.deepcopy`.
 
-**Mysteries** retest changing a shallow copy twice, replacing a shared inner object, the repeated-row trap, and adding to a copy.
+**Challenge problems** retest changing a shallow copy twice, replacing a shared inner object, the repeated-row trap, and adding to a copy.
 
 **Gaps.** No `about` or `debrief` text yet.
 
@@ -271,7 +271,7 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 
 **Out of scope.** Regular expressions, advanced string manipulation, and library immutability helpers.
 
-**Mysteries** retest combining followed by growing, uppercase through an alias, dropping a reference while another remains, repointing an inner reference, and combining alongside in-place mutation.
+**Challenge problems** retest combining followed by growing, uppercase through an alias, dropping a reference while another remains, repointing an inner reference, and combining alongside in-place mutation.
 
 **Gaps.** No `about` or `debrief` text yet.
 
@@ -291,17 +291,17 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 
 **Misconceptions it targets:**
 
-- *Reassigning a parameter changes the caller's variable* ("A function that rebinds", "Rebinding before mutating").
-- *A function works on its own copy of what it was given* ("A function that mutates", "Change it for everyone").
+- *Reassigning a parameter changes the caller's variable* ("Changing a parameter, then reassigning it", "Moving a finished task", "Restocking a shelf", "Tagging in place").
+- *A function works on its own copy of what it was given* ("A function that changes an array", "Change it for everyone", "Copying a parameter before changing it").
 - *A returned list is always a new list* ("Changes it and hands it back").
 - *Passing a slot passes a copy of the inner list* ("Passing an inner list").
 
 **Builds on** all previous levels, especially Levels 6, 7, 8, and 9. This is the culmination of the core memory model.
 
-**How the level checks it.** `call` rules require starter functions to be invoked with the expected arguments and call counts rather than simulated by hand. Puzzles where learners write functions use `then` starter code and constraints to verify functions work generally for any caller argument rather than hardcoding literals.
+**How the level checks it.** `call` rules require starter functions to be invoked with the expected arguments and call counts rather than simulated by hand. Puzzles where learners write functions use `then` starter code and constraints to verify functions work generally for any caller argument rather than hardcoding literals, and hidden cases that leave out the trailing call to verify the work happens inside the function rather than before it.
 
 **Out of scope.** Closures, default arguments, methods and `this`/`self`, and recursion.
 
-**Mysteries** retest functions that change aliases, functions that mutate and rebind, functions that store or tag items, and functions operating on nested containers.
+**Challenge problems** retest functions that change aliases, functions that mutate and rebind, functions that store or tag items, and functions operating on nested containers.
 
 **Gaps.** No `about` or `debrief` text yet.

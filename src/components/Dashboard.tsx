@@ -1,5 +1,5 @@
 import { levels, problems } from '../model/levels'
-import { LANGUAGE_LABELS, type Problem } from '../model/types'
+import { LANGUAGE_LABELS, textIn, type Problem } from '../model/types'
 import { progressKey, useAppStore } from '../store/useAppStore'
 import { LanguageToggle } from './LanguageToggle'
 import { ProblemTitle } from './ProblemTitle'
@@ -36,7 +36,7 @@ export function Dashboard({ onOpen }: { onOpen: (problemId: string) => void }) {
               <span className="problem-chip-title">
                 <ProblemTitle
                   problem={problem}
-                  visible={!problem.mystery || done}
+                  visible={!problem.challenge || done}
                   language={language}
                 />
               </span>
@@ -62,7 +62,7 @@ export function Dashboard({ onOpen }: { onOpen: (problemId: string) => void }) {
         languages, and progress is tracked separately for each.
       </p>
       <p className="dashboard-intro">
-        Each level ends with mystery problems that test its ideas on new examples without naming
+        Each level ends with challenge problems that test its ideas on new examples without naming
         them. Their titles appear once you solve them.
       </p>
       <div className="dashboard-controls">
@@ -86,14 +86,14 @@ export function Dashboard({ onOpen }: { onOpen: (problemId: string) => void }) {
             <li key={level.id} className="level-section">
               <div className="level-header">
                 <span className="level-number">{levelIndex + 1}</span>
-                <h2 className="level-title">{level.title[language]}</h2>
+                <h2 className="level-title">{textIn(level.title, language)}</h2>
                 <span className="level-count">
                   {levelDone}/{level.problems.length}
                 </span>
               </div>
-              {chips(level.problems.filter((problem) => !problem.mystery))}
-              <h3 className="mystery-heading">Mystery problems</h3>
-              {chips(level.problems.filter((problem) => problem.mystery))}
+              {chips(level.problems.filter((problem) => !problem.challenge))}
+              <h3 className="challenge-heading">Challenge problems</h3>
+              {chips(level.problems.filter((problem) => problem.challenge))}
             </li>
           )
         })}

@@ -1,7 +1,5 @@
 import type { KeyboardEvent } from 'react'
-import type { Language } from '../model/types'
-
-const INDENT: Record<Language, string> = { javascript: '  ', python: '    ' }
+import { languageProfile, type Language } from '../model/languages'
 
 interface CodeEditorProps {
   value: string
@@ -16,7 +14,7 @@ export function CodeEditor({ value, language, onChange }: CodeEditorProps) {
     event.preventDefault()
     const field = event.currentTarget
     const { selectionStart, selectionEnd } = field
-    const indent = INDENT[language]
+    const indent = languageProfile(language).indent
     onChange(value.slice(0, selectionStart) + indent + value.slice(selectionEnd))
     const caret = selectionStart + indent.length
     requestAnimationFrame(() => field.setSelectionRange(caret, caret))

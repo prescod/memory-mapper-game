@@ -65,17 +65,20 @@ export function ObjectNode({ id, data, selected }: NodeProps<ObjectFlowNode>) {
         return (
           <div className="mem-row mem-row-slot" key={entry.id}>
             <div className="mem-row-main">
-              <input
-                className="nodrag mem-input mem-key-input"
-                value={entry.key}
-                placeholder="key"
-                aria-label="Key"
-                spellCheck={false}
-                autoCapitalize="off"
-                autoCorrect="off"
-                readOnly={readOnly}
-                onChange={(event) => renameEntry(entry.id, event.target.value)}
-              />
+              {readOnly ? (
+                <span className="scalar-fixed">{entry.key}</span>
+              ) : (
+                <input
+                  className="nodrag mem-input mem-key-input"
+                  value={entry.key}
+                  placeholder="key"
+                  aria-label="Key"
+                  spellCheck={false}
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  onChange={(event) => renameEntry(entry.id, event.target.value)}
+                />
+              )}
               {!readOnly && (
                 <button
                   type="button"

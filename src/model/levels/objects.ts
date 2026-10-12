@@ -195,6 +195,7 @@ export const objectsLevel: Level = level(
     draw({
       title: { js: 'An empty object', py: 'An empty dictionary' },
       js: 'let empty = {};',
+      ts: 'let empty: Record<string, unknown> = {};',
       py: 'empty = {}',
       expected: graph({ empty: ref('empty') }, { empty: dict({}) }),
       hint: {

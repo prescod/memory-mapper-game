@@ -85,6 +85,7 @@ export const nestingLevel: Level = level(
     write({
       title: { js: 'An object that holds itself', py: 'A dictionary that holds itself' },
       js: lines('let o = {};', 'o.self = o;'),
+      ts: lines('let o: { self?: unknown } = {};', 'o.self = o;'),
       py: lines('o = {}', 'o["self"] = o'),
       expected: graph({ o: ref('o') }, { o: dict({ self: ref('o') }) }),
       hint: {

@@ -92,6 +92,7 @@ export const arraysLevel: Level = level(
     draw({
       title: { js: 'An empty array', py: 'An empty list' },
       js: 'let items = [];',
+      ts: 'let items: unknown[] = [];',
       py: 'items = []',
       expected: graph({ items: ref('items') }, { items: list() }),
       hint: {
@@ -498,6 +499,7 @@ export const arraysLevel: Level = level(
     write({
       title: 'Every kind of value',
       js: lines('let empty = [];', 'let full = [1, "1", true, null];'),
+      ts: lines('let empty: unknown[] = [];', 'let full = [1, "1", true, null];'),
       py: lines('empty = []', 'full = [1, "1", True, None]'),
       expected: graph(
         { empty: ref('empty'), full: ref('full') },
@@ -670,6 +672,7 @@ export const arraysLevel: Level = level(
     write({
       title: { js: 'Two empty arrays', py: 'Two empty lists' },
       js: lines('let todo = [];', 'let done = [];'),
+      ts: lines('let todo: unknown[] = [];', 'let done: unknown[] = [];'),
       py: lines('todo = []', 'done = []'),
       expected: graph({ todo: ref('todo'), done: ref('done') }, { todo: list(), done: list() }),
       hint: {

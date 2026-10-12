@@ -63,7 +63,7 @@ export const mutatingObjectsLevel: Level = level(
     }),
     write({
       title: { js: 'Fill an empty object', py: 'Fill an empty dictionary' },
-      given: { js: 'let p = {};', py: 'p = {}' },
+      given: { js: 'let p = {};', ts: 'let p: { width?: number; height?: number } = {};', py: 'p = {}' },
       js: lines('p.width = 4;', 'p.height = 2;'),
       py: lines('p["width"] = 4', 'p["height"] = 2'),
       expected: graph({ p: ref('p') }, { p: dict({ width: 4, height: 2 }) }),

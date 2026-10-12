@@ -20,7 +20,7 @@ The user will interact with the following "building blocks" (Nodes) and "pointer
 ## 3. User Flow & Experience
 
 1.  **Level Selection:** The user lands on a dashboard showing a list of levels (persisted in browser state).
-2.  **Language mode:** Every puzzle exists in JavaScript and Python (different syntax, same expected memory picture). A language toggle switches the shown code, and progress is tracked separately per language.
+2.  **Language mode:** Every puzzle exists in JavaScript, TypeScript, and Python (different syntax, same expected memory picture). A language toggle switches the shown code, and progress is tracked separately per language. TypeScript falls back to JavaScript when unannotated, stripping types at runtime.
 3.  **The Challenge:**
     *   The left sidebar displays a code snippet (e.g., `let a = [1]; let b = a;`).
     *   A toolbar offers draggable nodes: [Add Variable], [Add Scalar], [Add Array], [Add Object].
@@ -29,7 +29,7 @@ The user will interact with the following "building blocks" (Nodes) and "pointer
     *   The user drags nodes onto the main canvas.
     *   The user configures the nodes (e.g., types "a" into a Variable node, types "1" into a Scalar node, adds a slot to an Array node).
     *   The user drags lines between the nodes to establish relationships.
-    *   Diagram node labels follow the selected language (`array`/`object` in JavaScript, `list`/`dict` in Python; `true`/`false`/`null` vs `True`/`False`/`None`).
+    *   Diagram node labels follow the selected language (`array`/`object` in JavaScript and TypeScript, `list`/`dict` in Python; `true`/`false`/`null` vs `True`/`False`/`None`).
 5.  **Verification:** The user clicks "Check Answer".
     *   The system evaluates the user's graph against the expected answer graph.
     *   If correct, success animations play, and the level is marked "Completed" in local state.

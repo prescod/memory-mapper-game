@@ -57,7 +57,7 @@ export const mutatingArraysLevel: Level = level(
     }),
     write({
       title: { js: 'Grow an array', py: 'Grow a list' },
-      given: { js: 'let a = [];', py: 'a = []' },
+      given: { js: 'let a = [];', ts: 'let a: number[] = [];', py: 'a = []' },
       js: lines('a.push(3);', 'a.push(6);', 'a.push(9);'),
       py: lines('a.append(3)', 'a.append(6)', 'a.append(9)'),
       expected: graph({ a: ref('a') }, { a: list(3, 6, 9) }),

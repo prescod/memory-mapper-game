@@ -28,7 +28,7 @@ import {
 import { connectReplacing, isValidConnection } from './connections'
 import { FeedbackContext, handleKey, type Feedback } from './FeedbackContext'
 import { LanguageContext } from './LanguageContext'
-import { ReadOnlyContext } from './ReadOnlyContext'
+import { CompactContext, ReadOnlyContext } from './ReadOnlyContext'
 import {
   createNode,
   newId,
@@ -53,7 +53,7 @@ export interface CanvasProps {
   language: Language
   /** Shows the diagram as a fixed picture: no toolbar, connecting, editing or deleting. */
   readOnly?: boolean
-  /** Compact diagram embedded in text: no controls, no panning/zooming, permits page scrolling. */
+  /** Compact diagram embedded in scrollable text: allows page scrolling without hijacking mouse wheel. */
   compact?: boolean
 }
 
@@ -216,60 +216,59 @@ function CanvasInner({
     <FeedbackContext.Provider value={feedback}>
       <LanguageContext.Provider value={language}>
         <ReadOnlyContext.Provider value={isReadOnly}>
-          {!isReadOnly && (
-            <div className="canvas-toolbar">
-              <Toolbar language={language} onAdd={addInView} />
-            </div>
-          )}
-          <div className="canvas" ref={wrapper}>
-            <ReactFlow<MemFlowNode, MemFlowEdge>
-              nodes={displayedNodes}
-              edges={displayedEdges}
-              nodeTypes={nodeTypes}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              onNodeClick={isReadOnly ? undefined : onNodeClick}
-              onPaneClick={isReadOnly ? undefined : cancelTapConnection}
-              isValidConnection={checkConnection}
-              onDragOver={onDragOver}
-              onDrop={onDrop}
-              defaultEdgeOptions={defaultEdgeOptions}
-              deleteKeyCode={isReadOnly ? null : ['Backspace', 'Delete']}
-              nodesConnectable={!isReadOnly}
-              nodesDraggable={!isReadOnly}
-              elementsSelectable={!isReadOnly}
-              panOnDrag={!compact}
-              zoomOnScroll={!compact}
-              zoomOnPinch={!compact}
-              preventScrolling={!compact}
-              connectionRadius={40}
-              zoomOnDoubleClick={false}
-              minZoom={0.3}
-              fitView={isReadOnly}
-              fitViewOptions={isReadOnly ? { maxZoom: 1 } : undefined}
-            >
+          <CompactContext.Provider value={compact}>
+            {!isReadOnly && (
+              <div className="canvas-toolbar">
+                <Toolbar language={language} onAdd={addInView} />
+              </div>
+            )}
+            <div className={`canvas${compact ? ' compact' : ''}`} ref={wrapper}>
+              <ReactFlow<MemFlowNode, MemFlowEdge>
+                nodes={displayedNodes}
+                edges={displayedEdges}
+                nodeTypes={nodeTypes}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                onNodeClick={isReadOnly ? undefined : onNodeClick}
+                onPaneClick={isReadOnly ? undefined : cancelTapConnection}
+                isValidConnection={checkConnection}
+                onDragOver={onDragOver}
+                onDrop={onDrop}
+                defaultEdgeOptions={defaultEdgeOptions}
+                deleteKeyCode={isReadOnly ? null : ['Backspace', 'Delete']}
+                nodesConnectable={!isReadOnly}
+                nodesDraggable={true}
+                elementsSelectable={true}
+                panOnDrag={true}
+                zoomOnScroll={!compact}
+                zoomOnPinch={true}
+                preventScrolling={!compact}
+                connectionRadius={40}
+                zoomOnDoubleClick={false}
+                minZoom={0.3}
+                fitView={isReadOnly}
+                fitViewOptions={isReadOnly ? { maxZoom: 1 } : undefined}
+              >
               <Background />
-              {!compact && (
-                <Panel position="bottom-right">
-                  <div className="canvas-actions">
-                    {!isReadOnly && !pending && hasSelection && (
-                      <button
-                        type="button"
-                        className="canvas-delete"
-                        aria-label="Delete"
-                        title="Delete selected (Backspace or Delete)"
-                        onClick={() =>
-                          void deleteElements({ nodes: selectedNodes, edges: selectedEdges })
-                        }
-                      >
-                        <TrashIcon />
-                      </button>
-                    )}
-                    <Controls showInteractive={false} />
-                  </div>
-                </Panel>
-              )}
+              <Panel position="bottom-right">
+                <div className="canvas-actions">
+                  {!isReadOnly && !pending && hasSelection && (
+                    <button
+                      type="button"
+                      className="canvas-delete"
+                      aria-label="Delete"
+                      title="Delete selected (Backspace or Delete)"
+                      onClick={() =>
+                        void deleteElements({ nodes: selectedNodes, edges: selectedEdges })
+                      }
+                    >
+                      <TrashIcon />
+                    </button>
+                  )}
+                  <Controls showInteractive={false} />
+                </div>
+              </Panel>
               {!isReadOnly && pending && (
                 <Panel position="bottom-center">
                   <div className="connect-banner" role="status">
@@ -282,6 +281,7 @@ function CanvasInner({
               )}
             </ReactFlow>
           </div>
+          </CompactContext.Provider>
         </ReadOnlyContext.Provider>
       </LanguageContext.Provider>
     </FeedbackContext.Provider>

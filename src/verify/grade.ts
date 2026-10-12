@@ -1,4 +1,5 @@
-import { explainBrokenRules } from '../model/process'
+import { textIn } from '../model/languages'
+import { checksFor, explainBrokenRules } from '../model/process'
 import { formatScalar } from '../model/scalar'
 import type {
   ConstraintCase,
@@ -30,7 +31,7 @@ export function buildRunRequest(problem: WriteProblem, language: Language, code:
     code,
     then,
     names: problem.expected.variables.map((variable) => variable.name),
-    checks: problem.process?.runtime,
+    checks: problem.process?.runtime && checksFor(problem.process.runtime, language),
     alternateGivens: [
       ...(problem.process?.hidden ?? []).map((alternate) => start(alternate.given[language])),
       ...(problem.constraints ?? []).flatMap((constraint) =>
@@ -38,7 +39,7 @@ export function buildRunRequest(problem: WriteProblem, language: Language, code:
       ),
     ],
     alternateThens: [
-      ...(problem.process?.hidden ?? []).map(() => then ?? ''),
+      ...(problem.process?.hidden ?? []).map((alternate) => alternate.then?.[language] ?? then ?? ''),
       ...(problem.constraints ?? []).flatMap((constraint) =>
         constraint.cases.map((constraintCase) => constraintCase.then?.[language] ?? then ?? ''),
       ),
@@ -73,7 +74,7 @@ export function gradeRun(
 
   const process = problem.process
   const wrongWay = [
-    ...(process?.runtime ? explainBrokenRules(process.runtime, outcome.brokenRules) : []),
+    ...(process?.runtime ? explainBrokenRules(checksFor(process.runtime, language), outcome.brokenRules) : []),
     ...(process?.source ? checkSource(language, code, process.source) : []),
   ]
   if (wrongWay.length > 0) return fail(wrongWay)
@@ -82,12 +83,15 @@ export function gradeRun(
   const broken = brokenConstraints(problem, outcome.alternates.slice(hidden.length), language)
   if (broken.length > 0) return fail(broken)
 
-  const general = hidden.every(
+  const failed = hidden.find(
     (alternate, index) =>
-      outcome.alternates[index] !== undefined &&
-      verify(outcome.alternates[index], alternate.expected, problem.hints, language).ok,
+      outcome.alternates[index] === undefined ||
+      !verify(outcome.alternates[index], alternate.expected, problem.hints, language).ok,
   )
-  if (!general) {
+  if (failed?.message !== undefined) {
+    return fail([textIn(failed.message, language)])
+  }
+  if (failed) {
     const hint = findLiteralReusedHint(problem.given?.[language], language, code)
     return fail([hint ?? NOT_GENERAL])
   }

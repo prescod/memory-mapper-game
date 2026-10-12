@@ -1,4 +1,7 @@
-import type { Language, MemoryGraph } from './types'
+import { languageProfile, pythonName, type Language, type Runtime } from './languages'
+import type { Hint, MemoryGraph } from './types'
+
+export { pythonName }
 
 /**
  * A final memory graph cannot tell whether the learner changed the objects the
@@ -88,6 +91,9 @@ export function preserve(root: string, ...path: PathStep[]): IdentityRule {
  * A function defined by the starter code must be called exactly `times` times
  * with arguments that are, by identity, the objects at `args`. Calls made any
  * other way count against the rule too.
+ *
+ * `fn` is the JavaScript name. Python starter code spells the same function in
+ * snake_case, so `checksFor` renames it before a Python run.
  */
 export interface CallRule {
   kind: 'call'
@@ -97,10 +103,14 @@ export interface CallRule {
   message: string
 }
 
-export function call(fn: string, args: HeapLocation[], times: number): CallRule {
+function callMessage(fn: string, args: HeapLocation[], times: number): string {
   const argList = args.map(describeLocation).join(', ')
   const count = times === 1 ? 'once' : `${times} times`
-  return { kind: 'call', fn, args, times, message: `Call ${fn}(${argList}) ${count}.` }
+  return `Call ${fn}(${argList}) ${count}.`
+}
+
+export function call(fn: string, args: HeapLocation[], times: number): CallRule {
+  return { kind: 'call', fn, args, times, message: callMessage(fn, args, times) }
 }
 
 export interface RuntimeChecks {
@@ -112,6 +122,18 @@ export function runtime(...rules: (IdentityRule | CallRule)[]): RuntimeChecks {
   return {
     identity: rules.filter((rule): rule is IdentityRule => rule.kind === 'identity'),
     calls: rules.filter((rule): rule is CallRule => rule.kind === 'call'),
+  }
+}
+
+/** The checks with each starter function named the way `language` spells it. */
+export function checksFor(checks: RuntimeChecks, language: Language): RuntimeChecks {
+  const profile = languageProfile(language)
+  return {
+    identity: checks.identity,
+    calls: checks.calls.map((rule) => {
+      const fn = profile.functionName(rule.fn)
+      return { ...rule, fn, message: callMessage(fn, rule.args, rule.times) }
+    }),
   }
 }
 
@@ -146,7 +168,7 @@ export type SourceRule =
   /** `target` is computed with `*` from every one of `operands`. */
   | { kind: 'multiply'; target: string; operands: string[] }
   /** `target` is the result of calling a method of the learner's language on `receiver`. */
-  | { kind: 'method'; target: string; receiver: string; method: Record<Language, string> }
+  | { kind: 'method'; target: string; receiver: string; method: Record<Runtime, string> }
   /** `target` is a shallow copy of `source`, at any depth of the expression. */
   | { kind: 'copy'; target: string; source: string }
   /** `target` is built from `source` by `concat` (JavaScript) or `+` (Python). */
@@ -162,7 +184,7 @@ export const multiplies = (target: string, ...operands: string[]): SourceRule =>
 export const callsMethod = (
   target: string,
   receiver: string,
-  method: Record<Language, string>,
+  method: Record<Runtime, string>,
 ): SourceRule => ({ kind: 'method', target, receiver, method })
 export const copiesFrom = (target: string, source: string): SourceRule => ({ kind: 'copy', target, source })
 export const combines = (target: string, source: string): SourceRule => ({ kind: 'combine', target, source })
@@ -175,10 +197,16 @@ export const copiesOrCombinesFrom = (target: string, source: string): SourceRule
 /**
  * The learner's code is run again after other starter code. Its result must
  * match `expected`, which names the same variables as the puzzle's own picture.
+ *
+ * `then` replaces the puzzle's trailing code for this run; an empty string
+ * leaves it out, which shows what the learner's code does on its own. A case
+ * with a `message` explains its own failure instead of the generic one.
  */
 export interface HiddenCase {
   given: Record<Language, string>
+  then?: Record<Language, string>
   expected: MemoryGraph
+  message?: Hint
 }
 
 export interface ProcessSpec {

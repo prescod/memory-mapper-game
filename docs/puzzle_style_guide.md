@@ -18,12 +18,12 @@ The misconceptions worth targeting are the ones that cause real bugs:
 
 ## Anatomy of a level
 
-A level is built with `level(id, title, description, tutorial, mysteries)`.
+A level is built with `level(id, title, description, tutorial, challenges)`.
 
 - **One idea per level**, building only on earlier levels. If a puzzle needs an idea that has not been taught yet, it belongs in a later level, or that idea must be stated in the puzzle itself (see constraints, below).
 - **Title and description** are given per language with `L(javascript, python)`, because the containers have different names (array/list, object/dictionary). The description states the level's rule in plain language. It is shown on any puzzle that has no `about` of its own.
-- **Ten tutorial puzzles, then five mysteries.** The tutorial puzzles are five drawing puzzles (code shown, learner draws memory) and five writing puzzles (picture shown, learner writes code), in teaching order. Interleave the two kinds so the learner cannot predict which comes next, but never at the cost of teaching order.
-- **Ids are positional by kind**: drawing puzzles are `<level>-1` to `-5`, writing puzzles `-6` to `-10`, and mysteries `-11` to `-15`, in the order listed. Progress and drafts are stored by id. Replacing a puzzle in place keeps its id, so anyone who solved the old puzzle will see the new one as solved.
+- **Ten tutorial puzzles, then five challenge problems.** The tutorial puzzles are five drawing puzzles (code shown, learner draws memory) and five writing puzzles (picture shown, learner writes code), in teaching order. Interleave the two kinds so the learner cannot predict which comes next, but never at the cost of teaching order.
+- **Ids are positional by kind**: drawing puzzles are `<level>-1` to `-5`, writing puzzles `-6` to `-10`, and challenge problems `-11` to `-15`, in the order listed. Progress and drafts are stored by id. Replacing a puzzle in place keeps its id, so anyone who solved the old puzzle will see the new one as solved.
 
 ### Teaching order within a level
 
@@ -32,12 +32,12 @@ A level is built with `level(id, title, description, tutorial, mysteries)`.
 3. Show the contrast case: the situation where the idea does *not* apply, or applies the opposite way. "Area after a change" is paired with "Area before a change", and "Two equal values" with "Two teams".
 4. Move to writing puzzles once the learner has drawn the idea at least once.
 
-### Mysteries
+### Challenge problems
 
-Mysteries retest the level with less support. They follow these rules:
+Challenge problems retest the level with less support. They follow these rules:
 
-- **No new ideas.** Everything a mystery needs was taught by this level's tutorial puzzles or by earlier levels.
-- **Novel situations.** A mystery's picture must not appear in any other puzzle. A test enforces this.
+- **No new ideas.** Everything a challenge problem needs was taught by this level's tutorial puzzles or by earlier levels.
+- **Novel situations.** A challenge problem's picture must not appear in any other puzzle. A test enforces this.
 - **Hidden until solved.** The title and the level description stay hidden, so the title must not be the only thing that makes the puzzle make sense, and it may name the idea freely because it is shown only after the learner has succeeded.
 
 ## Anatomy of a puzzle
@@ -47,7 +47,7 @@ Every puzzle is written once as a spec, with JavaScript and Python versions side
 | Field | Drawing | Writing | Purpose |
 | --- | --- | --- | --- |
 | `title` | yes | yes | Short name for the situation |
-| `js` / `py` | the code shown | the reference answer | The same program in each language |
+| `js` / `py` / `ts?` | the code shown | the reference answer | The same program in each language; `ts` falls back to `js` if omitted |
 | `given` | no | usually | Starter code that runs before the learner's code |
 | `then` | no | when needed | Starter code that runs after the learner's code |
 | `expected` | yes | yes | The memory picture, built with `graph()`, `ref()`, `scalar()`, `list()`, `dict()`, `pet()` |
@@ -79,15 +79,22 @@ The code should look like something a programmer might write, at the smallest si
 
 The title must describe what the code actually does. A puzzle called "Width times height" with no multiplication in it is wrong. For drawing puzzles, avoid titles that announce the answer ("b stays 3"). Name the situation instead: "Reassigning the second variable" says what the code does and leaves the learner to work out what follows.
 
-### It works in both languages
+### It works across languages
 
-Both versions must build **the same memory picture** with code that is idiomatic in each language. If an idea has no natural spelling in one language, redesign the puzzle rather than forcing it: a Python learner has no reason to know a function called `concat`, so the Python version uses `+`, and its text says so.
+All versions must build **the same memory picture** with code that is idiomatic in each language. If an idea has no natural spelling in one language, redesign the puzzle rather than forcing it: a Python learner has no reason to know a function called `concat`, so the Python version uses `+`, and its text says so.
+
+The game distinguishes between **Language** (`javascript`, `typescript`, `python`) and **Runtime** (`javascript`, `python`):
+- JavaScript and TypeScript share the `javascript` runtime, memory model, container names (`array`/`object`), and keywords (`true`/`false`/`null`).
+- Python runs on the `python` runtime (`list`/`dict`, `True`/`False`/`None`).
+- Every snippet accepts an optional `ts` field. If omitted, TypeScript mode falls back to `js` automatically.
+- **The TypeScript annotation rule:** Annotate only where TypeScript cannot infer a useful type (function parameters and return types, and empty `[]` or `{}` collections, using inline object types like `{ seen?: boolean }`). Everything else stays identical to the JavaScript version and falls back automatically—never write a `ts` override identical to `js`.
 
 Bugs that exist in only one language are left out of the game, however famous. Python's mutable default arguments (`def f(items=[])`) and the different results of `a = a.sort()` (`None` in Python, the same array in JavaScript) cannot be one puzzle with one picture, so neither appears.
 
 - Spell keywords per language: `true`/`True`, `null`/`None`, `push`/`append`.
-- `let` exists only in JavaScript. Python writes the same line whether the name is new or not.
-- Use `{ js, py }` for any title, hint, about, or debrief text that mentions code or container names. A plain string is fine only when the text is truly language-neutral.
+- Name functions the way each language does: `addMilk` in JavaScript/TypeScript, `add_milk` in Python. `call` rules take the JavaScript name and the grader converts it for Python. The in-browser Python engine is MicroPython, which does not support `{**d}`; use `dict(d)` for copies.
+- `let` exists only in JavaScript and TypeScript. Python writes the same line whether the name is new or not.
+- Use `{ js, py, ts? }` or `L(javascript, python, typescript?)` for any title, hint, about, or debrief text that mentions code, types, or container names. A plain string is fine only when the text is truly language-neutral.
 
 ### Values are chosen with care
 
@@ -112,7 +119,7 @@ Numbers, strings, booleans, and `null`/`None` cannot be changed in place, so no 
 - **Enforce the point of the puzzle, or don't claim it.** If the puzzle is about mutating in place, about calling a function, or about building from an existing variable, the picture alone will not catch a learner who retypes the result. Enforce it with:
   - `process.runtime`: `preserve('a')` (a must still be the same container afterward), `sameObject`, `differentObject`, and `call` (a starter function must be called with particular arguments);
   - `process.source`: the variable must be built by a particular operation (`multiplies`, `callsMethod`, `copiesFrom`, `combines`);
-  - `process.hidden`: rerun the learner's code from other starting values;
+  - `process.hidden`: rerun the learner's code from other starting values. A case may also replace the trailing `then` code (an empty string leaves it out) and carry its own `message`. Running a function-writing puzzle with `then: ''` shows whether the work really happens inside the function, because an empty function must leave the starting containers alone;
   - `constraints`: when the purpose of the code decides the answer (next section).
 
   Never put a rule in a hint, about, or debrief that the checker does not enforce. If the text says "refer to a by name", typing the number must fail.
@@ -181,6 +188,9 @@ hints: [
 - Write them only for mistakes that come from the misconception the puzzle targets. Every typo does not need one.
 - Start by saying what is wrong, then give the rule.
 - `aliasing: 'shared'` / `'separate'` entries explain when a learner merged two names onto one container that should be separate, or the reverse.
+- `length` entries explain when a variable's array or list has the wrong number of slots, such as a list that should have been emptied in place.
+- `missingKey` entries explain when an object or dictionary lacks a key that the puzzle expects.
+- `message` may be `{ js, py }` when it names a container or a function, as for every other piece of text.
 
 ### `about`
 
@@ -210,7 +220,7 @@ Messages written in `src/verify/` follow the same voice. They say what is wrong 
 
 - each expected picture matches what JavaScript, CPython, and MicroPython actually build, including hidden and constraint cases;
 - drawing puzzles include every declared variable;
-- mysteries and writing puzzles show pictures no other puzzle shows;
+- challenge problems and writing puzzles show pictures no other puzzle shows;
 - writing puzzles are not already solved by their starter code;
 - every reference answer passes every process rule and constraint;
 - every debrief diagram's verdict agrees with the grader.
@@ -223,7 +233,7 @@ Before a puzzle is done:
 
 - [ ] I can finish "a learner who solves this now knows that ___" in one clause.
 - [ ] The misconception it targets produces a different picture, and a diagnostic hint explains that picture.
-- [ ] The title describes what the code does; for mysteries, the puzzle makes sense without it.
+- [ ] The title describes what the code does; for challenge problems, the puzzle makes sense without it.
 - [ ] JavaScript and Python versions are both idiomatic and build the same picture.
 - [ ] Values are small, unremarkable, and equal only on purpose. Pet names are real and distinct.
 - [ ] Nothing in the text claims a rule the checker does not enforce, and nothing calls a shared scalar wrong.
@@ -237,4 +247,4 @@ Before a level is done:
 - [ ] It teaches one idea that depends only on earlier levels.
 - [ ] The description states that idea in plain language, in both languages.
 - [ ] Tutorial puzzles go from smallest case to complications to the contrast case, with drawing and writing interleaved.
-- [ ] The five mysteries use no new ideas and repeat no pictures.
+- [ ] The five challenge problems use no new ideas and repeat no pictures.

@@ -3,6 +3,7 @@ import type {
   DebriefBlock,
   DiagnosticHint,
   Hint,
+  Language,
   Level,
   LocalizedText,
   MemoryGraph,
@@ -11,23 +12,47 @@ import type {
 
 export const lines = (...rows: string[]) => rows.join('\n')
 
-/** The same text in each language mode: `L('array', 'list')`, for example. */
-export const L = (javascript: string, python: string): LocalizedText => ({ javascript, python })
+export interface CodeSnippet {
+  js: string
+  py: string
+  ts?: string
+}
 
-export type SpecHint = string | { js: string; py: string }
+export function perLanguage(snippet: CodeSnippet): Record<Language, string> {
+  if (snippet.ts !== undefined && snippet.ts === snippet.js) {
+    throw new Error('TypeScript override is identical to JavaScript; omit ts to fall back automatically.')
+  }
+  return {
+    javascript: snippet.js,
+    typescript: snippet.ts ?? snippet.js,
+    python: snippet.py,
+  }
+}
+
+/** The same text in each language mode: `L('array', 'list')`, with optional TypeScript override. */
+export const L = (javascript: string, python: string, typescript?: string): LocalizedText => ({
+  javascript,
+  typescript: typescript ?? javascript,
+  python,
+})
+
+export type SpecHint = string | { js: string; py: string; ts?: string }
+
+/** See `DiagnosticHint`; the message may be spelled per language. */
+export type SpecDiagnosticHint = Omit<DiagnosticHint, 'message'> & { message: SpecHint }
 
 export type SpecDebriefBlock =
   | { html: SpecHint }
   | { diagram: MemoryGraph; caption: SpecHint; verdict?: 'correct' | 'incorrect' }
 
 /** Problem titles that name language keywords are spelled per language. */
-export type SpecTitle = string | { js: string; py: string }
+export type SpecTitle = string | { js: string; py: string; ts?: string }
 
 export const toTitle = (title: SpecTitle): string | LocalizedText =>
-  typeof title === 'string' ? title : { javascript: title.js, python: title.py }
+  typeof title === 'string' ? title : perLanguage(title)
 
 export function localize(spec: SpecHint): Hint {
-  return typeof spec === 'string' ? spec : { javascript: spec.js, python: spec.py }
+  return typeof spec === 'string' ? spec : perLanguage(spec)
 }
 
 export function toDebriefBlock(block: SpecDebriefBlock): DebriefBlock {
@@ -52,8 +77,9 @@ export interface DrawSpec {
   title: SpecTitle
   js: string
   py: string
+  ts?: string
   expected: MemoryGraph
-  hints?: DiagnosticHint[]
+  hints?: SpecDiagnosticHint[]
   hint?: SpecHint
   about?: SpecHint
   debrief?: SpecDebriefBlock[]
@@ -64,16 +90,17 @@ export interface WriteSpec {
   kind: 'write'
   title: SpecTitle
   /** Read-only code that runs before the learner's. */
-  given?: { js: string; py: string }
+  given?: { js: string; py: string; ts?: string }
   /** Read-only code that runs after the learner's. */
-  then?: { js: string; py: string }
-  /** Reference answer, in the two languages. */
+  then?: { js: string; py: string; ts?: string }
+  /** Reference answer, in the languages. */
   js: string
   py: string
+  ts?: string
   expected: MemoryGraph
   process?: ProcessSpec
   constraints?: ConstraintSpec[]
-  hints?: DiagnosticHint[]
+  hints?: SpecDiagnosticHint[]
   hint?: SpecHint
   about?: SpecHint
   debrief?: SpecDebriefBlock[]
@@ -85,16 +112,21 @@ export interface ConstraintSpec {
   rule: SpecHint
   cases: {
     change: string
-    given: { js: string; py: string }
-    then?: { js: string; py: string }
+    given: { js: string; py: string; ts?: string }
+    then?: { js: string; py: string; ts?: string }
     expected: MemoryGraph
   }[]
 }
 
-/** Starter code that differs from `given`, with the picture the same answer must build from it. */
+/**
+ * Starter code that differs from `given`, with the picture the same answer must
+ * build from it. See `HiddenCase` for `then` and `message`.
+ */
 export interface HiddenSpec {
-  given: { js: string; py: string }
+  given: { js: string; py: string; ts?: string }
+  then?: { js: string; py: string; ts?: string }
   expected: MemoryGraph
+  message?: SpecHint
 }
 
 /**
@@ -113,7 +145,8 @@ export type Spec = DrawSpec | WriteSpec
 export const draw = (spec: Omit<DrawSpec, 'kind'>): DrawSpec => ({ kind: 'draw', ...spec })
 export const write = (spec: Omit<WriteSpec, 'kind'>): WriteSpec => ({ kind: 'write', ...spec })
 
-export function toProblem(spec: Spec, id: string, mystery: boolean): Problem {
+export function toProblem(spec: Spec, id: string, challenge: boolean): Problem {
+  const hints = spec.hints?.map((entry) => ({ ...entry, message: localize(entry.message) }))
   const hint = spec.hint ? localize(spec.hint) : undefined
   const about = spec.about ? localize(spec.about) : undefined
   const debrief = spec.debrief?.map(toDebriefBlock)
@@ -123,10 +156,10 @@ export function toProblem(spec: Spec, id: string, mystery: boolean): Problem {
       kind: 'draw',
       id,
       title: toTitle(spec.title),
-      mystery,
-      code: { javascript: spec.js, python: spec.py },
+      challenge,
+      code: perLanguage(spec),
       expected: spec.expected,
-      hints: spec.hints,
+      hints,
       hint,
       about,
       debrief,
@@ -137,17 +170,19 @@ export function toProblem(spec: Spec, id: string, mystery: boolean): Problem {
     kind: 'write',
     id,
     title: toTitle(spec.title),
-    mystery,
+    challenge,
     expected: spec.expected,
-    given: spec.given && { javascript: spec.given.js, python: spec.given.py },
-    then: spec.then && { javascript: spec.then.js, python: spec.then.py },
-    solution: { javascript: spec.js, python: spec.py },
+    given: spec.given && perLanguage(spec.given),
+    then: spec.then && perLanguage(spec.then),
+    solution: perLanguage(spec),
     process: spec.process && {
       runtime: spec.process.runtime,
       source: spec.process.source,
-      hidden: spec.process.hidden?.map(({ given, expected }) => ({
-        given: { javascript: given.js, python: given.py },
+      hidden: spec.process.hidden?.map(({ given, then, expected, message }) => ({
+        given: perLanguage(given),
+        ...(then && { then: perLanguage(then) }),
         expected,
+        ...(message !== undefined && { message: localize(message) }),
       })),
     },
     ...(spec.constraints && {
@@ -155,13 +190,13 @@ export function toProblem(spec: Spec, id: string, mystery: boolean): Problem {
         rule: localize(rule),
         cases: cases.map(({ change, given, then, expected }) => ({
           change,
-          given: { javascript: given.js, python: given.py },
-          ...(then && { then: { javascript: then.js, python: then.py } }),
+          given: perLanguage(given),
+          ...(then && { then: perLanguage(then) }),
           expected,
         })),
       })),
     }),
-    hints: spec.hints,
+    hints,
     hint,
     about,
     debrief,
@@ -173,9 +208,9 @@ export function toProblem(spec: Spec, id: string, mystery: boolean): Problem {
  * Specs are listed in the order learners meet them, which mixes both kinds so
  * the next problem's direction is not predictable. Tutorial ids count each kind
  * separately (draw 1-5, write 6-10) so they stay stable if the order changes;
- * mystery problems follow as 11-15.
+ * challenge problems follow as 11-15.
  *
- * Mystery problems use only ideas the tutorial problems already taught, in
+ * Challenge problems use only ideas the tutorial problems already taught, in
  * situations the learner has not seen, and hide their titles until solved.
  */
 export function level(
@@ -183,7 +218,7 @@ export function level(
   title: LocalizedText,
   description: LocalizedText,
   tutorial: Spec[],
-  mysteries: Spec[],
+  challenges: Spec[],
 ): Level {
   let draws = 0
   let writes = 0
@@ -192,6 +227,6 @@ export function level(
       ? toProblem(spec, `${id}-${++draws}`, false)
       : toProblem(spec, `${id}-${5 + ++writes}`, false),
   )
-  const tested = mysteries.map((spec, index) => toProblem(spec, `${id}-${11 + index}`, true))
+  const tested = challenges.map((spec, index) => toProblem(spec, `${id}-${11 + index}`, true))
   return { id, title, description, problems: [...taught, ...tested] }
 }

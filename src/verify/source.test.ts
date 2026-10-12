@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest'
+import { languageProfile, LANGUAGES, type Runtime } from '../model/languages'
 import { callsMethod, combines, copiesFrom, copiesOrCombinesFrom, multiplies, type SourceRule } from '../model/process'
-import type { Language } from '../model/types'
 import { checkSource, findLiteralReusedHint } from './source'
 
 interface Case {
   name: string
   rule: SourceRule
-  accepted: { javascript: string[]; python: string[] }
-  rejected: { javascript: string[]; python: string[] }
+  accepted: Record<Runtime, string[]>
+  rejected: Record<Runtime, string[]>
+  annotated?: string[]
 }
 
 const cases: Case[] = [
@@ -28,6 +29,7 @@ const cases: Case[] = [
       ],
       python: ['area = 12', 'area = width + height', 'area = width * 2', 'area = 12\nother = width * height', 'area = width ** height'],
     },
+    annotated: ['let area: number = width * height;'],
   },
   {
     name: 'calling a method on a variable',
@@ -37,6 +39,7 @@ const cases: Case[] = [
       javascript: ['let up = "HI";', 'let up = s.toLowerCase();', 'let up = t.toUpperCase();', 'let up = s;'],
       python: ['up = "HI"', 'up = s.lower()', 'up = t.upper()', 'up = s'],
     },
+    annotated: ['let up: string = s.toUpperCase();'],
   },
   {
     name: 'copying',
@@ -85,6 +88,7 @@ const cases: Case[] = [
         'q = p[0]',
       ],
     },
+    annotated: ['let q: number[] = [...p];', 'let q: number[] = p.slice();'],
   },
   {
     name: 'copying or combining into a new list',
@@ -97,6 +101,7 @@ const cases: Case[] = [
       javascript: ['let b = [a[0], a[1], [3]];', 'let b = [[...a[0]], [...a[1]]];', 'b = c.concat([[3]]);'],
       python: ['b = [a[0], a[1], [3]]', 'b = [list(a[0]), list(a[1])]', 'b = c + [[3]]'],
     },
+    annotated: ['let b: number[] = [...a];', 'let b: number[] = a.concat([[3]]);'],
   },
   {
     name: 'combining into a new list',
@@ -106,17 +111,23 @@ const cases: Case[] = [
       javascript: ['b = [1, 2, 3, 4];', 'b.push(3);', 'b = c.concat([3]);'],
       python: ['b = [1, 2, 3, 4]', 'b.append(3)', 'b = c + [3]', 'b += [3]'],
     },
+    annotated: ['b = b.concat([3, 4]) as number[];'],
   },
 ]
 
-const flat = (language: Language, picked: Case['accepted']) => picked[language]
+describe.each(cases)('source rule: $name', ({ rule, accepted, rejected, annotated }) => {
+  for (const language of LANGUAGES) {
+    const profile = languageProfile(language)
+    const valid = [
+      ...accepted[profile.runtime],
+      ...(profile.typed ? (annotated ?? []) : []),
+    ]
+    const invalid = rejected[profile.runtime]
 
-describe.each(cases)('source rule: $name', ({ rule, accepted, rejected }) => {
-  for (const language of ['javascript', 'python'] as const) {
-    it.each(flat(language, accepted))(`accepts in ${language}: %s`, (code) => {
+    it.each(valid)(`accepts in ${language}: %s`, (code) => {
       expect(checkSource(language, code, [rule])).toEqual([])
     })
-    it.each(flat(language, rejected))(`rejects in ${language}: %s`, (code) => {
+    it.each(invalid)(`rejects in ${language}: %s`, (code) => {
       expect(checkSource(language, code, [rule])).toHaveLength(1)
     })
   }
@@ -127,11 +138,20 @@ describe('source feedback', () => {
     expect(checkSource('javascript', 'let area = 12;', [multiplies('area', 'width', 'height')])).toEqual([
       'Build "area" by multiplying "width" and "height".',
     ])
+    expect(checkSource('typescript', 'let area: number = 12;', [multiplies('area', 'width', 'height')])).toEqual([
+      'Build "area" by multiplying "width" and "height".',
+    ])
     const upper = callsMethod('up', 's', { javascript: 'toUpperCase', python: 'upper' })
     expect(checkSource('python', 'up = "HI"', [upper])).toEqual(['Build "up" by calling s.upper().'])
     expect(checkSource('javascript', 'let up = "HI";', [upper])).toEqual(['Build "up" by calling s.toUpperCase().'])
+    expect(checkSource('typescript', 'let up: string = "HI";', [upper])).toEqual([
+      'Build "up" by calling s.toUpperCase().',
+    ])
     expect(checkSource('python', 'b = [1]', [combines('b', 'b')])).toEqual(['Build "b" with "b + [...]".'])
     expect(checkSource('javascript', 'b = [1];', [combines('b', 'b')])).toEqual([
+      'Build "b" with "b.concat([...])".',
+    ])
+    expect(checkSource('typescript', 'b = [1];', [combines('b', 'b')])).toEqual([
       'Build "b" with "b.concat([...])".',
     ])
   })
@@ -144,6 +164,7 @@ describe('source feedback', () => {
   it('accepts a chained assignment and a declaration with several names', () => {
     expect(checkSource('python', 'x = area = width * height', [multiplies('area', 'width', 'height')])).toEqual([])
     expect(checkSource('javascript', 'let n = 1, area = width * height;', [multiplies('area', 'width', 'height')])).toEqual([])
+    expect(checkSource('typescript', 'let n = 1, area = width * height;', [multiplies('area', 'width', 'height')])).toEqual([])
   })
 })
 
@@ -151,6 +172,11 @@ describe('findLiteralReusedHint', () => {
   it('identifies when a learner hardcodes a single starter variable value', () => {
     const hintJs = findLiteralReusedHint('let a = 8;', 'javascript', 'let b = 8;')
     expect(hintJs).toBe(
+      'You assigned 8 directly instead of referencing "a". Build the result from "a" (e.g. b = a) — your code builds the right picture here, but not when the starting values change.',
+    )
+
+    const hintTs = findLiteralReusedHint('let a: number = 8;', 'typescript', 'let b: number = 8;')
+    expect(hintTs).toBe(
       'You assigned 8 directly instead of referencing "a". Build the result from "a" (e.g. b = a) — your code builds the right picture here, but not when the starting values change.',
     )
 
@@ -168,8 +194,8 @@ describe('findLiteralReusedHint', () => {
   })
 
   it('returns undefined when no starter literal matches', () => {
+    expect(findLiteralReusedHint(undefined, 'javascript', 'let b = 8;')).toBeUndefined()
     expect(findLiteralReusedHint('let a = 8;', 'javascript', 'let b = a;')).toBeUndefined()
     expect(findLiteralReusedHint('let a = 8;', 'javascript', 'let b = 99;')).toBeUndefined()
-    expect(findLiteralReusedHint(undefined, 'javascript', 'let b = 8;')).toBeUndefined()
   })
 })

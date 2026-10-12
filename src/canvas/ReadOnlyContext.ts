@@ -6,3 +6,10 @@ export const ReadOnlyContext = createContext(false)
 export function useReadOnly(): boolean {
   return useContext(ReadOnlyContext)
 }
+
+/** True when embedded as a static figure in scrollable text (debriefs). */
+export const CompactContext = createContext(false)
+
+export function useCompact(): boolean {
+  return useContext(CompactContext)
+}

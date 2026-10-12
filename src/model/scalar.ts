@@ -1,16 +1,12 @@
-import { LANGUAGES, type Language, type ScalarKind, type ScalarMem } from './types'
+import {
+  languageProfile,
+  runtimeTraits,
+  RUNTIMES,
+  type Language,
+} from './languages'
+import type { ScalarKind, ScalarMem } from './types'
 
 const NUMBER_PATTERN = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/
-
-const KEYWORDS: Record<Language, { true: string; false: string; null: string }> = {
-  javascript: { true: 'true', false: 'false', null: 'null' },
-  python: { true: 'True', false: 'False', null: 'None' },
-}
-
-const KIND_NAMES: Record<Language, Record<ScalarKind, string>> = {
-  javascript: { number: 'number', string: 'string', boolean: 'boolean', null: 'null' },
-  python: { number: 'number', string: 'str', boolean: 'bool', null: 'NoneType' },
-}
 
 /** The canonical text of a number, or `undefined` when `text` is not one. */
 export function canonicalNumber(text: string): string | undefined {
@@ -19,7 +15,7 @@ export function canonicalNumber(text: string): string | undefined {
 }
 
 function keywordValue(text: string, language: Language): ScalarMem | undefined {
-  const words = KEYWORDS[language]
+  const words = languageProfile(language).keywords
   if (text === words.null) return { type: 'scalar', kind: 'null', value: 'null' }
   if (text === words.true) return { type: 'scalar', kind: 'boolean', value: 'true' }
   if (text === words.false) return { type: 'scalar', kind: 'boolean', value: 'false' }
@@ -44,8 +40,15 @@ export function parseScalar(raw: string, language: Language): ScalarMem {
   const number = canonicalNumber(text)
   if (number !== undefined) return { type: 'scalar', kind: 'number', value: number }
 
-  const foreign = LANGUAGES.filter((other) => other !== language)
-    .map((other) => keywordValue(text, other))
+  const currentRuntime = languageProfile(language).runtime
+  const foreign = RUNTIMES.filter((runtime) => runtime !== currentRuntime)
+    .map((runtime) => {
+      const words = runtimeTraits(runtime).keywords
+      if (text === words.null) return { type: 'scalar' as const, kind: 'null' as const, value: 'null' }
+      if (text === words.true) return { type: 'scalar' as const, kind: 'boolean' as const, value: 'true' }
+      if (text === words.false) return { type: 'scalar' as const, kind: 'boolean' as const, value: 'false' }
+      return undefined
+    })
     .find((value) => value !== undefined)
   return foreign
     ? { type: 'scalar', kind: 'string', value: text, otherLanguageValue: { kind: foreign.kind, value: foreign.value } }
@@ -61,11 +64,12 @@ export function scalarFromJs(value: number | string | boolean | null): ScalarMem
 
 /** Writes a scalar the way `language` would display it, e.g. `None` in Python and `null` in JS. */
 export function formatScalar(scalar: { kind: ScalarKind; value: string }, language: Language): string {
+  const words = languageProfile(language).keywords
   switch (scalar.kind) {
     case 'null':
-      return KEYWORDS[language].null
+      return words.null
     case 'boolean':
-      return scalar.value === 'true' ? KEYWORDS[language].true : KEYWORDS[language].false
+      return scalar.value === 'true' ? words.true : words.false
     case 'number':
       return scalar.value
     case 'string':
@@ -74,7 +78,7 @@ export function formatScalar(scalar: { kind: ScalarKind; value: string }, langua
 }
 
 export function scalarKindName(kind: ScalarKind, language: Language): string {
-  return KIND_NAMES[language][kind]
+  return languageProfile(language).kindNames[kind]
 }
 
 export function stringQuote(_language?: Language): string {
