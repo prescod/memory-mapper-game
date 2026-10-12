@@ -9,8 +9,6 @@ import {
   type MemFlowNode,
 } from './types'
 
-const TITLE_HEIGHT = 36
-const ROW_HEIGHT = 34
 const SIMPLE_HEIGHT = 48
 
 const NODE_WIDTH = FLOW_NODE_WIDTH
