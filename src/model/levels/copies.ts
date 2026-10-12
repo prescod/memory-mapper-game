@@ -146,18 +146,24 @@ export const copiesLevel: Level = level(
         },
       ],
       about: {
-        js: 'Adding a key to a copy changes only the copy, because the copy is a separate object from the original.',
-        py: 'Adding a key to a copy changes only the copy, because the copy is a separate dictionary from the original.',
+        js: 'Copying with spread makes a separate object, then you add key m to that copy in place. The special constraint says q must follow whatever p starts with, so build q by copying p instead of retyping its contents.',
+        py: 'Copying with dict() makes a separate dictionary, then you add key m to that copy in place. The special constraint says q must follow whatever p starts with, so build q by copying p instead of retyping its contents.',
       },
+      constraints: [
+        {
+          rule: 'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a copy of that p with key m added and p left unchanged.',
+          cases: [
+            {
+              change: 'p starts with { n: 4 }',
+              given: { js: 'let p = { n: 4 };', ts: 'let p: { n: number } = { n: 4 };', py: 'p = {"n": 4}' },
+              expected: graph({ p: ref('p'), q: ref('q') }, { p: dict({ n: 4 }), q: dict({ n: 4, m: 2 }) }),
+            },
+          ],
+        },
+      ],
       process: {
         runtime: runtime(preserve('p')),
         source: [copiesFrom('q', 'p')],
-        hidden: [
-          {
-            given: { js: 'let p = { n: 4 };', ts: 'let p: { n: number } = { n: 4 };', py: 'p = {"n": 4}' },
-            expected: graph({ p: ref('p'), q: ref('q') }, { p: dict({ n: 4 }), q: dict({ n: 4, m: 2 }) }),
-          },
-        ],
       },
       debrief: [
         {
@@ -215,18 +221,24 @@ export const copiesLevel: Level = level(
         },
       ],
       about: {
-        js: 'Adding an item to a copy changes only the copy, because the copy is a separate array from the original.',
-        py: 'Adding an item to a copy changes only the copy, because the copy is a separate list from the original.',
+        js: 'Adding an item to a copy changes only the copy, because the copy is a separate array from the original. The special constraint says b must follow whatever a starts with, so build b by copying a instead of retyping its contents.',
+        py: 'Adding an item to a copy changes only the copy, because the copy is a separate list from the original. The special constraint says b must follow whatever a starts with, so build b by copying a instead of retyping its contents.',
       },
+      constraints: [
+        {
+          rule: 'Your boss said that b must be built by copying a, so if another programmer updates what a starts with, b must still be a separate copy with 3 added and a unchanged.',
+          cases: [
+            {
+              change: 'a starts as [5, 6]',
+              given: { js: 'let a = [5, 6];', ts: 'let a: number[] = [5, 6];', py: 'a = [5, 6]' },
+              expected: graph({ a: ref('a'), b: ref('b') }, { a: list(5, 6), b: list(5, 6, 3) }),
+            },
+          ],
+        },
+      ],
       process: {
         runtime: runtime(preserve('a')),
         source: [copiesOrCombinesFrom('b', 'a')],
-        hidden: [
-          {
-            given: { js: 'let a = [5, 6];', ts: 'let a: number[] = [5, 6];', py: 'a = [5, 6]' },
-            expected: graph({ a: ref('a'), b: ref('b') }, { a: list(5, 6), b: list(5, 6, 3) }),
-          },
-        ],
       },
       debrief: [
         {
@@ -244,6 +256,12 @@ export const copiesLevel: Level = level(
           html: {
             js: '<p><strong>Also correct:</strong> <code>let b = [...a, 3];</code> copies <code>a</code> and includes the new item <code>3</code> in one line. <code>let b = a.concat([3]);</code> also builds a new array from <code>a</code>, leaving <code>a</code> alone.</p>',
             py: '<p><strong>Also correct:</strong> <code>b = a.copy()</code> or <code>b = a[:]</code> also copies <code>a</code> before the append. <code>b = a + [3]</code> builds the new list in one line, leaving <code>a</code> alone.</p>',
+          },
+        },
+        {
+          html: {
+            js: '<p><strong>Not accepted:</strong> <code>let b = [1, 2, 3];</code> builds the right picture by retyping the contents of <code>a</code>, but it does not copy <code>a</code>, so it would be wrong if <code>a</code> held something else.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>b = [1, 2, 3]</code> builds the right picture by retyping the contents of <code>a</code>, but it does not copy <code>a</code>, so it would be wrong if <code>a</code> held something else.</p>',
           },
         },
         {
@@ -414,25 +432,34 @@ export const copiesLevel: Level = level(
         },
       ],
       about: {
-        js: 'Copying an object copies only its top-level keys. Any array held in a key is shared with the original object, so mutating that array through either object changes it for both.',
-        py: 'Copying a dictionary copies only its top-level keys. Any list held in a key is shared with the original dictionary, so mutating that list through either dictionary changes it for both.',
+        js: 'Copying an object copies only its top-level keys. Any array held in a key is shared with the original object, so mutating that array through either object changes it for both. The special constraint says q must follow whatever p starts with, so build q by copying p instead of retyping its contents.',
+        py: 'Copying a dictionary copies only its top-level keys. Any list held in a key is shared with the original dictionary, so mutating that list through either dictionary changes it for both. The special constraint says q must follow whatever p starts with, so build q by copying p instead of retyping its contents.',
       },
+      constraints: [
+        {
+          rule: {
+            js: 'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p and the shared tags array must end with "y".',
+            py: 'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p and the shared tags list must end with "y".',
+          },
+          cases: [
+            {
+              change: 'p starts with { tags: ["z"] }',
+              given: { js: 'let p = { tags: ["z"] };', ts: 'let p: { tags: string[] } = { tags: ["z"] };', py: 'p = {"tags": ["z"]}' },
+              expected: graph(
+                { p: ref('p'), q: ref('q') },
+                {
+                  p: dict({ tags: ref('tags') }),
+                  q: dict({ tags: ref('tags') }),
+                  tags: list('z', 'y'),
+                },
+              ),
+            },
+          ],
+        },
+      ],
       process: {
         runtime: runtime(preserve('p'), preserve('p', 'tags')),
         source: [copiesFrom('q', 'p')],
-        hidden: [
-          {
-            given: { js: 'let p = { tags: ["z"] };', ts: 'let p: { tags: string[] } = { tags: ["z"] };', py: 'p = {"tags": ["z"]}' },
-            expected: graph(
-              { p: ref('p'), q: ref('q') },
-              {
-                p: dict({ tags: ref('tags') }),
-                q: dict({ tags: ref('tags') }),
-                tags: list('z', 'y'),
-              },
-            ),
-          },
-        ],
       },
       debrief: [
         {
@@ -652,27 +679,33 @@ export const copiesLevel: Level = level(
         },
       ],
       about: {
-        js: 'To copy a nested array without sharing inner arrays, copy one level deeper by hand: create a new outer array holding copies of each inner array.',
-        py: 'To copy a nested list without sharing inner lists, copy one level deeper by hand: create a new outer list holding copies of each inner list.',
+        js: 'To copy a nested array without sharing inner arrays, copy one level deeper by hand: create a new outer array holding copies of each inner array. The special constraint says b must follow whatever a starts with, so build b from a instead of retyping its contents.',
+        py: 'To copy a nested list without sharing inner lists, copy one level deeper by hand: create a new outer list holding copies of each inner list. The special constraint says b must follow whatever a starts with, so build b from a instead of retyping its contents.',
       },
+      constraints: [
+        {
+          rule: 'Your boss said that b must be built from a, so if another programmer updates what a starts with, b must still be a separate copy that shares nothing with a.',
+          cases: [
+            {
+              change: 'a starts as [[3], [4]]',
+              given: { js: 'let a = [[3], [4]];', ts: 'let a: number[][] = [[3], [4]];', py: 'a = [[3], [4]]' },
+              expected: graph(
+                { a: ref('a'), b: ref('b') },
+                {
+                  a: list(ref('a0'), ref('a1')),
+                  b: list(ref('b0'), ref('b1')),
+                  a0: list(3),
+                  a1: list(4),
+                  b0: list(3),
+                  b1: list(4),
+                },
+              ),
+            },
+          ],
+        },
+      ],
       process: {
         runtime: runtime(preserve('a'), preserve('a', 0), preserve('a', 1)),
-        hidden: [
-          {
-            given: { js: 'let a = [[3], [4]];', ts: 'let a: number[][] = [[3], [4]];', py: 'a = [[3], [4]]' },
-            expected: graph(
-              { a: ref('a'), b: ref('b') },
-              {
-                a: list(ref('a0'), ref('a1')),
-                b: list(ref('b0'), ref('b1')),
-                a0: list(3),
-                a1: list(4),
-                b0: list(3),
-                b1: list(4),
-              },
-            ),
-          },
-        ],
       },
       debrief: [
         {
@@ -763,25 +796,34 @@ export const copiesLevel: Level = level(
         },
       ],
       about: {
-        js: 'A shallow copy creates a new outer object, but inner arrays remain shared. Adding a top-level property affects only the copy, while mutating an inner array affects both.',
-        py: 'A shallow copy creates a new outer dictionary, but inner lists remain shared. Adding a top-level key affects only the copy, while mutating an inner list affects both.',
+        js: 'A shallow copy creates a new outer object, but inner arrays remain shared. Adding a top-level property affects only the copy, while mutating an inner array affects both. The special constraint says q must follow whatever p starts with, so build q by copying p instead of retyping its contents.',
+        py: 'A shallow copy creates a new outer dictionary, but inner lists remain shared. Adding a top-level key affects only the copy, while mutating an inner list affects both. The special constraint says q must follow whatever p starts with, so build q by copying p instead of retyping its contents.',
       },
+      constraints: [
+        {
+          rule: {
+            js: 'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p with extra added and the shared tags array ending with "b".',
+            py: 'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p with extra added and the shared tags list ending with "b".',
+          },
+          cases: [
+            {
+              change: 'p starts with { tags: ["c"] }',
+              given: { js: 'let p = { tags: ["c"] };', ts: 'let p: { tags: string[] } = { tags: ["c"] };', py: 'p = {"tags": ["c"]}' },
+              expected: graph(
+                { p: ref('p'), q: ref('q') },
+                {
+                  p: dict({ tags: ref('tags') }),
+                  q: dict({ tags: ref('tags'), extra: true }),
+                  tags: list('c', 'b'),
+                },
+              ),
+            },
+          ],
+        },
+      ],
       process: {
         runtime: runtime(preserve('p'), preserve('p', 'tags')),
         source: [copiesFrom('q', 'p')],
-        hidden: [
-          {
-            given: { js: 'let p = { tags: ["c"] };', ts: 'let p: { tags: string[] } = { tags: ["c"] };', py: 'p = {"tags": ["c"]}' },
-            expected: graph(
-              { p: ref('p'), q: ref('q') },
-              {
-                p: dict({ tags: ref('tags') }),
-                q: dict({ tags: ref('tags'), extra: true }),
-                tags: list('c', 'b'),
-              },
-            ),
-          },
-        ],
       },
       debrief: [
         {

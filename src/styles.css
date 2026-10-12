@@ -110,38 +110,67 @@ textarea {
   opacity: 0.5;
 }
 
-/* Segmented toggles */
+/* Language picker */
+
+.language-select {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 28px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23667085' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    no-repeat right 10px center;
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.language-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
 
 .segmented-control {
-  display: inline-flex;
-  border: 1px solid var(--border);
+  display: flex;
+  border: 2px solid var(--accent);
   border-radius: 10px;
   overflow: hidden;
 }
 
 .segmented-option {
-  min-height: 36px;
-  padding: 0 10px;
+  flex: 1;
+  min-height: 50px;
+  padding: 0 16px;
   border: none;
   background: var(--panel);
-  color: var(--text);
-  font-size: 0.85rem;
+  color: var(--accent);
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .segmented-option + .segmented-option {
-  border-left: 1px solid var(--border);
+  border-left: 1px solid var(--accent);
 }
 
 .segmented-option.active {
   background: var(--accent);
   color: #fff;
-  font-weight: 600;
+  font-weight: 700;
+}
+
+/* Below this width the picker wraps under the Start button, so match its width. */
+@media (max-width: 600px) {
+  .segmented-control {
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
   .segmented-option {
-    padding: 0 6px;
-    font-size: 0.78rem;
+    padding: 0 8px;
   }
 }
 
@@ -473,12 +502,30 @@ textarea {
 .home-footer {
   margin-top: 24px;
   padding-top: 12px;
-  text-align: center;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px 20px;
 }
 
-.home-reset {
+.home-reset,
+.home-feedback {
   padding: 4px 8px;
   font-size: 0.85rem;
+}
+
+.home-feedback {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.home-feedback:hover {
+  text-decoration: underline;
 }
 
 /* Level Screen */
@@ -713,10 +760,6 @@ textarea {
   background: none;
 }
 
-.problem-header .segmented-control {
-  flex-shrink: 0;
-}
-
 .problem-panel {
   flex-shrink: 0;
   max-height: 38dvh;
@@ -833,6 +876,15 @@ textarea {
   margin-left: auto;
   font-size: 0.85rem;
   color: var(--accent);
+}
+
+.problem-feedback {
+  font-size: 0.85rem;
+}
+
+.problem-feedback a {
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .problem-about-done {

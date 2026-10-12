@@ -138,6 +138,7 @@ Guidelines:
 - **Each case describes the edit** (`change: 'a starts at 3'`) so the error message reads naturally: "This breaks the special constraint. If another programmer changes the code so that a starts at 3, b should become 3, but your code makes it 8."
 - **Pick case values that differ from the shown ones and from each other**, so a retyped literal cannot pass by luck.
 - Prefer a constraint over a silent `process.hidden` case whenever the learner needs to understand *why* retyping is wrong. Silent hidden cases are fine when the reason is already obvious from the level, such as building a string from its parts.
+- **Copying and alternate starters:** When a writing puzzle uses `copiesFrom` or `copiesOrCombinesFrom` along with alternate starting values, define explicit `constraints` with a boss rule explaining that the copy must track the original. Place alternate starters in `constraints.cases` rather than duplicating them in `process.hidden`. This is enforced by the `explicit special constraints` test suite in `src/model/levels.test.ts`.
 
 ## Writing the text
 

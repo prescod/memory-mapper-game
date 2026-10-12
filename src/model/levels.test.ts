@@ -16,6 +16,7 @@ import { snapshotPython } from './snapshot'
 import {
   LANGUAGES,
   type Language,
+  type LocalizedText,
   type MemoryGraph,
   type Problem,
   type WriteProblem,
@@ -53,6 +54,28 @@ const namesOf = (problem: Problem) => problem.expected.variables.map((variable) 
 
 const constraintCasesOf = (problem: WriteProblem) =>
   (problem.constraints ?? []).flatMap((constraint) => constraint.cases)
+
+function localizedStrings(text: string | LocalizedText | undefined): string[] {
+  if (!text) return []
+  return typeof text === 'string' ? [text] : Object.values(text)
+}
+
+/** All learner-facing prose from debrief blocks, for curriculum lint tests. */
+function debriefText(problem: Problem): string {
+  return (problem.debrief ?? [])
+    .flatMap((block) => {
+      if ('html' in block && block.html) return localizedStrings(block.html)
+      if ('caption' in block && block.caption) return localizedStrings(block.caption)
+      return []
+    })
+    .join('\n')
+}
+
+/**
+ * When the debrief says the checker rejects retyping a container's contents,
+ * the puzzle must state the boss's rule in `constraints` (see puzzle_style_guide).
+ */
+const RETYPING_CONTAINER_CONTENTS = /by retyping the contents of/i
 
 const matches = (actual: MemoryGraph, expected: MemoryGraph) =>
   verify(actual, expected).errors.length === 0 && verify(expected, actual).errors.length === 0
@@ -377,7 +400,12 @@ describe('shortcuts that match the picture but miss the point', () => {
       'q = {"tags": p["tags"]}\nq["tags"].append("y")',
       /by copying "p"/,
     ],
-    ['copies-10', 'let b = [[1], [2]];', 'b = [[1], [2]]', START_CHANGED],
+    [
+      'copies-10',
+      'let b = [[1], [2]];',
+      'b = [[1], [2]]',
+      /breaks the special constraint\. If another programmer changes the code so that a starts as \[\[3\], \[4\]\]/,
+    ],
     [
       'copies-11',
       'let q = { tags: p.tags, extra: true };\nq.tags.push("b");',
@@ -610,6 +638,24 @@ describe('debrief alternate answers', () => {
  * Each answer builds the right picture but breaks the puzzle's special
  * constraint, and the feedback must say so in terms of the constraint.
  */
+describe('explicit special constraints', () => {
+  it('states the boss rule in the UI when debrief rejects retyping container contents', () => {
+    const missing = writeProblems.filter(
+      (problem) => RETYPING_CONTAINER_CONTENTS.test(debriefText(problem)) && !problem.constraints?.length,
+    )
+    expect(missing.map((problem) => problem.id)).toEqual([])
+  })
+
+  it('moves copy alternate starters to constraints rather than silent hidden cases', () => {
+    const unmigrated = writeProblems.filter(
+      (problem) =>
+        problem.process?.source?.some((r) => r.kind === 'copy' || r.kind === 'copyOrCombine') &&
+        (problem.process?.hidden?.length ?? 0) > 0,
+    )
+    expect(unmigrated.map((problem) => problem.id)).toEqual([])
+  })
+})
+
 describe('special constraints', () => {
   const broken: [id: string, js: string, py: string, complaint: RegExp][] = [
     [
@@ -629,6 +675,12 @@ describe('special constraints', () => {
       'a = 2;\nb = 1;',
       'a = 2\nb = 1',
       /special constraint\. .*a should become 9, but your code makes it 2, and b should become 5, but your code makes it 1\./,
+    ],
+    [
+      'copies-10',
+      'let b = [[1], [2]];',
+      'b = [[1], [2]]',
+      /special constraint\. If another programmer changes the code so that a starts as \[\[3\], \[4\]\], your code no longer builds the right result\./,
     ],
   ]
 

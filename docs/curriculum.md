@@ -236,7 +236,7 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 
 **Builds on** Level 7's shared inner containers. **Sets up** Level 9's operations that build new containers.
 
-**How the level checks it.** Source rules require the copy to be made by copying, not by writing the contents out again. Runtime rules require the original, and where it matters its inner containers, to still be the same objects afterward, so the learner cannot rebuild them. Hidden alternate starters reject answers that retype the original's contents.
+**How the level checks it.** Source rules require the copy to be made by copying, not by writing the contents out again. Runtime rules require the original, and where it matters its inner containers, to still be the same objects afterward, so the learner cannot rebuild them. Special constraints and alternate starters reject answers that retype the original's contents.
 
 **Out of scope.** Library deep-copy functions such as `structuredClone` and `copy.deepcopy`.
 

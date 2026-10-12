@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { feedbackUrl } from '../feedback'
 import { textIn } from '../model/languages'
 import { hintIn, problemAbout } from '../model/levels'
 import type { Language, Level, Problem } from '../model/types'
@@ -96,6 +97,16 @@ export function ProblemPanel({
           {problem.kind === 'draw'
             ? 'Draw the memory as it looks after this code has run. To add an arrow, tap the dot below a block, then tap what it points to, or drag from the dot. Select a block or arrow, then tap Delete (or press Backspace).'
             : 'Write code that leaves memory looking like the picture. Every variable in the picture must exist and point to the same things.'}
+        </p>
+        <p className="problem-feedback">
+          Stuck, or think something is wrong?{' '}
+          <a
+            href={feedbackUrl({ problemId: problem.id, language })}
+            target="_blank"
+            rel="noopener"
+          >
+            Send feedback on this puzzle
+          </a>
         </p>
         {!wide && (
           <button

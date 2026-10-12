@@ -1,3 +1,4 @@
+import { feedbackUrl } from '../feedback'
 import { findProblem, levels, nextUnsolved, problems } from '../model/levels'
 import { LANGUAGE_LABELS, textIn } from '../model/types'
 import { useAppStore } from '../store/useAppStore'
@@ -38,7 +39,7 @@ export function Home({ onOpenProblem, onOpenLevel }: HomeProps) {
         <div className="hero-content">
           <h1 className="hero-title">Memory Mapper</h1>
           <p className="hero-tagline">
-            Every variable is an arrow. Can you draw where they all point?
+          Solve visual puzzles to make a memory model of variables, references, mutations and copies.
           </p>
         </div>
 
@@ -288,7 +289,7 @@ export function Home({ onOpenProblem, onOpenLevel }: HomeProps) {
             </button>
           ) : null}
         </div>
-        <LanguageToggle />
+        <LanguageToggle prominent />
       </section>
 
       <main className="home-levels">
@@ -344,6 +345,9 @@ export function Home({ onOpenProblem, onOpenLevel }: HomeProps) {
         >
           Reset all progress
         </button>
+        <a className="home-feedback" href={feedbackUrl()} target="_blank" rel="noopener">
+          Send feedback
+        </a>
       </footer>
     </div>
   )
