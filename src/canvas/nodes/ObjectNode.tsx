@@ -63,39 +63,39 @@ export function ObjectNode({ id, data, selected }: NodeProps<ObjectFlowNode>) {
       {data.entries.map((entry) => {
         const handle = entryHandle(entry.id)
         return (
-          <div className="mem-row mem-row-slot" key={entry.id}>
-            <div className="mem-row-main">
-              {readOnly ? (
-                <span className="scalar-fixed">{entry.key}</span>
-              ) : (
-                <input
-                  className="nodrag mem-input mem-key-input"
-                  value={entry.key}
-                  placeholder="key"
-                  aria-label="Key"
-                  spellCheck={false}
-                  autoCapitalize="off"
-                  autoCorrect="off"
-                  onChange={(event) => renameEntry(entry.id, event.target.value)}
-                />
-              )}
-              {!readOnly && (
-                <button
-                  type="button"
-                  className="nodrag mem-icon-button"
-                  aria-label="Remove entry"
-                  onClick={() => removeEntry(entry.id)}
-                >
-                  ×
-                </button>
-              )}
+          <div className="mem-row mem-array-slot" key={entry.id}>
+            {readOnly ? (
+              <span className="mem-index mem-entry-key">{entry.key}</span>
+            ) : (
+              <input
+                className="nodrag mem-input mem-entry-key"
+                value={entry.key}
+                placeholder="key"
+                aria-label="Key"
+                spellCheck={false}
+                autoCapitalize="off"
+                autoCorrect="off"
+                onChange={(event) => renameEntry(entry.id, event.target.value)}
+              />
+            )}
+            <div className="mem-slot-cell">
+              <Handle
+                id={handle}
+                type="source"
+                position={Position.Bottom}
+                className={feedback.handleKeys.has(handleKey(id, handle)) ? 'handle-error' : ''}
+              />
             </div>
-            <Handle
-              id={handle}
-              type="source"
-              position={Position.Bottom}
-              className={feedback.handleKeys.has(handleKey(id, handle)) ? 'handle-error' : ''}
-            />
+            {!readOnly && (
+              <button
+                type="button"
+                className="nodrag mem-icon-button"
+                aria-label="Remove entry"
+                onClick={() => removeEntry(entry.id)}
+              >
+                ×
+              </button>
+            )}
           </div>
         )
       })}

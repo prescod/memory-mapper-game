@@ -5,7 +5,7 @@ import { Canvas } from '../canvas/Canvas'
 import { emptyFeedback } from '../canvas/FeedbackContext'
 import { toFlow } from '../canvas/layout'
 import type { MemFlowEdge, MemFlowNode } from '../canvas/types'
-import { nextProblem, problemHint, type ProblemLocation } from '../model/levels'
+import { formatCurriculumMessages, nextProblem, problemHint, type ProblemLocation } from '../model/levels'
 import { LANGUAGE_LABELS, type Language, type VerifyResult, type WriteProblem } from '../model/types'
 import { runCode } from '../run/runCode'
 import { progressKey, useAppStore } from '../store/useAppStore'
@@ -104,6 +104,7 @@ export function WriteProblemView({
     hasDebrief,
     toggle: toggleDebrief,
   } = useDebrief(problem, result, language)
+  const formatProse = useMemo(() => formatCurriculumMessages(problem), [problem])
 
   return (
     <div className="problem-screen">
@@ -118,7 +119,11 @@ export function WriteProblemView({
       />
       <main className="workspace">
         {isDebriefOpen && problem.debrief ? (
-          <DebriefView debrief={problem.debrief} language={language} />
+          <DebriefView
+            debrief={problem.debrief}
+            language={language}
+            formatCaption={formatProse}
+          />
         ) : (
           <>
             <Canvas
@@ -167,6 +172,7 @@ export function WriteProblemView({
         successMessage="Correct! Your code builds exactly this picture."
         failureHeading="Not quite:"
         hint={problemHint(problem, language)}
+        formatProse={formatProse}
         onRevealAnswer={() => setIsAnswerRevealed((prev) => !prev)}
         isAnswerRevealed={isAnswerRevealed}
         debrief={

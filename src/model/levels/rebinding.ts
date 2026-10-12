@@ -15,45 +15,48 @@ export const rebindingLevel: Level = level(
   'rebinding',
   L('Building New Values', 'Building New Values'),
   L(
-    'Strings never change: methods like toUpperCase() build a new string. Growing an array with push changes it in place; combining with concat builds a new array and leaves the old one alone. Setting a variable to null drops one reference; a value nothing refers to is gone for good.',
-    'Strings never change: methods like upper() build a new string. Growing a list with append changes it in place; combining with + builds a new list and leaves the old one alone. Setting a variable to None drops one reference; a value nothing refers to is gone for good.',
+    'Strings never change: methods like toUpperCase() and toLowerCase() build a new string. Growing an array with push changes it in place; combining with concat builds a new array and leaves the old one alone. Setting a variable to null drops one reference; a value nothing refers to is gone for good.',
+    'Strings never change: methods like upper() and lower() build a new string. Growing a list with append changes it in place; combining with + builds a new list and leaves the old one alone. Setting a variable to None drops one reference; a value nothing refers to is gone for good.',
   ),
   [
     draw({
-      title: 'Upper-casing a string',
-      js: lines('let s = "ab";', 'let t = s.toUpperCase();'),
-      py: lines('s = "ab"', 't = s.upper()'),
-      expected: graph({ s: 'ab', t: 'AB' }),
+      title: 'Upper- and lower-casing a string',
+      js: lines('let s = "ab";', 'let t = s.toUpperCase();', 'let u = s.toLowerCase();'),
+      py: lines('s = "ab"', 't = s.upper()', 'u = s.lower()'),
+      expected: graph({ s: 'ab', t: 'AB', u: 'ab' }),
+      teaches: ['string.toUpperCase', 'string.toLowerCase'],
       hint: {
-        js: 's.toUpperCase() builds a new string "AB" for t. Ask whether it changes the string s refers to.',
-        py: 's.upper() builds a new string "AB" for t. Ask whether it changes the string s refers to.',
+        js: 's.toUpperCase() builds a new string "AB" for t, and s.toLowerCase() builds a new string "ab" for u. Neither changes the string s refers to.',
+        py: 's.upper() builds a new string "AB" for t, and s.lower() builds a new string "ab" for u. Neither changes the string s refers to.',
       },
       hints: [
         {
           variable: 's',
           value: 'AB',
-          message:
-            's should still refer to "ab". Strings never change in place: string methods like toUpperCase() and upper() return a new string and leave the original alone.',
+          message: {
+            js: 's should still refer to "ab". Strings never change in place: string methods like toUpperCase() and toLowerCase() return a new string and leave the original alone.',
+            py: 's should still refer to "ab". Strings never change in place: string methods like upper() and lower() return a new string and leave the original alone.',
+          },
         },
       ],
       about: {
-        js: 'Strings are immutable: they can never be changed in place. Methods like toUpperCase() build and return a new string, leaving the original string untouched.',
-        py: 'Strings are immutable: they can never be changed in place. Methods like upper() build and return a new string, leaving the original string untouched.',
+        js: 'Strings are immutable: they can never be changed in place. Methods like toUpperCase() and toLowerCase() build and return a new string, leaving the original string untouched.',
+        py: 'Strings are immutable: they can never be changed in place. Methods like upper() and lower() build and return a new string, leaving the original string untouched.',
       },
       debrief: [
         {
           html: {
-            js: '<p><code>let s = "ab";</code> points <code>s</code> at <code>"ab"</code>. When <code>s.toUpperCase()</code> runs, it does not modify <code>"ab"</code>. Instead, it builds a brand-new string <code>"AB"</code>, which <code>t</code> points to. <code>s</code> still refers to <code>"ab"</code>.</p>',
-            py: '<p><code>s = "ab"</code> points <code>s</code> at <code>"ab"</code>. When <code>s.upper()</code> runs, it does not modify <code>"ab"</code>. Instead, it builds a brand-new string <code>"AB"</code>, which <code>t</code> points to. <code>s</code> still refers to <code>"ab"</code>.</p>',
+            js: '<p><code>let s = "ab";</code> points <code>s</code> at <code>"ab"</code>. When <code>s.toUpperCase()</code> and <code>s.toLowerCase()</code> run, neither modifies <code>"ab"</code>. Instead, each builds a brand-new string: <code>t</code> points to <code>"AB"</code> and <code>u</code> points to <code>"ab"</code>. <code>s</code> still refers to <code>"ab"</code>.</p>',
+            py: '<p><code>s = "ab"</code> points <code>s</code> at <code>"ab"</code>. When <code>s.upper()</code> and <code>s.lower()</code> run, neither modifies <code>"ab"</code>. Instead, each builds a brand-new string: <code>t</code> points to <code>"AB"</code> and <code>u</code> points to <code>"ab"</code>. <code>s</code> still refers to <code>"ab"</code>.</p>',
           },
         },
         {
-          diagram: graph({ s: 'ab', t: 'AB' }),
-          caption: 'Correct: s keeps "ab" while t refers to the new string "AB".',
+          diagram: graph({ s: 'ab', t: 'AB', u: 'ab' }),
+          caption: 'Correct: s keeps "ab" while t refers to the new string "AB" and u refers to "ab".',
           verdict: 'correct',
         },
         {
-          diagram: graph({ s: 'AB', t: 'AB' }),
+          diagram: graph({ s: 'AB', t: 'AB', u: 'ab' }),
           caption: {
             js: 'Not correct: this is what would happen if toUpperCase() changed "ab" in place.',
             py: 'Not correct: this is what would happen if upper() changed "ab" in place.',
@@ -75,6 +78,7 @@ export const rebindingLevel: Level = level(
       ts: lines('let lo: string = s.toLowerCase();', 'let up: string = s.toUpperCase();'),
       py: lines('lo = s.lower()', 'up = s.upper()'),
       expected: graph({ s: 'Hi', lo: 'hi', up: 'HI' }),
+      reliesOn: ['string.toUpperCase', 'string.toLowerCase'],
       hint: {
         js: 'Declare lo as s.toLowerCase() and up as s.toUpperCase(); s stays "Hi".',
         py: 'Set lo to s.lower() and up to s.upper(); s stays "Hi".',
@@ -99,21 +103,28 @@ export const rebindingLevel: Level = level(
             'up should refer to "HI". Calling a string method does not change s; it returns a new string, and that result is what up should refer to.',
         },
       ],
+      about: {
+        js: 'Transform a string into lowercase and uppercase versions. Because strings are immutable, each method call builds a new string and leaves s untouched. The special constraint says lo and up must be built using string methods so they follow whatever string s starts with.',
+        py: 'Transform a string into lowercase and uppercase versions. Because strings are immutable, each method call builds a new string and leaves s untouched. The special constraint says lo and up must be built using string methods so they follow whatever string s starts with.',
+      },
+      constraints: [
+        {
+          rule:
+            'Your boss said that lo and up must be built using string methods on s, so if another programmer updates what s starts with, lo and up still become lowercase and uppercase versions of that string.',
+          cases: [
+            {
+              change: 's starts as "Yo"',
+              given: { js: 'let s = "Yo";', ts: 'let s: string = "Yo";', py: 's = "Yo"' },
+              expected: graph({ s: 'Yo', lo: 'yo', up: 'YO' }),
+            },
+          ],
+        },
+      ],
       process: {
         source: [
           callsMethod('lo', 's', { javascript: 'toLowerCase', python: 'lower' }),
           callsMethod('up', 's', { javascript: 'toUpperCase', python: 'upper' }),
         ],
-        hidden: [
-          {
-            given: { js: 'let s = "Yo";', ts: 'let s: string = "Yo";', py: 's = "Yo"' },
-            expected: graph({ s: 'Yo', lo: 'yo', up: 'YO' }),
-          },
-        ],
-      },
-      about: {
-        js: 'Transform a string into lowercase and uppercase versions. Because strings are immutable, each method call builds a new string and leaves s untouched.',
-        py: 'Transform a string into lowercase and uppercase versions. Because strings are immutable, each method call builds a new string and leaves s untouched.',
       },
       debrief: [
         {
@@ -148,6 +159,7 @@ export const rebindingLevel: Level = level(
       js: lines('let a = [1];', 'let b = a;', 'a = a.concat([2]);'),
       py: lines('a = [1]', 'b = a', 'a = a + [2]'),
       expected: graph({ a: ref('new'), b: ref('old') }, { old: list(1), new: list(1, 2) }),
+      teaches: ['array.concat'],
       hint: {
         js: 'After a = a.concat([2]), a points at a new array while b still refers to [1].',
         py: 'After a = a + [2], a points at a new list while b still refers to [1].',
@@ -257,6 +269,7 @@ export const rebindingLevel: Level = level(
       js: lines('let a = [1];', 'let b = a;', 'a = null;'),
       py: lines('a = [1]', 'b = a', 'a = None'),
       expected: graph({ a: null, b: ref('b') }, { b: list(1) }),
+      teaches: ['reference.drop'],
       hint: {
         js: 'Assigning a = null repoints only a; b keeps referring to [1].',
         py: 'Assigning a = None repoints only a; b keeps referring to [1].',
@@ -303,6 +316,7 @@ export const rebindingLevel: Level = level(
       js: lines('a = null;', 'b = null;'),
       py: lines('a = None', 'b = None'),
       expected: graph({ a: null, b: null }),
+      reliesOn: ['reference.drop'],
       hint: {
         js: 'Reassign a to null, then b to null.',
         py: 'Reassign a to None, then b to None.',
@@ -363,6 +377,7 @@ export const rebindingLevel: Level = level(
       js: 'b = b.concat([3, 4]);',
       py: 'b = b + [3, 4]',
       expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1, 2), b: list(1, 2, 3, 4) }),
+      reliesOn: ['array.concat'],
       process: {
         runtime: runtime(
           sameObject(
@@ -561,6 +576,7 @@ export const rebindingLevel: Level = level(
       js: 'name = name.toUpperCase();',
       py: 'name = name.upper()',
       expected: graph({ name: 'ADA', backup: 'ada' }),
+      reliesOn: ['string.toUpperCase'],
       hint: {
         js: 'Reassign name to name.toUpperCase(); strings never change in place, so backup stays "ada".',
         py: 'Reassign name to name.upper(); strings never change in place, so backup stays "ada".',
@@ -579,22 +595,29 @@ export const rebindingLevel: Level = level(
             'backup should still refer to "ada". Upper-casing name builds a new string and moves only name\'s arrow, so backup needs no change.',
         },
       ],
+      about: {
+        js: 'Strings are immutable. Converting name to uppercase builds a new string. Reassigning name moves its arrow to the uppercase string while backup remains pointing to the original lowercase string. The special constraint says name must be converted using string methods so it follows whatever name starts with.',
+        py: 'Strings are immutable. Converting name to uppercase builds a new string. Reassigning name moves its arrow to the uppercase string while backup remains pointing to the original lowercase string. The special constraint says name must be converted using string methods so it follows whatever name starts with.',
+      },
+      constraints: [
+        {
+          rule:
+            'Your boss said that name must be converted using string methods, so if another programmer updates what name starts with, name will still become uppercase and backup will stay untouched.',
+          cases: [
+            {
+              change: 'name starts as "bo"',
+              given: {
+                js: lines('let name = "bo";', 'let backup = name;'),
+                ts: lines('let name: string = "bo";', 'let backup: string = name;'),
+                py: lines('name = "bo"', 'backup = name'),
+              },
+              expected: graph({ name: 'BO', backup: 'bo' }),
+            },
+          ],
+        },
+      ],
       process: {
         source: [callsMethod('name', 'name', { javascript: 'toUpperCase', python: 'upper' })],
-        hidden: [
-          {
-            given: {
-              js: lines('let name = "bo";', 'let backup = name;'),
-              ts: lines('let name: string = "bo";', 'let backup: string = name;'),
-              py: lines('name = "bo"', 'backup = name'),
-            },
-            expected: graph({ name: 'BO', backup: 'bo' }),
-          },
-        ],
-      },
-      about: {
-        js: 'Strings are immutable. Converting name to uppercase builds a new string. Reassigning name moves its arrow to the uppercase string while backup remains pointing to the original lowercase string.',
-        py: 'Strings are immutable. Converting name to uppercase builds a new string. Reassigning name moves its arrow to the uppercase string while backup remains pointing to the original lowercase string.',
       },
       debrief: [
         {
@@ -680,6 +703,7 @@ export const rebindingLevel: Level = level(
       js: lines('let s = "ok";', 'let t = s;', 'let u = t;', 't = t.toUpperCase();'),
       py: lines('s = "ok"', 't = s', 'u = t', 't = t.upper()'),
       expected: graph({ s: 'ok', t: 'OK', u: 'ok' }),
+      reliesOn: ['string.toUpperCase'],
       hint: {
         js: 'All three names start on "ok". t.toUpperCase() builds a new string, and only t is reassigned to it.',
         py: 'All three names start on "ok". t.upper() builds a new string, and only t is reassigned to it.',

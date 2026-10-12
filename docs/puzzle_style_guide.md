@@ -32,6 +32,15 @@ A level is built with `level(id, title, description, tutorial, challenges)`.
 3. Show the contrast case: the situation where the idea does *not* apply, or applies the opposite way. "Area after a change" is paired with "Area before a change", and "Two equal values" with "Two teams".
 4. Move to writing puzzles once the learner has drawn the idea at least once.
 
+### Concept dependencies and CI verification
+
+A puzzle can declare concepts it introduces via `teaches: string[]` and concepts it depends upon via `reliesOn: string[]`.
+
+Automated tests in `levels.test.ts` (`checkConceptDependencies`) validate that:
+- Every concept in `reliesOn` was already declared in `teaches` by a strictly preceding puzzle in curriculum presentation order.
+- No problem relies on an unknown or mistyped concept.
+- Concepts cannot be self-satisfied within the same problem without a prior lesson.
+
 ### Challenge problems
 
 Challenge problems retest the level with less support. They follow these rules:
@@ -58,6 +67,8 @@ Every puzzle is written once as a spec, with JavaScript and Python versions side
 | `process` | no | when needed | Enforces *how* the picture is built |
 | `constraints` | no | when needed | The boss's instructions that the picture cannot show |
 | `opaquePrelude` | Pet levels | Pet levels | Defines `Pet` invisibly before the code runs |
+| `teaches` | optional | optional | Concept strings introduced by this puzzle (e.g. `'array.push'`, `'string.toUpperCase'`) |
+| `reliesOn` | optional | optional | Concept strings this puzzle requires; checked by CI to ensure strictly earlier teaching order |
 
 ## What makes an excellent puzzle
 
@@ -136,9 +147,11 @@ Guidelines:
 - **State the purpose, not the code.** "The game always has exactly 2 teams, no matter how many players there are" lets the learner work out that `teams = 2` is right. "Do not use players" just hands them the answer.
 - **Use both directions within a level.** If one puzzle says "b must follow a", another should say "teams must stay 2 even if players changes". Seeing both is what shows the learner that the choice is theirs.
 - **Each case describes the edit** (`change: 'a starts at 3'`) so the error message reads naturally: "This breaks the special constraint. If another programmer changes the code so that a starts at 3, b should become 3, but your code makes it 8."
+- Variable and function names in plain `rule`, `hint`, `about`, diagnostic `message`, and diagram `caption` strings are wrapped in `<code>` at display time from the puzzle's identifiers. Use explicit `<code>` in `debrief` HTML blocks (and in `rule` only when you need markup beyond identifiers).
 - **Pick case values that differ from the shown ones and from each other**, so a retyped literal cannot pass by luck.
 - Prefer a constraint over a silent `process.hidden` case whenever the learner needs to understand *why* retyping is wrong. Silent hidden cases are fine when the reason is already obvious from the level, such as building a string from its parts.
 - **Copying and alternate starters:** When a writing puzzle uses `copiesFrom` or `copiesOrCombinesFrom` along with alternate starting values, define explicit `constraints` with a boss rule explaining that the copy must track the original. Place alternate starters in `constraints.cases` rather than duplicating them in `process.hidden`. This is enforced by the `explicit special constraints` test suite in `src/model/levels.test.ts`.
+- **Method calls and alternate starters:** When a writing puzzle requires calling a specific method (`callsMethod`), define explicit `constraints` with a boss rule explaining that the value must be transformed using methods so it works when the starting value changes. Place alternate starters in `constraints.cases` rather than in silent `process.hidden`. This is enforced by CI.
 
 ## Writing the text
 

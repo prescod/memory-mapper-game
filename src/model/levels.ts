@@ -5,6 +5,19 @@ import {
   type Level,
   type Problem,
 } from './types'
+
+import {
+  curriculumProse,
+  identifiersForProblem,
+  wrapCurriculumIdentifiers,
+} from './curriculumHtml'
+
+export { curriculumProse, identifiersForProblem, wrapCurriculumIdentifiers }
+
+export function formatCurriculumMessages(problem: Problem): (text: string) => string {
+  const identifiers = identifiersForProblem(problem)
+  return (text: string) => wrapCurriculumIdentifiers(text, identifiers)
+}
 import { scalarsLevel } from './levels/scalars'
 import { identityLevel } from './levels/identity'
 import { arraysLevel } from './levels/arrays'
@@ -30,6 +43,11 @@ export {
   type SpecTitle,
   type WriteSpec,
 } from './levels/common'
+
+export {
+  checkConceptDependencies,
+  type ConceptDependencyError,
+} from './concepts'
 
 export const levels: Level[] = [
   scalarsLevel,

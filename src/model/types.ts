@@ -143,6 +143,8 @@ export interface DrawProblem {
    * to it, never its definition.
    */
   opaquePrelude?: boolean
+  teaches?: string[]
+  reliesOn?: string[]
 }
 
 /**
@@ -157,6 +159,7 @@ export interface DrawProblem {
  * for another programmer editing the starting values.
  */
 export interface Constraint {
+  /** Boss instruction; identifiers are monospace in the UI (see curriculum prose formatting). */
   rule: Hint
   cases: ConstraintCase[]
 }
@@ -198,6 +201,8 @@ export interface WriteProblem {
   debrief?: DebriefBlock[]
   /** See `DrawProblem.opaquePrelude`. */
   opaquePrelude?: boolean
+  teaches?: string[]
+  reliesOn?: string[]
 }
 
 export type Problem = DrawProblem | WriteProblem

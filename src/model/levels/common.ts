@@ -84,6 +84,8 @@ export interface DrawSpec {
   about?: SpecHint
   debrief?: SpecDebriefBlock[]
   opaquePrelude?: boolean
+  teaches?: string[]
+  reliesOn?: string[]
 }
 
 export interface WriteSpec {
@@ -105,6 +107,8 @@ export interface WriteSpec {
   about?: SpecHint
   debrief?: SpecDebriefBlock[]
   opaquePrelude?: boolean
+  teaches?: string[]
+  reliesOn?: string[]
 }
 
 /** See `Constraint`. */
@@ -164,6 +168,8 @@ export function toProblem(spec: Spec, id: string, challenge: boolean): Problem {
       about,
       debrief,
       ...(spec.opaquePrelude !== undefined && { opaquePrelude: spec.opaquePrelude }),
+      ...(spec.teaches && { teaches: spec.teaches }),
+      ...(spec.reliesOn && { reliesOn: spec.reliesOn }),
     }
   }
   return {
@@ -201,6 +207,8 @@ export function toProblem(spec: Spec, id: string, challenge: boolean): Problem {
     about,
     debrief,
     ...(spec.opaquePrelude !== undefined && { opaquePrelude: spec.opaquePrelude }),
+    ...(spec.teaches && { teaches: spec.teaches }),
+    ...(spec.reliesOn && { reliesOn: spec.reliesOn }),
   }
 }
 

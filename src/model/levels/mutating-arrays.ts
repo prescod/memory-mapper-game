@@ -16,6 +16,7 @@ export const mutatingArraysLevel: Level = level(
       js: lines('let a = [1];', 'a.push(2);'),
       py: lines('a = [1]', 'a.append(2)'),
       expected: graph({ a: ref('a') }, { a: list(1, 2) }),
+      teaches: ['array.push'],
       hint: {
         js: 'push adds a slot to the array a already refers to. It does not build a new array.',
         py: 'append adds a slot to the list a already refers to. It does not build a new list.',
@@ -61,6 +62,7 @@ export const mutatingArraysLevel: Level = level(
       js: lines('a.push(3);', 'a.push(6);', 'a.push(9);'),
       py: lines('a.append(3)', 'a.append(6)', 'a.append(9)'),
       expected: graph({ a: ref('a') }, { a: list(3, 6, 9) }),
+      reliesOn: ['array.push'],
       hint: {
         js: 'Add 3, then 6, then 9 to the end of a, changing the same array in place.',
         py: 'Add 3, then 6, then 9 to the end of a, changing the same list in place.',
@@ -158,6 +160,7 @@ export const mutatingArraysLevel: Level = level(
       js: lines('let a = [1, 2, 3];', 'a.pop();'),
       py: lines('a = [1, 2, 3]', 'a.pop()'),
       expected: graph({ a: ref('a') }, { a: list(1, 2) }),
+      teaches: ['array.pop'],
       hint: {
         js: 'pop changes the array a already refers to. Think about which end it removes from.',
         py: 'pop changes the list a already refers to. Think about which end it removes from.',
@@ -289,6 +292,7 @@ export const mutatingArraysLevel: Level = level(
       js: lines('a.pop();', 'a.pop();'),
       py: lines('a.pop()', 'a.pop()'),
       expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: list() }),
+      reliesOn: ['array.pop'],
       hint: {
         js: 'Remove both items from a in place so a and b end sharing one empty array.',
         py: 'Remove both items from a in place so a and b end sharing one empty list.',

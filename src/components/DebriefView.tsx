@@ -6,6 +6,7 @@ import { toFlow } from '../canvas/layout'
 import type { MemFlowEdge, MemFlowNode } from '../canvas/types'
 import type { DebriefBlock, Hint, Language, MemoryGraph } from '../model/types'
 import { textIn } from '../model/languages'
+import { CurriculumHtml } from './CurriculumHtml'
 
 const DEFAULT_HEIGHT = 240
 const MIN_HEIGHT = 160
@@ -16,11 +17,13 @@ function DebriefDiagram({
   caption,
   verdict,
   language,
+  formatCaption,
 }: {
   diagram: MemoryGraph
   caption: Hint
   verdict?: 'correct' | 'incorrect'
   language: Language
+  formatCaption: (text: string) => string
 }) {
   const flow = useMemo(() => toFlow(diagram), [diagram])
   const [nodes, setNodes, onNodesChange] = useNodesState<MemFlowNode>(flow.nodes)
@@ -110,7 +113,9 @@ function DebriefDiagram({
       >
         <span className="debrief-resize-grip" aria-hidden="true" />
       </div>
-      <figcaption className="debrief-caption">{captionText}</figcaption>
+      <figcaption className="debrief-caption">
+        <CurriculumHtml html={formatCaption(captionText)} />
+      </figcaption>
     </figure>
   )
 }
@@ -118,9 +123,10 @@ function DebriefDiagram({
 interface DebriefViewProps {
   debrief: DebriefBlock[]
   language: Language
+  formatCaption: (text: string) => string
 }
 
-export function DebriefView({ debrief, language }: DebriefViewProps) {
+export function DebriefView({ debrief, language, formatCaption }: DebriefViewProps) {
   return (
     <div className="debrief" role="region" aria-label="Problem debrief">
       <div className="debrief-banner" role="status">
@@ -149,6 +155,7 @@ export function DebriefView({ debrief, language }: DebriefViewProps) {
               caption={block.caption}
               verdict={block.verdict}
               language={language}
+              formatCaption={formatCaption}
             />
           )
         })}

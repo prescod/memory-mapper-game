@@ -842,6 +842,14 @@ textarea {
   margin-top: 4px;
 }
 
+.curriculum-html code {
+  font-family: monospace;
+  font-size: 0.9em;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
 .problem-about {
   margin-top: 4px;
   color: var(--muted);
@@ -1239,20 +1247,6 @@ select.mem-input {
   padding-right: 4px;
 }
 
-.mem-row-slot {
-  position: relative;
-  flex-direction: column;
-  align-items: stretch;
-  padding-bottom: 14px;
-  margin-bottom: 4px;
-}
-
-.mem-row-main {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .mem-index {
   min-width: 24px;
   padding: 2px 6px;
@@ -1277,12 +1271,15 @@ select.mem-input {
 }
 
 .mem-slot-cell .react-flow__handle {
-  position: relative;
-  top: auto;
-  left: auto;
-  right: auto;
-  bottom: auto;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 4px;
   transform: none;
+  cursor: crosshair;
 }
 
 .mem-spacer {
@@ -1290,8 +1287,20 @@ select.mem-input {
   min-width: 24px;
 }
 
-.mem-key-input {
-  flex: 1;
+.mem-entry-key {
+  width: 5.5em;
+  min-width: 5.5em;
+  max-width: 9em;
+  text-align: left;
+}
+
+@supports (field-sizing: content) {
+  .mem-entry-key.mem-input {
+    field-sizing: content;
+    width: auto;
+    min-width: 4.5em;
+    max-width: 9em;
+  }
 }
 
 .mem-empty {
@@ -1318,21 +1327,21 @@ select.mem-input {
   font-size: 0.8rem;
 }
 
-.react-flow__handle {
-  width: 12px;
-  height: 12px;
-  background: #555b6b;
-  border: 2px solid #fff;
+.react-flow__node {
+  pointer-events: none;
 }
 
-.react-flow__handle.clickconnecting {
-  background: var(--accent);
-  box-shadow: 0 0 0 4px rgba(59, 111, 224, 0.4);
+.react-flow__node .mem-node-header,
+.react-flow__node .nodrag {
+  pointer-events: all;
 }
 
-.react-flow__handle.handle-error {
-  background: var(--error);
-  box-shadow: 0 0 0 3px rgba(217, 45, 32, 0.35);
+.react-flow__node .react-flow__handle {
+  pointer-events: none;
+}
+
+.react-flow__node.connect-target {
+  pointer-events: all;
 }
 
 .react-flow__edges {
@@ -1340,7 +1349,109 @@ select.mem-input {
 }
 
 svg.react-flow__connectionline {
+  z-index: 1001;
+}
+
+.react-flow__edgelabel-renderer {
   z-index: 1002;
+}
+
+.react-flow__viewport-portal {
+  z-index: 1003;
+  pointer-events: none;
+}
+
+.mem-handle-hit {
+  position: absolute;
+  pointer-events: all;
+  cursor: crosshair;
+  background: transparent;
+}
+
+.mem-edge-bend-handle {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  border-radius: 100%;
+  background: #fff;
+  border: 2px solid var(--accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  cursor: grab;
+  touch-action: none;
+}
+
+/* Larger target than the visible dot; does not affect layout or edge routing. */
+.mem-edge-bend-handle::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+}
+
+.mem-edge-bend-handle:active {
+  cursor: grabbing;
+}
+
+@media (pointer: coarse) {
+  .mem-edge-bend-handle {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.react-flow__handle {
+  width: 12px;
+  height: 12px;
+  opacity: 0;
+}
+
+.mem-handle-visual {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  box-sizing: border-box;
+  border-radius: 100%;
+  background: #555b6b;
+  border: 2px solid #fff;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+@keyframes mem-handle-connect-pulse {
+  0%,
+  100% {
+    background: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 111, 224, 0.55);
+  }
+
+  50% {
+    background: #7da3f5;
+    box-shadow: 0 0 0 9px rgba(59, 111, 224, 0.12);
+  }
+}
+
+.mem-handle-visual.clickconnecting {
+  animation: mem-handle-connect-pulse 1.75s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mem-handle-visual.clickconnecting {
+    animation: none;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px rgba(59, 111, 224, 0.4);
+  }
+}
+
+.mem-handle-visual.handle-error {
+  background: var(--error);
+  box-shadow: 0 0 0 3px rgba(217, 45, 32, 0.35);
+}
+
+.react-flow__handle.clickconnecting {
+  opacity: 0;
+}
+
+.react-flow__handle.handle-error {
+  opacity: 0;
 }
 
 .react-flow__edge.edge-error .react-flow__edge-path {
@@ -1349,6 +1460,10 @@ svg.react-flow__connectionline {
 }
 
 @media (pointer: coarse) {
+  .react-flow__edge-path {
+    stroke-width: 2.5px;
+  }
+
   .mem-node {
     min-width: 140px;
   }
@@ -1358,6 +1473,11 @@ svg.react-flow__connectionline {
   }
 
   .react-flow__handle {
+    width: 22px;
+    height: 22px;
+  }
+
+  .mem-handle-visual {
     width: 22px;
     height: 22px;
   }

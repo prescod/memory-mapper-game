@@ -8,7 +8,7 @@ import { loadNodePythonSnapshotter } from '../run/testRuntime'
 import { buildRunRequest, gradeRun } from '../verify/grade'
 import { verify } from '../verify/verify'
 import { graph, list, pet, ref } from './builders'
-import { findLevel, findProblem, nextProblem, nextUnsolved, previousProblem, problems } from './levels'
+import { checkConceptDependencies, findLevel, findProblem, nextProblem, nextUnsolved, previousProblem, problems } from './levels'
 import { perLanguage } from './levels/common'
 import { withOpaquePrelude } from '../run/opaquePrelude'
 import { checksFor } from './process'
@@ -654,6 +654,34 @@ describe('explicit special constraints', () => {
     )
     expect(unmigrated.map((problem) => problem.id)).toEqual([])
   })
+
+  it('states the boss rule when a puzzle requires calling a specific method', () => {
+    const missing = writeProblems.filter(
+      (problem) =>
+        problem.process?.source?.some((r) => r.kind === 'method') &&
+        (!problem.constraints || problem.constraints.length === 0),
+    )
+    expect(missing.map((problem) => problem.id)).toEqual([])
+  })
+
+  it('moves method alternate starters to constraints rather than silent hidden cases', () => {
+    const unmigrated = writeProblems.filter(
+      (problem) =>
+        problem.process?.source?.some((r) => r.kind === 'method') &&
+        (problem.process?.hidden?.length ?? 0) > 0,
+    )
+    expect(unmigrated.map((problem) => problem.id)).toEqual([])
+  })
+
+  it('ensures every special constraint has a boss rule explaining it', () => {
+    const missingBoss = writeProblems.flatMap((problem) =>
+      (problem.constraints ?? []).filter((constraint) => {
+        const text = localizedStrings(constraint.rule).join(' ')
+        return !/boss/i.test(text)
+      }).map(() => problem.id),
+    )
+    expect(missingBoss).toEqual([])
+  })
 })
 
 describe('special constraints', () => {
@@ -748,6 +776,13 @@ describe('findLevel and nextUnsolved', () => {
     const list = [problems[0], problems[1]]
     const next = nextUnsolved(list, () => true)
     expect(next).toBeUndefined()
+  })
+})
+
+describe('concept dependencies', () => {
+  it('ensures every problem in the curriculum only relies on concepts that were taught earlier', () => {
+    const errors = checkConceptDependencies(problems)
+    expect(errors).toEqual([])
   })
 })
 

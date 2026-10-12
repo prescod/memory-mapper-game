@@ -25,7 +25,8 @@ import {
   type DragEvent,
   type SetStateAction,
 } from 'react'
-import { connectReplacing, isValidConnection } from './connections'
+import { activeStrobingSource, idleConnectionState } from './connectMode'
+import { connectReplacing, isValidConnection, removeEdgesFromHandle } from './connections'
 import { FeedbackContext, handleKey, type Feedback } from './FeedbackContext'
 import { LanguageContext } from './LanguageContext'
 import { CompactContext, ReadOnlyContext } from './ReadOnlyContext'
@@ -37,10 +38,18 @@ import {
   type MemNodeType,
 } from './types'
 import type { Language } from '../model/types'
+import { edgeTypes } from './edges'
 import { nodeTypes } from './nodes'
 import { defaultPositionForType, freePosition } from './placement'
+import { HandleHitLayer } from './HandleHitLayer'
+import { HandleVisualLayer } from './HandleVisualLayer'
 import { tapConnection } from './tapConnect'
 import { DRAG_MIME, Toolbar } from './Toolbar'
+import { useCoarsePointer } from './useCoarsePointer'
+
+/** Invisible stroke width for selecting arrows; visible stroke stays thin. */
+const EDGE_HIT_WIDTH_MOUSE = 22
+const EDGE_HIT_WIDTH_TOUCH = 34
 
 export interface CanvasProps {
   nodes: MemFlowNode[]
@@ -56,10 +65,6 @@ export interface CanvasProps {
   /** Compact diagram embedded in scrollable text: allows page scrolling without hijacking mouse wheel. */
   compact?: boolean
 }
-
-const defaultEdgeOptions = { markerEnd: { type: MarkerType.ArrowClosed } }
-/** Width of the invisible stroke around each arrow that a finger can hit. */
-const EDGE_TAP_WIDTH = 32
 
 function TrashIcon() {
   return (
@@ -95,11 +100,53 @@ function CanvasInner({
   compact = false,
 }: CanvasProps) {
   const isReadOnly = readOnly || compact
+  const coarsePointer = useCoarsePointer()
+  const edgeHitWidth = coarsePointer ? EDGE_HIT_WIDTH_TOUCH : EDGE_HIT_WIDTH_MOUSE
+  const defaultEdgeOptions = useMemo(
+    () => ({
+      markerEnd: { type: MarkerType.ArrowClosed },
+      interactionWidth: edgeHitWidth,
+    }),
+    [edgeHitWidth],
+  )
   const wrapper = useRef<HTMLDivElement>(null)
   const { screenToFlowPosition, fitView, deleteElements } = useReactFlow<MemFlowNode, MemFlowEdge>()
   const nodesMeasured = useNodesInitialized()
   const store = useStoreApi<MemFlowNode, MemFlowEdge>()
   const pending = useStore((state) => state.connectionClickStartHandle)
+  const strobingSource = useStore((state) =>
+    activeStrobingSource(state.connectionClickStartHandle, state.connection),
+  )
+
+  const cancelConnection = useCallback(() => {
+    store.setState({
+      connectionClickStartHandle: null,
+      connection: { ...idleConnectionState },
+    })
+  }, [store])
+
+  useEffect(() => {
+    if (isReadOnly || !strobingSource) return
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Delete' && event.key !== 'Backspace') return
+      const target = event.target
+      if (
+        target instanceof HTMLElement &&
+        target.closest('input, textarea, select, [contenteditable="true"]')
+      ) {
+        return
+      }
+      event.preventDefault()
+      event.stopPropagation()
+      const { nodeId, sourceHandle } = strobingSource
+      setEdges((current) => removeEdgesFromHandle(current, nodeId, sourceHandle))
+      cancelConnection()
+    }
+
+    window.addEventListener('keydown', onKeyDown, true)
+    return () => window.removeEventListener('keydown', onKeyDown, true)
+  }, [isReadOnly, strobingSource, setEdges, cancelConnection])
 
   // The picture is wider than the learner's own diagrams, so fit it again once every node has its real size.
   useEffect(() => {
@@ -167,10 +214,7 @@ function CanvasInner({
     [nodes],
   )
 
-  const cancelTapConnection = useCallback(
-    () => store.setState({ connectionClickStartHandle: null }),
-    [store],
-  )
+  const cancelTapConnection = useCallback(() => cancelConnection(), [cancelConnection])
 
   // React Flow only finishes a tap connection on a handle; tapping anywhere on the target block is easier on a phone.
   const onNodeClick: NodeMouseHandler<MemFlowNode> = useCallback(
@@ -200,12 +244,12 @@ function CanvasInner({
     () =>
       edges.map((edge) => ({
         ...edge,
-        interactionWidth: EDGE_TAP_WIDTH,
+        interactionWidth: edgeHitWidth,
         className: feedback.handleKeys.has(handleKey(edge.source, edge.sourceHandle ?? ''))
           ? 'edge-error'
           : undefined,
       })),
-    [edges, feedback],
+    [edges, feedback, edgeHitWidth],
   )
 
   const selectedNodes = nodes.filter((node) => node.selected)
@@ -227,6 +271,7 @@ function CanvasInner({
                 nodes={displayedNodes}
                 edges={displayedEdges}
                 nodeTypes={nodeTypes}
+                edgeTypes={edgeTypes}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
@@ -251,6 +296,8 @@ function CanvasInner({
                 fitViewOptions={isReadOnly ? { maxZoom: 1 } : undefined}
               >
               <Background />
+              {!isReadOnly && <HandleHitLayer />}
+              <HandleVisualLayer />
               <Panel position="bottom-right">
                 <div className="canvas-actions">
                   {!isReadOnly && !pending && hasSelection && (
@@ -272,7 +319,7 @@ function CanvasInner({
               {!isReadOnly && pending && (
                 <Panel position="bottom-center">
                   <div className="connect-banner" role="status">
-                    <span>Tap what this points to</span>
+                    <span>Tap what this points to (Delete clears the arrow)</span>
                     <button type="button" className="text-button" onClick={cancelTapConnection}>
                       Cancel
                     </button>

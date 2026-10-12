@@ -20,7 +20,11 @@ export type ObjectFlowNode = Node<ObjectData, 'object'>
 export type PetFlowNode = Node<PetData, 'pet'>
 
 export type MemFlowNode = VariableFlowNode | ScalarFlowNode | ArrayFlowNode | ObjectFlowNode | PetFlowNode
-export type MemFlowEdge = Edge
+
+/** Optional bend control point in flow coordinates; layout only, not verified. */
+export type MemEdgeData = { bend?: { x: number; y: number } }
+
+export type MemFlowEdge = Edge<MemEdgeData>
 
 export type MemNodeType = MemFlowNode['type']
 

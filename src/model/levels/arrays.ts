@@ -329,7 +329,8 @@ export const arraysLevel: Level = level(
       expected: graph({ n: 5, row: ref('row') }, { row: list(5) }),
       constraints: [
         {
-          rule: 'Your boss said that if another programmer updates the code so that n starts at a different number, the slot in row must point to that different number.',
+          rule:
+            'Your boss said that if another programmer updates the code so that n starts at a different number, the slot in row must point to that different number.',
           cases: [
             {
               change: 'n starts at 7',

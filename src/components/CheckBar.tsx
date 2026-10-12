@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { VerifyResult } from '../model/types'
 import { useMediaQuery } from '../useMediaQuery'
+import { CurriculumHtml } from './CurriculumHtml'
 
 interface CheckBarProps {
   result: VerifyResult | null
@@ -15,6 +16,8 @@ interface CheckBarProps {
   failureHeading?: string
   problemId?: string
   hint?: string
+  /** Wraps variable names in hint and error messages for monospace display. */
+  formatProse?: (text: string) => string
   onRevealAnswer?: () => void
   isAnswerRevealed?: boolean
   revealedAnswer?: ReactNode
@@ -41,6 +44,7 @@ export function CheckBar({
   failureHeading = 'Not quite. Fix the highlighted items:',
   problemId,
   hint,
+  formatProse = (text) => text,
   onRevealAnswer,
   isAnswerRevealed = false,
   revealedAnswer,
@@ -100,7 +104,7 @@ export function CheckBar({
           {hintVisible && (
             <div className="check-result hint-box" role="status">
               <span className="hint-tag">Hint</span>
-              <span>{hint}</span>
+              <CurriculumHtml html={formatProse(hint)} />
             </div>
           )}
 
@@ -120,7 +124,9 @@ export function CheckBar({
               <strong>{failureHeading}</strong>
               <ul>
                 {result.errors.map((error, index) => (
-                  <li key={index}>{error.message}</li>
+                  <li key={index}>
+                    <CurriculumHtml html={formatProse(error.message)} />
+                  </li>
                 ))}
               </ul>
             </div>

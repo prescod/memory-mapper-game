@@ -175,7 +175,8 @@ export const scalarsLevel: Level = level(
       expected: graph({ a: 8, b: 8 }),
       constraints: [
         {
-          rule: 'Your boss said that if another programmer updates the code so that a starts at a different number, b must also use that different number.',
+          rule:
+            'Your boss said that if another programmer updates the code so that a starts at a different number, b must also use that different number.',
           cases: [
             {
               change: 'a starts at 3',
@@ -286,7 +287,8 @@ export const scalarsLevel: Level = level(
       expected: graph({ players: 2, teams: 2 }),
       constraints: [
         {
-          rule: 'Your boss said the game always has exactly 2 teams, no matter how many players there are. If another programmer updates the code so that players starts at a different number, teams must stay 2.',
+          rule:
+            'Your boss said the game always has exactly 2 teams, no matter how many players there are. If another programmer updates the code so that players starts at a different number, teams must stay 2.',
           cases: [
             {
               change: 'players starts at 6',
@@ -413,7 +415,8 @@ export const scalarsLevel: Level = level(
       expected: graph({ a: 2, b: 1 }),
       constraints: [
         {
-          rule: 'Your boss said that if another programmer updates the code so that a and b start at different numbers, your code must still swap them.',
+          rule:
+            'Your boss said that if another programmer updates the code so that a and b start at different numbers, your code must still swap them.',
           cases: [
             {
               change: 'a starts at 5 and b starts at 9',

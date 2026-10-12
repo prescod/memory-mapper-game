@@ -16,6 +16,7 @@ export const copiesLevel: Level = level(
       js: lines('let a = [1, 2];', 'let b = [...a];'),
       py: lines('a = [1, 2]', 'b = list(a)'),
       expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1, 2), b: list(1, 2) }),
+      teaches: ['copy.array'],
       hint: {
         js: '[...a] makes a new array holding the same values as a, so a and b point to different arrays.',
         py: 'list(a) makes a new list holding the same values as a, so a and b point to different lists.',
@@ -81,6 +82,7 @@ export const copiesLevel: Level = level(
       js: lines('let p = { n: 1 };', 'let q = { ...p };'),
       py: lines('p = {"n": 1}', 'q = dict(p)'),
       expected: graph({ p: ref('p'), q: ref('q') }, { p: dict({ n: 1 }), q: dict({ n: 1 }) }),
+      teaches: ['copy.object'],
       hint: {
         js: '{ ...p } makes a new object with the same keys as p, so p and q point to different objects.',
         py: 'dict(p) makes a new dictionary with the same keys as p, so p and q point to different dictionaries.',
@@ -134,6 +136,7 @@ export const copiesLevel: Level = level(
       ts: lines('let q: { n: number; m?: number } = { ...p };', 'q.m = 2;'),
       py: lines('q = dict(p)', 'q["m"] = 2'),
       expected: graph({ p: ref('p'), q: ref('q') }, { p: dict({ n: 1 }), q: dict({ n: 1, m: 2 }) }),
+      reliesOn: ['copy.object'],
       hint: {
         js: 'Declare q as a copy of p, then add key m holding 2 to q in place; p stays with only n.',
         py: 'Assign q as a copy of p, then add key m holding 2 to q in place; p stays with only n.',
@@ -151,7 +154,8 @@ export const copiesLevel: Level = level(
       },
       constraints: [
         {
-          rule: 'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a copy of that p with key m added and p left unchanged.',
+          rule:
+            'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a copy of that p with key m added and p left unchanged.',
           cases: [
             {
               change: 'p starts with { n: 4 }',
@@ -209,6 +213,7 @@ export const copiesLevel: Level = level(
       ts: lines('let b: number[] = [...a];', 'b.push(3);'),
       py: lines('b = list(a)', 'b.append(3)'),
       expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1, 2), b: list(1, 2, 3) }),
+      reliesOn: ['copy.array', 'array.push'],
       hint: {
         js: 'Declare b as a copy of a, then grow b to [1, 2, 3] in place; a stays [1, 2].',
         py: 'Assign b as a copy of a, then grow b to [1, 2, 3] in place; a stays [1, 2].',
@@ -226,7 +231,8 @@ export const copiesLevel: Level = level(
       },
       constraints: [
         {
-          rule: 'Your boss said that b must be built by copying a, so if another programmer updates what a starts with, b must still be a separate copy with 3 added and a unchanged.',
+          rule:
+            'Your boss said that b must be built by copying a, so if another programmer updates what a starts with, b must still be a separate copy with 3 added and a unchanged.',
           cases: [
             {
               change: 'a starts as [5, 6]',
@@ -415,6 +421,7 @@ export const copiesLevel: Level = level(
           tags: list('x', 'y'),
         },
       ),
+      reliesOn: ['copy.object', 'array.push'],
       hint: {
         js: 'Declare q as a copy of p, then grow the shared tags array in place so both end with ["x", "y"].',
         py: 'Assign q as a copy of p, then grow the shared tags list in place so both end with ["x", "y"].',
@@ -438,8 +445,10 @@ export const copiesLevel: Level = level(
       constraints: [
         {
           rule: {
-            js: 'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p and the shared tags array must end with "y".',
-            py: 'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p and the shared tags list must end with "y".',
+            js:
+              'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p and the shared tags array must end with "y".',
+            py:
+              'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p and the shared tags list must end with "y".',
           },
           cases: [
             {
@@ -684,7 +693,8 @@ export const copiesLevel: Level = level(
       },
       constraints: [
         {
-          rule: 'Your boss said that b must be built from a, so if another programmer updates what a starts with, b must still be a separate copy that shares nothing with a.',
+          rule:
+            'Your boss said that b must be built from a, so if another programmer updates what a starts with, b must still be a separate copy that shares nothing with a.',
           cases: [
             {
               change: 'a starts as [[3], [4]]',
@@ -802,8 +812,10 @@ export const copiesLevel: Level = level(
       constraints: [
         {
           rule: {
-            js: 'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p with extra added and the shared tags array ending with "b".',
-            py: 'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p with extra added and the shared tags list ending with "b".',
+            js:
+              'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p with extra added and the shared tags array ending with "b".',
+            py:
+              'Your boss said that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p with extra added and the shared tags list ending with "b".',
           },
           cases: [
             {

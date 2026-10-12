@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { feedbackUrl } from '../feedback'
 import { textIn } from '../model/languages'
-import { hintIn, problemAbout } from '../model/levels'
+import { curriculumProse, problemAbout } from '../model/levels'
+import { CurriculumHtml } from './CurriculumHtml'
 import type { Language, Level, Problem } from '../model/types'
 import { useMediaQuery } from '../useMediaQuery'
 import { ProblemTitle } from './ProblemTitle'
@@ -63,7 +64,9 @@ export function ProblemPanel({
           </h3>
           <ul>
             {problem.constraints.map((constraint, index) => (
-              <li key={index}>{hintIn(constraint.rule, language)}</li>
+              <li key={index}>
+                <CurriculumHtml html={curriculumProse(constraint.rule, language, problem)} />
+              </li>
             ))}
           </ul>
         </aside>
@@ -86,7 +89,15 @@ export function ProblemPanel({
         </summary>
         <h3 className="level-heading">{textIn(level.title, language)}</h3>
         {revealed ? (
-          <p className="level-description">{problemAbout(problem, language) ?? textIn(level.description, language)}</p>
+          <CurriculumHtml
+            block
+            className="level-description curriculum-html"
+            html={curriculumProse(
+              problemAbout(problem, language) ?? level.description,
+              language,
+              problem,
+            )}
+          />
         ) : (
           <p className="level-description">
             A challenge problem: it uses only ideas from this level, without naming them. The title

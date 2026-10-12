@@ -4,7 +4,7 @@ import { Canvas } from '../canvas/Canvas'
 import { emptyFeedback, feedbackFromErrors } from '../canvas/FeedbackContext'
 import { toFlow } from '../canvas/layout'
 import type { MemFlowEdge, MemFlowNode } from '../canvas/types'
-import { nextProblem, problemHint, type ProblemLocation } from '../model/levels'
+import { formatCurriculumMessages, nextProblem, problemHint, type ProblemLocation } from '../model/levels'
 import type { DrawProblem, Language, VerifyResult } from '../model/types'
 import { progressKey, useAppStore } from '../store/useAppStore'
 import { quotedLiteralErrors } from '../canvas/quotedLiteral'
@@ -146,6 +146,7 @@ export function ProblemView({
     hasDebrief,
     toggle: toggleDebrief,
   } = useDebrief(problem, result, language)
+  const formatProse = useMemo(() => formatCurriculumMessages(problem), [problem])
 
   return (
     <div className="problem-screen">
@@ -160,7 +161,11 @@ export function ProblemView({
       />
       <main className="workspace">
         {isDebriefOpen && problem.debrief ? (
-          <DebriefView debrief={problem.debrief} language={language} />
+          <DebriefView
+            debrief={problem.debrief}
+            language={language}
+            formatCaption={formatProse}
+          />
         ) : (
           <Canvas
             nodes={nodes}
@@ -183,6 +188,7 @@ export function ProblemView({
         onNext={() => next && onNavigate(next.id)}
         onBack={() => onNavigate(null)}
         hint={problemHint(problem, language)}
+        formatProse={formatProse}
         onRevealAnswer={handleRevealAnswer}
         isAnswerRevealed={isAnswerRevealed}
         disableCheck={isAnswerRevealed}

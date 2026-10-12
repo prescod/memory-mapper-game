@@ -589,8 +589,10 @@ export const functionsLevel: Level = level(
       constraints: [
         {
           rule: {
-            js: 'Your boss said withMilk must work for any cart. If another programmer updates the code so that the cart starts as ["coffee"], order must be ["coffee", "milk"].',
-            py: 'Your boss said with_milk must work for any cart. If another programmer updates the code so that the cart starts as ["coffee"], order must be ["coffee", "milk"].',
+            js:
+              'Your boss said withMilk must work for any cart. If another programmer updates the code so that the cart starts as ["coffee"], order must be ["coffee", "milk"].',
+            py:
+              'Your boss said with_milk must work for any cart. If another programmer updates the code so that the cart starts as ["coffee"], order must be ["coffee", "milk"].',
           },
           cases: [
             {
@@ -800,7 +802,8 @@ export const functionsLevel: Level = level(
       expected: graph({ todo: ref('todo'), done: ref('done') }, { todo: list(), done: list('wash') }),
       constraints: [
         {
-          rule: 'Your boss said finish must work for any task. If another programmer updates the code so that todo starts as ["dry"], done must end up as ["dry"] and todo must end up empty.',
+          rule:
+            'Your boss said finish must work for any task. If another programmer updates the code so that todo starts as ["dry"], done must end up as ["dry"] and todo must end up empty.',
           cases: [
             {
               change: 'todo starts as ["dry"]',
@@ -1109,7 +1112,8 @@ export const functionsLevel: Level = level(
       ),
       constraints: [
         {
-          rule: 'Your boss said tag must tag whichever object it is given. If another programmer updates the code so that tag is called on b instead of a, b must be tagged and a must not be.',
+          rule:
+            'Your boss said tag must tag whichever object it is given. If another programmer updates the code so that tag is called on b instead of a, b must be tagged and a must not be.',
           cases: [
             {
               change: 'tag is called on b instead of a',
