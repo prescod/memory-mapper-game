@@ -1,4 +1,4 @@
-import { nextProblem, previousProblem, problems } from '../model/levels'
+import { findProblem, levels, nextProblem, previousProblem, problems } from '../model/levels'
 import { LanguageToggle } from './LanguageToggle'
 
 interface ProblemHeaderProps {
@@ -10,11 +10,14 @@ export function ProblemHeader({ problemId, onNavigate }: ProblemHeaderProps) {
   const previous = previousProblem(problemId)
   const next = nextProblem(problemId)
   const position = problems.findIndex((problem) => problem.id === problemId)
+  const location = findProblem(problemId)
+  const levelIndex = location ? levels.indexOf(location.level) : -1
+  const backLabel = levelIndex !== -1 ? `‹ Level ${levelIndex + 1}` : '‹ Levels'
 
   return (
     <header className="problem-header">
       <button type="button" className="text-button header-back" onClick={() => onNavigate(null)}>
-        ‹ All
+        {backLabel}
       </button>
       <nav className="header-stepper" aria-label="Problem navigation">
         <button

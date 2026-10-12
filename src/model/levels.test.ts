@@ -8,7 +8,7 @@ import { loadNodePythonSnapshotter } from '../run/testRuntime'
 import { buildRunRequest, gradeRun } from '../verify/grade'
 import { verify } from '../verify/verify'
 import { graph, list, pet, ref } from './builders'
-import { findProblem, nextProblem, previousProblem, problems } from './levels'
+import { findLevel, findProblem, nextProblem, nextUnsolved, previousProblem, problems } from './levels'
 import { perLanguage } from './levels/common'
 import { withOpaquePrelude } from '../run/opaquePrelude'
 import { checksFor } from './process'
@@ -671,3 +671,31 @@ describe('TypeScript overrides', () => {
     )
   })
 })
+
+describe('findLevel and nextUnsolved', () => {
+  it('finds existing levels and returns undefined for unknown', () => {
+    expect(findLevel('scalars')?.id).toBe('scalars')
+    expect(findLevel('unknown-level')).toBeUndefined()
+  })
+
+  it('nextUnsolved finds the first unsolved problem from the start when fromId is omitted', () => {
+    const list = [problems[0], problems[1], problems[2]]
+    const solved = new Set([problems[0].id])
+    const next = nextUnsolved(list, (id) => solved.has(id))
+    expect(next?.id).toBe(problems[1].id)
+  })
+
+  it('nextUnsolved begins searching at fromId and wraps around', () => {
+    const list = [problems[0], problems[1], problems[2]]
+    const solved = new Set([problems[1].id, problems[2].id])
+    const next = nextUnsolved(list, (id) => solved.has(id), problems[1].id)
+    expect(next?.id).toBe(problems[0].id)
+  })
+
+  it('nextUnsolved returns undefined when all problems in the list are solved', () => {
+    const list = [problems[0], problems[1]]
+    const next = nextUnsolved(list, () => true)
+    expect(next).toBeUndefined()
+  })
+})
+

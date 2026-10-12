@@ -16,7 +16,9 @@ const js = progressKey('scalars-1', 'javascript')
 const py = progressKey('scalars-1', 'python')
 
 describe('progress resets', () => {
-  beforeEach(() => useAppStore.setState({ completed: {}, drafts: {}, codeDrafts: {} }))
+  beforeEach(() =>
+    useAppStore.setState({ completed: {}, drafts: {}, codeDrafts: {}, lastProblemId: null }),
+  )
 
   it('resetProblem clears only that problem and language', () => {
     const { markCompleted, saveDraft, saveCodeDraft, resetProblem } = useAppStore.getState()
@@ -36,19 +38,27 @@ describe('progress resets', () => {
   })
 
   it('resetAllProgress clears every solve and draft but keeps settings', () => {
-    const { markCompleted, saveDraft, saveCodeDraft, setLanguage, resetAllProgress } =
+    const { markCompleted, saveDraft, saveCodeDraft, setLanguage, setLastProblem, resetAllProgress } =
       useAppStore.getState()
     setLanguage('python')
     markCompleted(js)
     saveDraft(py, draft)
     saveCodeDraft(py, 'x = 1')
+    setLastProblem('scalars-1')
 
     resetAllProgress()
 
-    const { completed, drafts, codeDrafts, language } = useAppStore.getState()
+    const { completed, drafts, codeDrafts, language, lastProblemId } = useAppStore.getState()
     expect(completed).toEqual({})
     expect(drafts).toEqual({})
     expect(codeDrafts).toEqual({})
     expect(language).toBe('python')
+    expect(lastProblemId).toBeNull()
+  })
+
+  it('setLastProblem records the most recent problem', () => {
+    const { setLastProblem } = useAppStore.getState()
+    setLastProblem('arrays-2')
+    expect(useAppStore.getState().lastProblemId).toBe('arrays-2')
   })
 })

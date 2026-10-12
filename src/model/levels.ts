@@ -53,10 +53,31 @@ export interface ProblemLocation<P extends Problem = Problem> {
   index: number
 }
 
+export function findLevel(id: string): Level | undefined {
+  return levels.find((level) => level.id === id)
+}
+
 export function findProblem(id: string): ProblemLocation | undefined {
   for (const entry of levels) {
     const index = entry.problems.findIndex((problem) => problem.id === id)
     if (index !== -1) return { problem: entry.problems[index], level: entry, index }
+  }
+  return undefined
+}
+
+export function nextUnsolved(
+  list: Problem[],
+  isSolved: (id: string) => boolean,
+  fromId?: string,
+): Problem | undefined {
+  if (list.length === 0) return undefined
+  const startIndex = fromId ? list.findIndex((problem) => problem.id === fromId) : -1
+  const start = startIndex === -1 ? 0 : startIndex
+  for (let offset = 0; offset < list.length; offset++) {
+    const candidate = list[(start + offset) % list.length]
+    if (!isSolved(candidate.id)) {
+      return candidate
+    }
   }
   return undefined
 }
