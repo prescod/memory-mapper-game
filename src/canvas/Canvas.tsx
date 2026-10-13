@@ -21,12 +21,14 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
   type Dispatch,
   type DragEvent,
   type SetStateAction,
 } from 'react'
 import { activeStrobingSource, idleConnectionState } from './connectMode'
 import { connectReplacing, isValidConnection, removeEdgesFromHandle } from './connections'
+import { duplicateElements } from './duplicate'
 import { FeedbackContext, handleKey, type Feedback } from './FeedbackContext'
 import { LanguageContext } from './LanguageContext'
 import { CompactContext, ReadOnlyContext } from './ReadOnlyContext'
@@ -87,6 +89,45 @@ function TrashIcon() {
   )
 }
 
+function DuplicateIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  )
+}
+
+function MultiSelectIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 7V5a2 2 0 0 1 2-2h2" />
+      <path d="M17 3h2a2 2 0 0 1 2 2v2" />
+      <path d="M21 17v2a2 2 0 0 1-2 2h-2" />
+      <path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+      <polyline points="9 12 11 14 15 10" />
+    </svg>
+  )
+}
+
 function CanvasInner({
   nodes,
   edges,
@@ -118,12 +159,106 @@ function CanvasInner({
     activeStrobingSource(state.connectionClickStartHandle, state.connection),
   )
 
+  const [multiSelectMode, setMultiSelectMode] = useState(false)
+  const touchStartPos = useRef<{ x: number; y: number } | null>(null)
+  const touchTimer = useRef<number | null>(null)
+  const didLongPress = useRef(false)
+
   const cancelConnection = useCallback(() => {
     store.setState({
       connectionClickStartHandle: null,
       connection: { ...idleConnectionState },
     })
   }, [store])
+
+  const triggerLongPress = useCallback(
+    (nodeId: string) => {
+      cancelConnection()
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try {
+          navigator.vibrate(25)
+        } catch {
+          // Ignore unsupported environments
+        }
+      }
+      setMultiSelectMode(true)
+      setNodes((current) =>
+        current.map((n) => (n.id === nodeId ? { ...n, selected: true } : n)),
+      )
+      didLongPress.current = true
+    },
+    [cancelConnection, setNodes],
+  )
+
+  const clearTouchTimer = useCallback(() => {
+    if (touchTimer.current !== null) {
+      window.clearTimeout(touchTimer.current)
+      touchTimer.current = null
+    }
+    touchStartPos.current = null
+  }, [])
+
+  const onCanvasPointerDown = useCallback(
+    (event: React.PointerEvent) => {
+      if (event.pointerType !== 'touch') return
+      const targetNodeEl = (event.target as HTMLElement).closest('.react-flow__node')
+      const nodeId = targetNodeEl?.getAttribute('data-id')
+      if (!nodeId) return
+
+      clearTouchTimer()
+      touchStartPos.current = { x: event.clientX, y: event.clientY }
+      touchTimer.current = window.setTimeout(() => {
+        triggerLongPress(nodeId)
+        touchTimer.current = null
+      }, 400)
+    },
+    [clearTouchTimer, triggerLongPress],
+  )
+
+  const onCanvasPointerMove = useCallback(
+    (event: React.PointerEvent) => {
+      if (!touchStartPos.current) return
+      const dist = Math.hypot(
+        event.clientX - touchStartPos.current.x,
+        event.clientY - touchStartPos.current.y,
+      )
+      if (dist > 10) {
+        clearTouchTimer()
+      }
+    },
+    [clearTouchTimer],
+  )
+
+  const onCanvasPointerUp = useCallback(() => {
+    clearTouchTimer()
+    if (didLongPress.current) {
+      window.setTimeout(() => {
+        didLongPress.current = false
+      }, 50)
+    }
+  }, [clearTouchTimer])
+
+  const onCanvasPointerCancel = useCallback(() => {
+    clearTouchTimer()
+    didLongPress.current = false
+  }, [clearTouchTimer])
+
+  useEffect(() => {
+    return () => {
+      if (touchTimer.current !== null) {
+        window.clearTimeout(touchTimer.current)
+      }
+    }
+  }, [])
+
+  const onNodeContextMenu: NodeMouseHandler<MemFlowNode> = useCallback(
+    (event, node) => {
+      event.preventDefault()
+      if (isReadOnly) return
+      triggerLongPress(node.id)
+    },
+    [isReadOnly, triggerLongPress],
+  )
 
   useEffect(() => {
     if (isReadOnly || !strobingSource) return
@@ -219,6 +354,16 @@ function CanvasInner({
   // React Flow only finishes a tap connection on a handle; tapping anywhere on the target block is easier on a phone.
   const onNodeClick: NodeMouseHandler<MemFlowNode> = useCallback(
     (event, node) => {
+      if (didLongPress.current) {
+        didLongPress.current = false
+        return
+      }
+      if (multiSelectMode) {
+        setNodes((current) =>
+          current.map((n) => (n.id === node.id ? { ...n, selected: !n.selected } : n)),
+        )
+        return
+      }
       const start = store.getState().connectionClickStartHandle
       if (!start) return
       // A tap on a handle is handled by React Flow itself and then bubbles up to the node.
@@ -227,8 +372,94 @@ function CanvasInner({
       if (connection) onConnect(connection)
       cancelTapConnection()
     },
-    [store, nodes, onConnect, cancelTapConnection],
+    [multiSelectMode, store, nodes, onConnect, cancelTapConnection, setNodes],
   )
+
+  const onEdgeClick = useCallback(
+    (_event: React.MouseEvent, edge: MemFlowEdge) => {
+      if (multiSelectMode) {
+        setEdges((current) =>
+          current.map((e) => (e.id === edge.id ? { ...e, selected: !e.selected } : e)),
+        )
+      }
+    },
+    [multiSelectMode, setEdges],
+  )
+
+  const onPaneClick = useCallback(() => {
+    cancelTapConnection()
+    if (!multiSelectMode) {
+      setNodes((current) =>
+        current.some((n) => n.selected) ? current.map((n) => ({ ...n, selected: false })) : current,
+      )
+      setEdges((current) =>
+        current.some((e) => e.selected) ? current.map((e) => ({ ...e, selected: false })) : current,
+      )
+    }
+  }, [cancelTapConnection, multiSelectMode, setNodes, setEdges])
+
+  const selectedNodes = nodes.filter((node) => node.selected)
+  const selectedEdges = edges.filter((edge) => edge.selected)
+  const hasSelection = selectedNodes.length > 0 || selectedEdges.length > 0
+
+  const clearSelection = useCallback(() => {
+    setNodes((current) => current.map((n) => (n.selected ? { ...n, selected: false } : n)))
+    setEdges((current) => current.map((e) => (e.selected ? { ...e, selected: false } : e)))
+    setMultiSelectMode(false)
+  }, [setNodes, setEdges])
+
+  const exitMultiSelect = useCallback(() => {
+    setMultiSelectMode(false)
+  }, [])
+
+  const toggleMultiSelect = useCallback(() => {
+    setMultiSelectMode((active) => {
+      if (!active) {
+        if (!hasSelection) return false
+        cancelConnection()
+        return true
+      }
+      return false
+    })
+  }, [cancelConnection, hasSelection])
+
+  const handleDuplicate = useCallback(() => {
+    if (isReadOnly || pending || !hasSelection) return
+    const result = duplicateElements(nodes, edges)
+    if (result.clonedNodes.length > 0) {
+      setNodes(result.nodes)
+      setEdges(result.edges)
+    }
+  }, [isReadOnly, pending, hasSelection, nodes, edges, setNodes, setEdges])
+
+  useEffect(() => {
+    if (isReadOnly) return
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      const isMod = event.metaKey || event.ctrlKey
+      if (isMod && event.key.toLowerCase() === 'd') {
+        const target = event.target
+        if (
+          target instanceof HTMLElement &&
+          target.closest('input, textarea, select, [contenteditable="true"]')
+        ) {
+          return
+        }
+        event.preventDefault()
+        handleDuplicate()
+        return
+      }
+
+      if (event.key === 'Escape' && multiSelectMode) {
+        event.preventDefault()
+        setMultiSelectMode(false)
+        return
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isReadOnly, handleDuplicate, multiSelectMode])
 
   const displayedNodes = useMemo(
     () =>
@@ -252,10 +483,6 @@ function CanvasInner({
     [edges, feedback, edgeHitWidth],
   )
 
-  const selectedNodes = nodes.filter((node) => node.selected)
-  const selectedEdges = edges.filter((edge) => edge.selected)
-  const hasSelection = selectedNodes.length > 0 || selectedEdges.length > 0
-
   return (
     <FeedbackContext.Provider value={feedback}>
       <LanguageContext.Provider value={language}>
@@ -266,7 +493,14 @@ function CanvasInner({
                 <Toolbar language={language} onAdd={addInView} />
               </div>
             )}
-            <div className={`canvas${compact ? ' compact' : ''}`} ref={wrapper}>
+            <div
+              className={`canvas${compact ? ' compact' : ''}`}
+              ref={wrapper}
+              onPointerDown={isReadOnly ? undefined : onCanvasPointerDown}
+              onPointerMove={isReadOnly ? undefined : onCanvasPointerMove}
+              onPointerUp={isReadOnly ? undefined : onCanvasPointerUp}
+              onPointerCancel={isReadOnly ? undefined : onCanvasPointerCancel}
+            >
               <ReactFlow<MemFlowNode, MemFlowEdge>
                 nodes={displayedNodes}
                 edges={displayedEdges}
@@ -276,7 +510,9 @@ function CanvasInner({
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
                 onNodeClick={isReadOnly ? undefined : onNodeClick}
-                onPaneClick={isReadOnly ? undefined : cancelTapConnection}
+                onEdgeClick={isReadOnly ? undefined : onEdgeClick}
+                onNodeContextMenu={isReadOnly ? undefined : onNodeContextMenu}
+                onPaneClick={isReadOnly ? undefined : onPaneClick}
                 isValidConnection={checkConnection}
                 onDragOver={onDragOver}
                 onDrop={onDrop}
@@ -284,7 +520,7 @@ function CanvasInner({
                 deleteKeyCode={isReadOnly ? null : ['Backspace', 'Delete']}
                 nodesConnectable={!isReadOnly}
                 nodesDraggable={true}
-                elementsSelectable={true}
+                elementsSelectable={!multiSelectMode}
                 panOnDrag={true}
                 zoomOnScroll={!compact}
                 zoomOnPinch={true}
@@ -300,18 +536,42 @@ function CanvasInner({
               <HandleVisualLayer />
               <Panel position="bottom-right">
                 <div className="canvas-actions">
-                  {!isReadOnly && !pending && hasSelection && (
+                  {!isReadOnly && !pending && (hasSelection || multiSelectMode) && (
                     <button
                       type="button"
-                      className="canvas-delete"
-                      aria-label="Delete"
-                      title="Delete selected (Backspace or Delete)"
-                      onClick={() =>
-                        void deleteElements({ nodes: selectedNodes, edges: selectedEdges })
-                      }
+                      className={`canvas-multiselect${multiSelectMode ? ' active' : ''}`}
+                      aria-label="Multi-select mode"
+                      aria-pressed={multiSelectMode}
+                      title={multiSelectMode ? 'Exit multi-select mode' : 'Enter multi-select mode'}
+                      onClick={toggleMultiSelect}
                     >
-                      <TrashIcon />
+                      <MultiSelectIcon />
                     </button>
+                  )}
+                  {!isReadOnly && !pending && hasSelection && (
+                    <>
+                      <button
+                        type="button"
+                        className="canvas-duplicate"
+                        aria-label="Duplicate"
+                        title="Duplicate selected (Cmd+D or Ctrl+D)"
+                        onClick={handleDuplicate}
+                      >
+                        <DuplicateIcon />
+                      </button>
+                      <button
+                        type="button"
+                        className="canvas-delete"
+                        aria-label="Delete"
+                        title="Delete selected (Backspace or Delete)"
+                        onClick={() => {
+                          setMultiSelectMode(false)
+                          void deleteElements({ nodes: selectedNodes, edges: selectedEdges })
+                        }}
+                      >
+                        <TrashIcon />
+                      </button>
+                    </>
                   )}
                   <Controls showInteractive={false} />
                 </div>
@@ -322,6 +582,23 @@ function CanvasInner({
                     <span>Tap what this points to (Delete clears the arrow)</span>
                     <button type="button" className="text-button" onClick={cancelTapConnection}>
                       Cancel
+                    </button>
+                  </div>
+                </Panel>
+              )}
+              {!isReadOnly && !pending && multiSelectMode && (
+                <Panel position="bottom-center">
+                  <div className="connect-banner multi-select-banner" role="status">
+                    <span>
+                      Multi-select mode ({selectedNodes.length + selectedEdges.length} selected)
+                    </span>
+                    {hasSelection && (
+                      <button type="button" className="text-button" onClick={clearSelection}>
+                        Clear
+                      </button>
+                    )}
+                    <button type="button" className="text-button" onClick={exitMultiSelect}>
+                      Done
                     </button>
                   </div>
                 </Panel>

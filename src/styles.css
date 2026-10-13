@@ -1026,7 +1026,9 @@ textarea {
   margin: 0;
 }
 
-.canvas-delete {
+.canvas-delete,
+.canvas-duplicate,
+.canvas-multiselect {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1037,8 +1039,12 @@ textarea {
   border: 1px solid var(--border);
   border-radius: 4px;
   background: var(--panel);
-  color: var(--error);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+
+.canvas-delete {
+  color: var(--error);
 }
 
 .canvas-delete:hover {
@@ -1046,10 +1052,33 @@ textarea {
   border-color: var(--error);
 }
 
-.canvas-delete svg {
+.canvas-duplicate,
+.canvas-multiselect {
+  color: var(--text);
+}
+
+.canvas-duplicate:hover,
+.canvas-multiselect:hover {
+  background: var(--bg);
+  border-color: var(--accent);
+}
+
+.canvas-multiselect.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.canvas-delete svg,
+.canvas-duplicate svg,
+.canvas-multiselect svg {
   width: 14px;
   height: 14px;
   display: block;
+}
+
+.multi-select-banner {
+  gap: 8px;
 }
 
 .connect-banner {
@@ -1495,13 +1524,17 @@ svg.react-flow__connectionline {
     height: 36px;
   }
 
-  .canvas-delete {
+  .canvas-delete,
+  .canvas-duplicate,
+  .canvas-multiselect {
     width: 36px;
     height: 36px;
     min-height: 36px;
   }
 
-  .canvas-delete svg {
+  .canvas-delete svg,
+  .canvas-duplicate svg,
+  .canvas-multiselect svg {
     width: 18px;
     height: 18px;
   }
