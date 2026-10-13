@@ -40,7 +40,7 @@ export function ScalarNode({ id, data, selected }: NodeProps<ScalarFlowNode>) {
           value={data.text}
           placeholder={data.kind === 'auto' ? 'value' : '0'}
           inputMode={data.kind === 'number' ? 'decimal' : undefined}
-          aria-label="Scalar value"
+          aria-label="Primitive value"
           spellCheck={false}
           autoCapitalize="off"
           autoCorrect="off"

@@ -10,7 +10,7 @@ function palette(language: Language): { type: MemNodeType; label: string }[] {
   const names = CONTAINER_NAMES[language]
   return [
     { type: 'variable', label: 'Variable' },
-    { type: 'scalar', label: 'Scalar' },
+    { type: 'scalar', label: 'Primitive' },
     { type: 'array', label: capitalize(names.array) },
     { type: 'object', label: capitalize(names.object) },
     { type: 'pet', label: 'Pet' },

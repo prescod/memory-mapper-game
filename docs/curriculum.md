@@ -20,7 +20,7 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 
 ---
 
-## Level 1: Variables and Primitives / Variables and Scalars (`scalars`)
+## Level 1: Variables and Primitives (`scalars`)
 
 **Big idea.** A variable holds a value as of the moment it was assigned. It is not a formula and not a link to another variable.
 

@@ -12,18 +12,18 @@ import {
 
 export const scalarsLevel: UnnumberedLevel = level(
   'scalars',
-  L('Variables and Primitives', 'Variables and Scalars'),
+  L('Variables and Primitives', 'Variables and Primitives'),
   L(
     'A variable refers to a value at the moment you assign it, not a live formula or spreadsheet cell. Reassigning moves its arrow to a new value. Assigning from another variable gives it the value the first one refers to at that moment. Reassigning one later repoints only that variable, leaving the other unchanged.',
     'A variable refers to a value at the moment you assign it, not a live formula or spreadsheet cell. Reassigning moves its arrow to a new value. Assigning from another variable gives it the value the first one refers to at that moment. Reassigning one later repoints only that variable, leaving the other unchanged.',
   ),
   [
     draw({
-      title: 'One variable',
+      title: 'One variable. One primitive',
       js: 'let x = 10;',
       py: 'x = 10',
       expected: graph({ x: 10 }),
-      hint: 'Create a variable named x and a scalar number node with value 10, then connect x to 10.',
+      hint: 'Create a variable named x and a primitive number node with value 10, then connect x to 10.',
       hints: [
         {
           variable: 'x',

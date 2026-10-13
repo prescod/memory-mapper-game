@@ -45,7 +45,7 @@ export function verify(
   const errors: VerifyError[] = []
   const report = (message: string, origin: Origin = {}) => errors.push({ message, ...origin })
   const name = (type: MemNode['type']) =>
-    type === 'scalar' ? 'scalar' : type === 'instance' ? 'Pet' : CONTAINER_NAMES[language][type]
+    type === 'scalar' ? 'primitive' : type === 'instance' ? 'Pet' : CONTAINER_NAMES[language][type]
 
   const isVariableTarget = (target: NodeId | null): boolean => {
     if (target === null) return false

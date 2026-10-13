@@ -198,7 +198,7 @@ export const identityLevel: UnnumberedLevel = level(
       py: lines('s = "hi"', 't = s'),
       expected: graph({ s: 'hi', t: 'hi' }),
       hint:
-        'Assigning t from s gives t the value "hi". Strings cannot change in place, so one shared string scalar node or two separate nodes are both correct.',
+        'Assigning t from s gives t the value "hi". Strings cannot change in place, so one shared string primitive node or two separate nodes are both correct.',
       hints: [
         {
           variable: 't',

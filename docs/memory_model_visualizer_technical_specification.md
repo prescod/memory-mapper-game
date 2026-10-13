@@ -23,7 +23,7 @@ The user will interact with the following "building blocks" (Nodes) and "pointer
 2.  **Language mode:** Every puzzle exists in JavaScript, TypeScript, and Python (different syntax, same expected memory picture). A language toggle switches the shown code, and progress is tracked separately per language. TypeScript falls back to JavaScript when unannotated, stripping types at runtime.
 3.  **The Challenge:**
     *   The left sidebar displays a code snippet (e.g., `let a = [1]; let b = a;`).
-    *   A toolbar offers draggable nodes: [Add Variable], [Add Scalar], [Add Array], [Add Object].
+    *   A toolbar offers draggable nodes: [Add Variable], [Add Primitive], [Add Array], [Add Object].
     *   An on-demand Help hint is available on every puzzle. Hints are neutral where possible and language-specific where spelling differs (`true`/`True`, `null`/`None`, `let` declare vs assignment, `concat` vs `+`).
 4.  **Assembly (The Canvas):**
     *   The user drags nodes onto the main canvas.
@@ -37,7 +37,7 @@ The user will interact with the following "building blocks" (Nodes) and "pointer
 
 ## 4. Example Levels / Curriculum
 
-**Level 1: Variables and Scalars (JavaScript: Variables and Primitives)**
+**Level 1: Variables and Primitives**
 ```javascript
 let width = 3;
 let height = 4;
