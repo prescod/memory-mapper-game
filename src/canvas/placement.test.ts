@@ -57,6 +57,14 @@ describe('defaultPositionForType', () => {
 })
 
 describe('primitive placement', () => {
+  it('keeps a band in one row past the right edge of a narrow view', () => {
+    const narrow = { x: 0, y: 0, width: 200, height: 500 }
+    const first = defaultPositionForType('scalar', [], narrow)
+    const second = defaultPositionForType('scalar', [node('scalar', first.x, first.y)], narrow)
+    expect(second.y).toBe(first.y)
+    expect(second.x).toBeGreaterThan(first.x)
+  })
+
   it('leaves room for the wide "AUTO: NUMBER" kind dropdown', () => {
     const first = defaultPositionForType('scalar', [], region)
     const second = defaultPositionForType('scalar', [node('scalar', first.x, first.y)], region)

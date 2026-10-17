@@ -60,45 +60,34 @@ const overlaps = (position: XYPosition, type: MemNodeType | undefined, box: Box)
   )
 }
 
-function bandOrigin(band: Band, region: PlacementRegion, rowHeight: number): { y: number; rowStride: number } {
+function bandTop(band: Band, region: PlacementRegion): number {
   const { y, height } = region
   switch (band) {
     case 'top':
-      return { y: y + 8, rowStride: rowHeight + GAP }
+      return y + 8
     case 'middle':
-      return { y: y + height * 0.36, rowStride: rowHeight + GAP }
+      return y + height * 0.36
     case 'bottom':
-      return { y: y + height * 0.68, rowStride: rowHeight + GAP }
+      return y + height * 0.68
   }
 }
 
 /**
  * Where a new block of `type` should appear: variables along the top,
- * scalars along the bottom, arrays and objects in the middle, each row
- * filling left to right before wrapping.
+ * scalars along the bottom, arrays and objects in the middle, each band
+ * a single row that keeps growing to the right.
  */
 export function defaultPositionForType(
   type: MemNodeType,
   nodes: MemFlowNode[],
   region: PlacementRegion,
 ): XYPosition {
-  const band = bandForType(type)
   const slot = slotFor(type)
-  const { y: bandY, rowStride } = bandOrigin(band, region, slot.height)
-  const usableWidth = Math.max(slot.width, region.width - 24)
-  const columns = Math.max(1, Math.floor(usableWidth / (slot.width + GAP)))
-
-  for (let row = 0; row < 12; row++) {
-    for (let col = 0; col < columns; col++) {
-      const position = {
-        x: region.x + 12 + col * (slot.width + GAP),
-        y: bandY + row * rowStride,
-      }
-      if (!nodes.some((node) => overlaps(position, type, node))) return position
-    }
+  const y = bandTop(bandForType(type), region)
+  for (let col = 0; ; col++) {
+    const position = { x: region.x + 12 + col * (slot.width + GAP), y }
+    if (!nodes.some((node) => overlaps(position, type, node))) return position
   }
-
-  return { x: region.x + 12, y: bandY }
 }
 
 /**
