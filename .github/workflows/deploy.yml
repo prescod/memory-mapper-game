@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - beta
   workflow_dispatch:
 
 permissions:
@@ -19,8 +20,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      # The site serves main at the root and the beta branch under /beta/, so every deploy builds both.
+      - name: Checkout main
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -36,6 +40,29 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Check for a beta branch
+        id: beta
+        run: |
+          if git ls-remote --exit-code --heads origin beta > /dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout beta
+        if: steps.beta.outputs.exists == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: beta
+          path: beta-src
+
+      - name: Build beta into /beta/
+        if: steps.beta.outputs.exists == 'true'
+        working-directory: beta-src
+        run: |
+          npm ci
+          npm test
+          npm run build:beta
+          cp -r dist ../dist/beta
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

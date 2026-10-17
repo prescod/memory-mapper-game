@@ -23,7 +23,8 @@ export interface AppState {
   resetAllProgress: () => void
 }
 
-export const STORAGE_KEY = 'memory-model-visualizer'
+// The beta site shares an origin with the main one, so it keeps its own progress.
+export const STORAGE_KEY = import.meta.env.MODE === 'beta' ? 'memory-model-visualizer-beta' : 'memory-model-visualizer'
 const STORAGE_VERSION = 10
 
 export const progressKey = (problemId: string, language: Language) => `${problemId}:${language}`
