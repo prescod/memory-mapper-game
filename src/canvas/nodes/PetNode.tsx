@@ -25,21 +25,24 @@ export function PetNode({ id, data, selected }: NodeProps<PetFlowNode>) {
     >
       <Handle id={TARGET_HANDLE} type="target" position={Position.Top} />
       <NodeHeader>Pet</NodeHeader>
-      {readOnly ? (
-        <span className="scalar-fixed">
-          {data.label === ''
-            ? ''
-            : formatScalar({ kind: 'string', value: stripSurroundingQuotes(data.label) }, language)}
-        </span>
-      ) : (
-        <QuotedLiteralInput
-          value={data.label}
-          onChange={(label) => updateNodeData(id, { label })}
-          language={language}
-          ariaLabel="Pet name"
-          placeholder={`${q}name${q}`}
-        />
-      )}
+      <div className="pet-field">
+        <span className="pet-field-label">name =</span>
+        {readOnly ? (
+          <span className="scalar-fixed">
+            {data.label === ''
+              ? ''
+              : formatScalar({ kind: 'string', value: stripSurroundingQuotes(data.label) }, language)}
+          </span>
+        ) : (
+          <QuotedLiteralInput
+            value={data.label}
+            onChange={(label) => updateNodeData(id, { label })}
+            language={language}
+            ariaLabel="Pet name"
+            placeholder={`${q}name${q}`}
+          />
+        )}
+      </div>
     </div>
   )
 }

@@ -1178,6 +1178,17 @@ textarea {
   border-radius: 4px;
 }
 
+.pet-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pet-field-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: nowrap;
+}
+
 .pet-node.read-only {
   padding-top: 8px;
 }
