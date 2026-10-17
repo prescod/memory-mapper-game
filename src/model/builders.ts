@@ -18,7 +18,7 @@ export type ContainerSpec =
 export const ref = (id: string): Ref => ({ ref: id })
 export const list = (...items: Value[]): ContainerSpec => ({ kind: 'array', items })
 export const dict = (entries: Record<string, Value>): ContainerSpec => ({ kind: 'object', entries })
-/** An opaque `Pet` instance named `label` (e.g. a pet's name), for the identity level. */
+/** A `Pet` instance whose `name` field is `label`, for the identity level. */
 export const pet = (label: string): ContainerSpec => ({ kind: 'pet', label })
 export const scalar = (value: number | string | boolean | null): ContainerSpec => ({ kind: 'scalar', value })
 

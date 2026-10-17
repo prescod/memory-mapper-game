@@ -20,7 +20,7 @@ interface Origin {
 }
 
 export const CANNOT_REFER_TO_VARIABLES =
-  'Variables can NEVER refer to variables. Variables can only refer to values.'
+  'There is no way to refer to variables. Variables, keys and slots can only refer to values.'
 
 /**
  * Compares the learner's graph to the expected one by walking outward from the

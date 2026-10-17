@@ -386,25 +386,26 @@ describe('shortcuts that match the picture but miss the point', () => {
   const KEEP = (name: string) => new RegExp(`Change what "${name}" already refers to`)
 
   const shortcuts: [id: string, js: string, py: string, complaint: RegExp][] = [
-    ['identity-9', 'let full = "Ada Lovelace";', 'full = "Ada Lovelace"', START_CHANGED],
-    ['identity-10', 'let b = Pet("Duke");', 'b = Pet("Duke")', /share one Pet/],
+    ['identity-9', 'let y = Pet("Duke");', 'y = Pet("Duke")', /share one Pet/],
+    ['identity-10', 'x = Pet("Bear");\ny = x;', 'x = Pet("Bear")\ny = x', KEEP('x')],
+    ['identity-10', 'y = Pet("Bear");\nx = y;', 'y = Pet("Bear")\nx = y', KEEP('x')],
     [
       'identity-12',
-      'a = Pet("Rocky");\nb = Pet("Pepper");\nlet c = b;\nlet d = a;\nlet e = c;',
-      'a = Pet("Rocky")\nb = Pet("Pepper")\nc = b\nd = a\ne = c',
+      'x = Pet("Rocky");\ny = Pet("Pepper");\nlet z = y;\nlet d = x;\nlet e = z;',
+      'x = Pet("Rocky")\ny = Pet("Pepper")\nz = y\nd = x\ne = z',
       START_CHANGED,
     ],
 
-    ['mutating-arrays-6', 'a = [3, 6, 9];', 'a = [3, 6, 9]', KEEP('a')],
-    ['mutating-arrays-7', 'a = [1, 5, 3];', 'a = [1, 5, 3]', KEEP('a')],
-    ['mutating-arrays-8', 'a = [];\nb = a;', 'a = []\nb = a', KEEP('a')],
-    ['mutating-arrays-9', 'a = ["x", "y"];\nb = a;', 'a = ["x", "y"]\nb = a', KEEP('a')],
-    ['mutating-arrays-10', 'a = [1];\nb = [1, 2];', 'a = [1]\nb = [1, 2]', KEEP('a')],
-    ['mutating-arrays-11', 'a = [1, 2];\nb = [];\nc = a;', 'a = [1, 2]\nb = []\nc = a', KEEP('a')],
-    ['mutating-arrays-13', 'a = [7, 0, 8];', 'a = [7, 0, 8]', KEEP('a')],
+    ['mutating-arrays-6', 'x = [3, 6, 9];', 'x = [3, 6, 9]', KEEP('x')],
+    ['mutating-arrays-7', 'x = [1, 5, 3];', 'x = [1, 5, 3]', KEEP('x')],
+    ['mutating-arrays-8', 'x = [];\ny = x;', 'x = []\ny = x', KEEP('x')],
+    ['mutating-arrays-9', 'x = ["cat", "dog"];\ny = x;', 'x = ["cat", "dog"]\ny = x', KEEP('x')],
+    ['mutating-arrays-10', 'x = [1];\ny = [1, 2];', 'x = [1]\ny = [1, 2]', KEEP('x')],
+    ['mutating-arrays-11', 'x = [1, 2];\ny = [];\nz = x;', 'x = [1, 2]\ny = []\nz = x', KEEP('x')],
+    ['mutating-arrays-13', 'x = [7, 0, 8];', 'x = [7, 0, 8]', KEEP('x')],
 
     ['mutating-objects-6', 'p = { width: 4, height: 2 };', 'p = {"width": 4, "height": 2}', KEEP('p')],
-    ['mutating-objects-7', 'a = { n: 1, done: true };\nb = a;', 'a = {"n": 1, "done": True}\nb = a', KEEP('a')],
+    ['mutating-objects-7', 'x = { n: 1, done: true };\ny = x;', 'x = {"n": 1, "done": True}\ny = x', KEEP('x')],
     ['mutating-objects-8', 'p = { renamed: 1 };', 'p = {"renamed": 1}', KEEP('p')],
     ['mutating-objects-9', 'p = {};\nq = p;', 'p = {}\nq = p', KEEP('p')],
     [
@@ -416,58 +417,53 @@ describe('shortcuts that match the picture but miss the point', () => {
     ['mutating-objects-12', 'p = { a: 2, b: 1 };', 'p = {"a": 2, "b": 1}', KEEP('p')],
     [
       'mutating-objects-15',
-      'b = { score: 0, done: true };\na = { score: 5 };',
-      'b = {"score": 0, "done": True}\na = {"score": 5}',
-      /"b" afterward should be the same container as "a" at the start/,
+      'y = { score: 0, done: true };\nx = { score: 5 };',
+      'y = {"score": 0, "done": True}\nx = {"score": 5}',
+      /"y" afterward should be the same container as "x" at the start/,
     ],
 
     ['copies-6', 'let q = { n: 1, m: 2 };', 'q = {"n": 1, "m": 2}', /by copying "p"/],
-    ['copies-7', 'let b = [1, 2, 3];', 'b = [1, 2, 3]', /by copying "a"/],
+    ['copies-7', 'let y = [1, 2, 3];', 'y = [1, 2, 3]', /by copying "x"/],
     [
       'copies-8',
-      'let q = { tags: p.tags };\nq.tags.push("y");',
-      'q = {"tags": p["tags"]}\nq["tags"].append("y")',
+      'let q = { tags: p.tags };\nq.tags.push("dog");',
+      'q = {"tags": p["tags"]}\nq["tags"].append("dog")',
       /by copying "p"/,
     ],
     [
       'copies-10',
-      'let b = [[1], [2]];',
-      'b = [[1], [2]]',
-      /breaks the special constraint\. If another programmer changes the code so that a starts as \[\[3\], \[4\]\]/,
+      'let y = [[1], [2]];',
+      'y = [[1], [2]]',
+      /breaks the special constraint\. If another programmer changes the code so that x starts as \[\[3\], \[4\]\]/,
     ],
     [
       'copies-11',
-      'let q = { tags: p.tags, extra: true };\nq.tags.push("b");',
-      'q = {"tags": p["tags"], "extra": True}\nq["tags"].append("b")',
+      'let q = { tags: p.tags, extra: true };\nq.tags.push("dog");',
+      'q = {"tags": p["tags"], "extra": True}\nq["tags"].append("dog")',
       /by copying "p"/,
     ],
-    ['copies-14', 'let b = [a[0], a[1], [3]];', 'b = [a[0], a[1], [3]]', /by copying "a"/],
+    ['copies-14', 'let y = [x[0], x[1], [3]];', 'y = [x[0], x[1], [3]]', /by copying "x"/],
 
+    ['rebinding-6', 'let full = "Ada Lovelace";', 'full = "Ada Lovelace"', START_CHANGED],
     [
-      'rebinding-6',
+      'rebinding-7',
       'let lo = "hi";\nlet up = "HI";',
       'lo = "hi"\nup = "HI"',
       /by calling s\.(toLowerCase|lower)\(\)/,
     ],
-    ['rebinding-8', 'b = [1, 2, 3, 4];', 'b = [1, 2, 3, 4]', /Build "b" with "b(\.concat\(\[\.\.\.\]\)| \+ \[\.\.\.\])"/],
-    ['rebinding-9', 'a = [9];\nb = [1, 2];', 'a = [9]\nb = [1, 2]', /"b" afterward should be the same container as "a" at the start/],
-    [
-      'rebinding-10',
-      'name = "ADA";',
-      'name = "ADA"',
-      /by calling name\.(toUpperCase|upper)\(\)/,
-    ],
+    ['rebinding-8', 'y = [1, 2, 3, 4];', 'y = [1, 2, 3, 4]', /Build "y" with "y(\.concat\(\[\.\.\.\]\)| \+ \[\.\.\.\])"/],
+    ['rebinding-9', 'x = [9];\ny = [1, 2];', 'x = [9]\ny = [1, 2]', /"y" afterward should be the same container as "x" at the start/],
     [
       'rebinding-15',
-      'a.push(5);\nb = [4, 5, 6];',
-      'a.append(5)\nb = [4, 5, 6]',
-      /Build "b" with "b(\.concat\(\[\.\.\.\]\)| \+ \[\.\.\.\])"/,
+      'x.push(5);\ny = [4, 5, 6];',
+      'x.append(5)\ny = [4, 5, 6]',
+      /Build "y" with "y(\.concat\(\[\.\.\.\]\)| \+ \[\.\.\.\])"/,
     ],
     [
       'functions-6',
-      'grow(a);\na.pop();\nb.push(0);',
-      'grow(a)\na.pop()\nb.append(0)',
-      /Call grow\(b\) once/,
+      'grow(x);\nx.pop();\ny.push(0);',
+      'grow(x)\nx.pop()\ny.append(0)',
+      /Call grow\(y\) once/,
     ],
     [
       'functions-8',
@@ -501,8 +497,8 @@ describe('shortcuts that match the picture but miss the point', () => {
     ],
     [
       'functions-13',
-      'function tag(o) {\n  a.tagged = true;\n}',
-      'def tag(o):\n    a["tagged"] = True',
+      'function tag(o) {\n  x.tagged = true;\n}',
+      'def tag(o):\n    x["tagged"] = True',
       /breaks the special constraint/,
     ],
   ]
@@ -521,9 +517,9 @@ describe('shortcuts that match the picture but miss the point', () => {
 
 describe('copies-14 alternatives', () => {
   const alternatives: [code: string, language: Language][] = [
-    ['let b = [...a, [3]];', 'javascript'],
-    ['let b = a.concat([[3]]);', 'javascript'],
-    ['b = a + [[3]]', 'python'],
+    ['let y = [...x, [3]];', 'javascript'],
+    ['let y = x.concat([[3]]);', 'javascript'],
+    ['y = x + [[3]]', 'python'],
   ]
 
   it.each(alternatives)('accepts %s in %s', async (code, language) => {
@@ -549,12 +545,27 @@ describe('diagnostic hints', () => {
     expect(result.errors[0].message).toMatch(/height was changed to 5 before area was calculated/)
   })
 
-  it('explains separate constructors when a and b are merged onto one Pet on Same label, separate objects', () => {
-    const problem = findProblem('identity-5')!.problem
-    const mistaken = graph({ a: ref('shared'), b: ref('shared') }, { shared: pet('Milo') })
+  it('explains separate constructors when x and y are merged onto one Pet on Same label, separate objects', () => {
+    const problem = findProblem('identity-3')!.problem
+    const mistaken = graph({ x: ref('shared'), y: ref('shared') }, { shared: pet('Milo') })
     const result = verify(mistaken, problem.expected, problem.hints)
     expect(result.ok).toBe(false)
     expect(result.errors[0].message).toMatch(/separate Pet calls/)
+  })
+
+  it.each([
+    ['identity-4', graph({ x: ref('x'), y: ref('y') }, { x: pet('Lucy'), y: pet('Lola') }), /only one Pet to rename/],
+    ['identity-5', graph({ x: ref('shared'), y: ref('shared') }, { shared: pet('Honey') }), /separate Pet calls/],
+    [
+      'identity-15',
+      graph({ x: ref('penny'), y: ref('penny'), z: ref('penny') }, { penny: pet('Jack') }),
+      /y still refers to that first Pet/,
+    ],
+  ] as const)('explains the Pet mix-up behind a wrong rename on %s', (id, mistaken, explanation) => {
+    const problem = findProblem(id)!.problem
+    const result = verify(mistaken, problem.expected, problem.hints)
+    expect(result.ok).toBe(false)
+    expect(result.errors.map((error) => error.message).join('\n')).toMatch(explanation)
   })
 
   it.each([
@@ -608,10 +619,10 @@ describe('diagnostic hints', () => {
   it.each([
     [0, /box = \[\] moves only the parameter box/],
     [1, /box\.(push|append)\(1\) changes/],
-  ])('explains a drawing of a with %i items on Changing a parameter, then reassigning it', (count, explanation) => {
+  ])('explains a drawing of x with %i items on Changing a parameter, then reassigning it', (count, explanation) => {
     const problem = findProblem('functions-2')!.problem
     const slots = [0, 9].slice(0, count)
-    const mistaken = graph({ a: ref('a') }, { a: list(...slots) })
+    const mistaken = graph({ x: ref('x') }, { x: list(...slots) })
     const result = verify(mistaken, problem.expected, problem.hints, 'javascript')
     expect(result.ok).toBe(false)
     expect(result.errors[0].message).toMatch(explanation)
@@ -619,8 +630,8 @@ describe('diagnostic hints', () => {
 
   it('names the Python function when a call rule is broken', async () => {
     const problem = writeProblems.find((candidate) => candidate.id === 'functions-6')!
-    const verdict = await grade(problem, 'python', 'b.append(0)')
-    expect(verdict.errors.map((error) => error.message)).toEqual(['Call grow(b) once.'])
+    const verdict = await grade(problem, 'python', 'y.append(0)')
+    expect(verdict.errors.map((error) => error.message)).toEqual(['Call grow(y) once.'])
   })
 })
 
@@ -645,8 +656,10 @@ describe('debrief diagrams', () => {
 
 describe('debrief alternate answers', () => {
   const alternates: [id: string, code: string, language: Language][] = [
-    ['scalars-8', '[a, b] = [b, a];', 'javascript'],
-    ['scalars-8', 'a, b = b, a', 'python'],
+    ['scalars-8', '[x, y] = [y, x];', 'javascript'],
+    ['identity-10', 'y.name = "Bear";', 'javascript'],
+    ['identity-10', 'y.name = "Bear"', 'python'],
+    ['scalars-8', 'x, y = y, x', 'python'],
     ['functions-10', 'function finish(tasks, finished) {\n  finished.push(tasks.pop());\n}', 'javascript'],
     ['functions-10', 'def finish(tasks, finished):\n    finished.append(tasks.pop())', 'python'],
     ['functions-10', 'def finish(tasks, finished):\n    finished.append(tasks[0])\n    tasks.clear()', 'python'],
@@ -735,9 +748,9 @@ describe('special constraints', () => {
   const broken: [id: string, js: string, py: string, complaint: RegExp][] = [
     [
       'scalars-6',
-      'let b = 8;',
-      'b = 8',
-      /special constraint\. If another programmer changes the code so that a starts at 3, b should become 3, but your code makes it 8\./,
+      'let y = 8;',
+      'y = 8',
+      /special constraint\. If another programmer changes the code so that x starts at 3, y should become 3, but your code makes it 8\./,
     ],
     [
       'scalars-7',
@@ -747,15 +760,15 @@ describe('special constraints', () => {
     ],
     [
       'scalars-8',
-      'a = 2;\nb = 1;',
-      'a = 2\nb = 1',
-      /special constraint\. .*a should become 9, but your code makes it 2, and b should become 5, but your code makes it 1\./,
+      'x = 2;\ny = 1;',
+      'x = 2\ny = 1',
+      /special constraint\. .*x should become 9, but your code makes it 2, and y should become 5, but your code makes it 1\./,
     ],
     [
       'copies-10',
-      'let b = [[1], [2]];',
-      'b = [[1], [2]]',
-      /special constraint\. If another programmer changes the code so that a starts as \[\[3\], \[4\]\], your code no longer builds the right result\./,
+      'let y = [[1], [2]];',
+      'y = [[1], [2]]',
+      /special constraint\. If another programmer changes the code so that x starts as \[\[3\], \[4\]\], your code no longer builds the right result\./,
     ],
   ]
 
@@ -793,7 +806,7 @@ describe('debrief rejected answers', () => {
 
 describe('TypeScript overrides', () => {
   it('rejects a ts override identical to js', () => {
-    expect(() => perLanguage({ js: 'let a = 1;', py: 'a = 1', ts: 'let a = 1;' })).toThrow(
+    expect(() => perLanguage({ js: 'let x = 1;', py: 'x = 1', ts: 'let x = 1;' })).toThrow(
       /identical to JavaScript/,
     )
   })

@@ -44,8 +44,8 @@ export interface ObjectMem {
 }
 
 /**
- * An opaque instance of a built-in class (`Pet` in the identity level).
- * Learners can tell instances apart by `label` but never see inside: no
+ * An instance of a built-in class (`Pet` in the identity level). `label` is
+ * the Pet's one field, its `name`, which code can change in place; no other
  * entries, slots, or attributes are shown or compared.
  */
 export interface InstanceMem {
@@ -135,6 +135,11 @@ export interface DrawProblem {
   expected: MemoryGraph
   hints?: DiagnosticHint[]
   hint?: Hint
+  /**
+   * A note shown with the problem from the start (not on request) for a fact
+   * the learner could not reasonably guess, such as that extra variables are allowed.
+   */
+  tip?: Hint
   about?: Hint
   debrief?: DebriefBlock[]
   /**
@@ -197,6 +202,11 @@ export interface WriteProblem {
   constraints?: Constraint[]
   hints?: DiagnosticHint[]
   hint?: Hint
+  /**
+   * A note shown with the problem from the start (not on request) for a fact
+   * the learner could not reasonably guess, such as that extra variables are allowed.
+   */
+  tip?: Hint
   about?: Hint
   debrief?: DebriefBlock[]
   /** See `DrawProblem.opaquePrelude`. */

@@ -81,6 +81,8 @@ export interface DrawSpec {
   expected: MemoryGraph
   hints?: SpecDiagnosticHint[]
   hint?: SpecHint
+  /** See `DrawProblem.tip`. */
+  tip?: SpecHint
   about?: SpecHint
   debrief?: SpecDebriefBlock[]
   opaquePrelude?: boolean
@@ -104,6 +106,8 @@ export interface WriteSpec {
   constraints?: ConstraintSpec[]
   hints?: SpecDiagnosticHint[]
   hint?: SpecHint
+  /** See `DrawProblem.tip`. */
+  tip?: SpecHint
   about?: SpecHint
   debrief?: SpecDebriefBlock[]
   opaquePrelude?: boolean
@@ -152,6 +156,7 @@ export const write = (spec: Omit<WriteSpec, 'kind'>): WriteSpec => ({ kind: 'wri
 export function toProblem(spec: Spec, id: string, challenge: boolean): Problem {
   const hints = spec.hints?.map((entry) => ({ ...entry, message: localize(entry.message) }))
   const hint = spec.hint ? localize(spec.hint) : undefined
+  const tip = spec.tip ? localize(spec.tip) : undefined
   const about = spec.about ? localize(spec.about) : undefined
   const debrief = spec.debrief?.map(toDebriefBlock)
 
@@ -165,6 +170,7 @@ export function toProblem(spec: Spec, id: string, challenge: boolean): Problem {
       expected: spec.expected,
       hints,
       hint,
+      ...(tip !== undefined && { tip }),
       about,
       debrief,
       ...(spec.opaquePrelude !== undefined && { opaquePrelude: spec.opaquePrelude }),
@@ -204,6 +210,7 @@ export function toProblem(spec: Spec, id: string, challenge: boolean): Problem {
     }),
     hints,
     hint,
+    ...(tip !== undefined && { tip }),
     about,
     debrief,
     ...(spec.opaquePrelude !== undefined && { opaquePrelude: spec.opaquePrelude }),

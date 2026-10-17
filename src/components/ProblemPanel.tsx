@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { feedbackUrl } from '../feedback'
 import { textIn } from '../model/languages'
-import { curriculumProse, problemAbout } from '../model/levels'
+import { curriculumProse, problemAbout, problemTip } from '../model/levels'
 import { CurriculumHtml } from './CurriculumHtml'
 import type { Language, Level, Problem } from '../model/types'
 import { useMediaQuery } from '../useMediaQuery'
@@ -60,6 +60,15 @@ export function ProblemPanel({
               </li>
             ))}
           </ul>
+        </aside>
+      )}
+      {problemTip(problem, language) && (
+        <aside className="problem-tip">
+          <h3 className="problem-tip-heading">Good to know</h3>
+          <CurriculumHtml
+            block
+            html={curriculumProse(problemTip(problem, language) as string, language, problem)}
+          />
         </aside>
       )}
       <details

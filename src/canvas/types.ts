@@ -10,7 +10,7 @@ export type VariableData = { name: string }
 export type ScalarData = { kind: ScalarKind | 'auto'; text: string }
 export type ArrayData = { slots: { id: string }[] }
 export type ObjectData = { entries: { id: string; key: string }[] }
-/** An opaque `Pet`: a label with no slots or entries to edit. */
+/** A `Pet`: its name is the only field, with no slots or entries to edit. */
 export type PetData = { label: string }
 
 export type VariableFlowNode = Node<VariableData, 'variable'>

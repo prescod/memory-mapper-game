@@ -13,19 +13,19 @@ export const copiesLevel: UnnumberedLevel = level(
   [
     draw({
       title: 'A copy of a list',
-      js: lines('let a = [1, 2];', 'let b = [...a];'),
-      py: lines('a = [1, 2]', 'b = list(a)'),
-      expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1, 2), b: list(1, 2) }),
+      js: lines('let x = [1, 2];', 'let y = [...x];'),
+      py: lines('x = [1, 2]', 'y = list(x)'),
+      expected: graph({ x: ref('x'), y: ref('y') }, { x: list(1, 2), y: list(1, 2) }),
       teaches: ['copy.array'],
       hint: {
-        js: '[...a] makes a new array holding the same values as a, so a and b point to different arrays.',
-        py: 'list(a) makes a new list holding the same values as a, so a and b point to different lists.',
+        js: '[...x] makes a new array holding the same values as x, so x and y point to different arrays.',
+        py: 'list(x) makes a new list holding the same values as x, so x and y point to different lists.',
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
-          message: 'b must point to its own container: copying makes a new container rather than an alias for a.',
+          message: 'y must point to its own container: copying makes a new container rather than an alias for x.',
         },
       ],
       about: {
@@ -35,12 +35,12 @@ export const copiesLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>let b = [...a];</code> creates a <strong>new array</strong> in memory and fills its slots with the values from <code>a</code>. <code>a</code> and <code>b</code> refer to two separate arrays.</p>',
-            py: '<p><code>b = list(a)</code> creates a <strong>new list</strong> in memory and fills its slots with the values from <code>a</code>. <code>a</code> and <code>b</code> refer to two separate lists.</p>',
+            js: '<p><code>let y = [...x];</code> creates a <strong>new array</strong> in memory and fills its slots with the values from <code>x</code>. <code>x</code> and <code>y</code> refer to two separate arrays.</p>',
+            py: '<p><code>y = list(x)</code> creates a <strong>new list</strong> in memory and fills its slots with the values from <code>x</code>. <code>x</code> and <code>y</code> refer to two separate lists.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: list(1, 2), b: list(1, 2) }),
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: list(1, 2), y: list(1, 2) }),
           caption: {
             js: 'Two separate arrays with matching slot values.',
             py: 'Two separate lists with matching slot values.',
@@ -52,8 +52,8 @@ export const copiesLevel: UnnumberedLevel = level(
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b') },
-            { a: list(ref('one'), ref('two')), b: list(ref('one'), ref('two')), one: scalar(1), two: scalar(2) },
+            { x: ref('x'), y: ref('y') },
+            { x: list(ref('one'), ref('two')), y: list(ref('one'), ref('two')), one: scalar(1), two: scalar(2) },
           ),
           caption: {
             js: 'Also correct: two separate arrays whose slots share the numbers.',
@@ -63,12 +63,12 @@ export const copiesLevel: UnnumberedLevel = level(
         },
         {
           html: {
-            js: '<p><strong>Not correct:</strong> <code>let b = a;</code> would make <code>b</code> an alias for <code>a</code>, pointing both variables at the same array.</p>',
-            py: '<p><strong>Not correct:</strong> <code>b = a</code> would make <code>b</code> an alias for <code>a</code>, pointing both variables at the same list.</p>',
+            js: '<p><strong>Not correct:</strong> <code>let y = x;</code> would make <code>y</code> an alias for <code>x</code>, pointing both variables at the same array.</p>',
+            py: '<p><strong>Not correct:</strong> <code>y = x</code> would make <code>y</code> an alias for <code>x</code>, pointing both variables at the same list.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: list(1, 2) }),
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: list(1, 2) }),
           caption: {
             js: 'Not correct: an alias shares one array instead of making a copy.',
             py: 'Not correct: an alias shares one list instead of making a copy.',
@@ -208,79 +208,79 @@ export const copiesLevel: UnnumberedLevel = level(
     }),
     write({
       title: 'Copy, then grow the copy',
-      given: { js: 'let a = [1, 2];', ts: 'let a: number[] = [1, 2];', py: 'a = [1, 2]' },
-      js: lines('let b = [...a];', 'b.push(3);'),
-      ts: lines('let b: number[] = [...a];', 'b.push(3);'),
-      py: lines('b = list(a)', 'b.append(3)'),
-      expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1, 2), b: list(1, 2, 3) }),
+      given: { js: 'let x = [1, 2];', ts: 'let x: number[] = [1, 2];', py: 'x = [1, 2]' },
+      js: lines('let y = [...x];', 'y.push(3);'),
+      ts: lines('let y: number[] = [...x];', 'y.push(3);'),
+      py: lines('y = list(x)', 'y.append(3)'),
+      expected: graph({ x: ref('x'), y: ref('y') }, { x: list(1, 2), y: list(1, 2, 3) }),
       reliesOn: ['copy.array', 'array.push'],
       hint: {
-        js: 'Declare b as a copy of a, then grow b to [1, 2, 3] in place; a stays [1, 2].',
-        py: 'Assign b as a copy of a, then grow b to [1, 2, 3] in place; a stays [1, 2].',
+        js: 'Declare y as a copy of x, then grow y to [1, 2, 3] in place; x stays [1, 2].',
+        py: 'Assign y as a copy of x, then grow y to [1, 2, 3] in place; x stays [1, 2].',
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
-          message: 'b must be a copy of a, not an alias. If a and b share one container, adding to b adds to a as well.',
+          message: 'y must be a copy of x, not an alias. If x and y share one container, adding to y adds to x as well.',
         },
       ],
       about: {
-        js: 'Adding an item to a copy changes only the copy, because the copy is a separate array from the original. The special constraint says b must follow whatever a starts with, so build b by copying a instead of retyping its contents.',
-        py: 'Adding an item to a copy changes only the copy, because the copy is a separate list from the original. The special constraint says b must follow whatever a starts with, so build b by copying a instead of retyping its contents.',
+        js: 'Adding an item to a copy changes only the copy, because the copy is a separate array from the original. The special constraint says y must follow whatever x starts with, so build y by copying x instead of retyping its contents.',
+        py: 'Adding an item to a copy changes only the copy, because the copy is a separate list from the original. The special constraint says y must follow whatever x starts with, so build y by copying x instead of retyping its contents.',
       },
       constraints: [
         {
           rule:
-            'The boss says that b must be built by copying a, so if another programmer updates what a starts with, b must still be a separate copy with 3 added and a unchanged.',
+            'The boss says that y must be built by copying x, so if another programmer updates what x starts with, y must still be a separate copy with 3 added and x unchanged.',
           cases: [
             {
-              change: 'a starts as [5, 6]',
-              given: { js: 'let a = [5, 6];', ts: 'let a: number[] = [5, 6];', py: 'a = [5, 6]' },
-              expected: graph({ a: ref('a'), b: ref('b') }, { a: list(5, 6), b: list(5, 6, 3) }),
+              change: 'x starts as [5, 6]',
+              given: { js: 'let x = [5, 6];', ts: 'let x: number[] = [5, 6];', py: 'x = [5, 6]' },
+              expected: graph({ x: ref('x'), y: ref('y') }, { x: list(5, 6), y: list(5, 6, 3) }),
             },
           ],
         },
       ],
       process: {
-        runtime: runtime(preserve('a')),
-        source: [copiesOrCombinesFrom('b', 'a')],
+        runtime: runtime(preserve('x')),
+        source: [copiesOrCombinesFrom('y', 'x')],
       },
       debrief: [
         {
           html: {
-            js: '<p><code>let b = [...a];</code> makes a new array holding <code>1</code> and <code>2</code>. Then <code>b.push(3);</code> grows <code>b</code> in place to three items. <code>a</code> is a separate array and remains <code>[1, 2]</code>.</p>',
-            py: '<p><code>b = list(a)</code> makes a new list holding <code>1</code> and <code>2</code>. Then <code>b.append(3)</code> grows <code>b</code> in place to three items. <code>a</code> is a separate list and remains <code>[1, 2]</code>.</p>',
+            js: '<p><code>let y = [...x];</code> makes a new array holding <code>1</code> and <code>2</code>. Then <code>y.push(3);</code> grows <code>y</code> in place to three items. <code>x</code> is a separate array and remains <code>[1, 2]</code>.</p>',
+            py: '<p><code>y = list(x)</code> makes a new list holding <code>1</code> and <code>2</code>. Then <code>y.append(3)</code> grows <code>y</code> in place to three items. <code>x</code> is a separate list and remains <code>[1, 2]</code>.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: list(1, 2), b: list(1, 2, 3) }),
-          caption: 'b has three items; a stays at two.',
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: list(1, 2), y: list(1, 2, 3) }),
+          caption: 'y has three items; x stays at two.',
           verdict: 'correct',
         },
         {
           html: {
-            js: '<p><strong>Also correct:</strong> <code>let b = [...a, 3];</code> copies <code>a</code> and includes the new item <code>3</code> in one line. <code>let b = a.concat([3]);</code> also builds a new array from <code>a</code>, leaving <code>a</code> alone.</p>',
-            py: '<p><strong>Also correct:</strong> <code>b = a.copy()</code> or <code>b = a[:]</code> also copies <code>a</code> before the append. <code>b = a + [3]</code> builds the new list in one line, leaving <code>a</code> alone.</p>',
+            js: '<p><strong>Also correct:</strong> <code>let y = [...x, 3];</code> copies <code>x</code> and includes the new item <code>3</code> in one line. <code>let y = x.concat([3]);</code> also builds a new array from <code>x</code>, leaving <code>x</code> alone.</p>',
+            py: '<p><strong>Also correct:</strong> <code>y = x.copy()</code> or <code>y = x[:]</code> also copies <code>x</code> before the append. <code>y = x + [3]</code> builds the new list in one line, leaving <code>x</code> alone.</p>',
           },
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> <code>let b = [1, 2, 3];</code> builds the right picture by retyping the contents of <code>a</code>, but it does not copy <code>a</code>, so it would be wrong if <code>a</code> held something else.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>b = [1, 2, 3]</code> builds the right picture by retyping the contents of <code>a</code>, but it does not copy <code>a</code>, so it would be wrong if <code>a</code> held something else.</p>',
+            js: '<p><strong>Not accepted:</strong> <code>let y = [1, 2, 3];</code> builds the right picture by retyping the contents of <code>x</code>, but it does not copy <code>x</code>, so it would be wrong if <code>x</code> held something else.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>y = [1, 2, 3]</code> builds the right picture by retyping the contents of <code>x</code>, but it does not copy <code>x</code>, so it would be wrong if <code>x</code> held something else.</p>',
           },
         },
         {
           html: {
-            js: '<p><strong>Not correct:</strong> <code>let b = a; b.push(3);</code> would make <code>b</code> an alias for <code>a</code>, so pushing to <code>b</code> would change <code>a</code> as well.</p>',
-            py: '<p><strong>Not correct:</strong> <code>b = a; b.append(3)</code> would make <code>b</code> an alias for <code>a</code>, so appending to <code>b</code> would change <code>a</code> as well.</p>',
+            js: '<p><strong>Not correct:</strong> <code>let y = x; y.push(3);</code> would make <code>y</code> an alias for <code>x</code>, so pushing to <code>y</code> would change <code>x</code> as well.</p>',
+            py: '<p><strong>Not correct:</strong> <code>y = x; y.append(3)</code> would make <code>y</code> an alias for <code>x</code>, so appending to <code>y</code> would change <code>x</code> as well.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: list(1, 2, 3) }),
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: list(1, 2, 3) }),
           caption: {
-            js: 'Not correct: through an alias, growing b grows the original array too.',
-            py: 'Not correct: through an alias, growing b grows the original list too.',
+            js: 'Not correct: through an alias, growing y grows the original array too.',
+            py: 'Not correct: through an alias, growing y grows the original list too.',
           },
           verdict: 'incorrect',
         },
@@ -288,11 +288,11 @@ export const copiesLevel: UnnumberedLevel = level(
     }),
     draw({
       title: 'A shallow copy',
-      js: lines('let a = [[1]];', 'let b = [...a];'),
-      py: lines('a = [[1]]', 'b = list(a)'),
+      js: lines('let x = [[1]];', 'let y = [...x];'),
+      py: lines('x = [[1]]', 'y = list(x)'),
       expected: graph(
-        { a: ref('a'), b: ref('b') },
-        { a: list(ref('inner')), b: list(ref('inner')), inner: list(1) },
+        { x: ref('x'), y: ref('y') },
+        { x: list(ref('inner')), y: list(ref('inner')), inner: list(1) },
       ),
       teaches: ['copy.shallow'],
       hint: {
@@ -301,14 +301,14 @@ export const copiesLevel: UnnumberedLevel = level(
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'separate',
-          message: 'The copy is shallow: a and b are separate outer containers, but their slots point to the very same inner container.',
+          message: 'The copy is shallow: x and y are separate outer containers, but their slots point to the very same inner container.',
         },
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
-          message: 'a and b must be separate outer containers: copying makes a new outer container rather than an alias.',
+          message: 'x and y must be separate outer containers: copying makes a new outer container rather than an alias.',
         },
       ],
       about: {
@@ -318,18 +318,18 @@ export const copiesLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>let b = [...a];</code> creates a new outer array for <code>b</code>. But each slot in <code>b</code> gets the reference from <code>a</code>\'s corresponding slot. Slot 0 in <code>a</code> points to an inner array <code>[1]</code>, so slot 0 in <code>b</code> points to that <strong>very same inner array</strong>.</p>',
-            py: '<p><code>b = list(a)</code> creates a new outer list for <code>b</code>. But each slot in <code>b</code> gets the reference from <code>a</code>\'s corresponding slot. Slot 0 in <code>a</code> points to an inner list <code>[1]</code>, so slot 0 in <code>b</code> points to that <strong>very same inner list</strong>.</p>',
+            js: '<p><code>let y = [...x];</code> creates a new outer array for <code>y</code>. But each slot in <code>y</code> gets the reference from <code>x</code>\'s corresponding slot. Slot 0 in <code>x</code> points to an inner array <code>[1]</code>, so slot 0 in <code>y</code> points to that <strong>very same inner array</strong>.</p>',
+            py: '<p><code>y = list(x)</code> creates a new outer list for <code>y</code>. But each slot in <code>y</code> gets the reference from <code>x</code>\'s corresponding slot. Slot 0 in <code>x</code> points to an inner list <code>[1]</code>, so slot 0 in <code>y</code> points to that <strong>very same inner list</strong>.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b') },
-            { a: list(ref('inner')), b: list(ref('inner')), inner: list(1) },
+            { x: ref('x'), y: ref('y') },
+            { x: list(ref('inner')), y: list(ref('inner')), inner: list(1) },
           ),
           caption: {
-            js: 'Correct: a and b are separate outer arrays sharing one inner array.',
-            py: 'Correct: a and b are separate outer lists sharing one inner list.',
+            js: 'Correct: x and y are separate outer arrays sharing one inner array.',
+            py: 'Correct: x and y are separate outer lists sharing one inner list.',
           },
           verdict: 'correct',
         },
@@ -338,8 +338,8 @@ export const copiesLevel: UnnumberedLevel = level(
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b') },
-            { a: list(ref('innerA')), b: list(ref('innerB')), innerA: list(1), innerB: list(1) },
+            { x: ref('x'), y: ref('y') },
+            { x: list(ref('innerA')), y: list(ref('innerB')), innerA: list(1), innerB: list(1) },
           ),
           caption: 'Not correct: this would be a deep copy, but copying only makes a new outer container.',
           verdict: 'incorrect',
@@ -348,26 +348,26 @@ export const copiesLevel: UnnumberedLevel = level(
     }),
     draw({
       title: 'Mutating inside a shallow copy',
-      js: lines('let a = [[1]];', 'let b = [...a];', 'b[0].push(2);'),
-      py: lines('a = [[1]]', 'b = list(a)', 'b[0].append(2)'),
+      js: lines('let x = [[1]];', 'let y = [...x];', 'y[0].push(2);'),
+      py: lines('x = [[1]]', 'y = list(x)', 'y[0].append(2)'),
       expected: graph(
-        { a: ref('a'), b: ref('b') },
-        { a: list(ref('inner')), b: list(ref('inner')), inner: list(1, 2) },
+        { x: ref('x'), y: ref('y') },
+        { x: list(ref('inner')), y: list(ref('inner')), inner: list(1, 2) },
       ),
       hint: {
-        js: 'b shares the inner array with a, so growing that inner array to [1, 2] is visible through both outer arrays.',
-        py: 'b shares the inner list with a, so growing that inner list to [1, 2] is visible through both outer lists.',
+        js: 'y shares the inner array with x, so growing that inner array to [1, 2] is visible through both outer arrays.',
+        py: 'y shares the inner list with x, so growing that inner list to [1, 2] is visible through both outer lists.',
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'separate',
-          message: 'Because the copy was shallow, a and b share the inner container. Growing it through b[0] changes what a[0] sees too.',
+          message: 'Because the copy was shallow, x and y share the inner container. Growing it through y[0] changes what x[0] sees too.',
         },
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
-          message: 'a and b must be separate outer containers: copying makes a new outer container, even though the inner one is shared.',
+          message: 'x and y must be separate outer containers: copying makes a new outer container, even though the inner one is shared.',
         },
       ],
       about: {
@@ -377,14 +377,14 @@ export const copiesLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p>Follow the lines in order:</p><ol><li><code>a</code> refers to an outer array whose slot 0 points to an inner array <code>[1]</code>.</li><li><code>b</code> gets a new outer array, but its slot 0 points to that same inner array.</li><li><code>b[0].push(2);</code> follows slot 0 to the inner array and adds <code>2</code> in place.</li></ol><p>Because the inner array is shared, both <code>a[0]</code> and <code>b[0]</code> now refer to <code>[1, 2]</code>.</p>',
-            py: '<p>Follow the lines in order:</p><ol><li><code>a</code> refers to an outer list whose slot 0 points to an inner list <code>[1]</code>.</li><li><code>b</code> gets a new outer list, but its slot 0 points to that same inner list.</li><li><code>b[0].append(2)</code> follows slot 0 to the inner list and adds <code>2</code> in place.</li></ol><p>Because the inner list is shared, both <code>a[0]</code> and <code>b[0]</code> now refer to <code>[1, 2]</code>.</p>',
+            js: '<p>Follow the lines in order:</p><ol><li><code>x</code> refers to an outer array whose slot 0 points to an inner array <code>[1]</code>.</li><li><code>y</code> gets a new outer array, but its slot 0 points to that same inner array.</li><li><code>y[0].push(2);</code> follows slot 0 to the inner array and adds <code>2</code> in place.</li></ol><p>Because the inner array is shared, both <code>x[0]</code> and <code>y[0]</code> now refer to <code>[1, 2]</code>.</p>',
+            py: '<p>Follow the lines in order:</p><ol><li><code>x</code> refers to an outer list whose slot 0 points to an inner list <code>[1]</code>.</li><li><code>y</code> gets a new outer list, but its slot 0 points to that same inner list.</li><li><code>y[0].append(2)</code> follows slot 0 to the inner list and adds <code>2</code> in place.</li></ol><p>Because the inner list is shared, both <code>x[0]</code> and <code>y[0]</code> now refer to <code>[1, 2]</code>.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b') },
-            { a: list(ref('inner')), b: list(ref('inner')), inner: list(1, 2) },
+            { x: ref('x'), y: ref('y') },
+            { x: list(ref('inner')), y: list(ref('inner')), inner: list(1, 2) },
           ),
           caption: {
             js: 'Correct: the shared inner array was changed in place to [1, 2].',
@@ -393,16 +393,16 @@ export const copiesLevel: UnnumberedLevel = level(
           verdict: 'correct',
         },
         {
-          html: '<p>If you expected <code>a</code> to stay <code>[[1]]</code>, you were imagining a deep copy, independent all the way down. A shallow copy only creates a new outer container; anything inside remains shared.</p>',
+          html: '<p>If you expected <code>x</code> to stay <code>[[1]]</code>, you were imagining a deep copy, independent all the way down. A shallow copy only creates a new outer container; anything inside remains shared.</p>',
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b') },
-            { a: list(ref('innerA')), b: list(ref('innerB')), innerA: list(1), innerB: list(1, 2) },
+            { x: ref('x'), y: ref('y') },
+            { x: list(ref('innerA')), y: list(ref('innerB')), innerA: list(1), innerB: list(1, 2) },
           ),
           caption: {
-            js: 'Not correct: a[0] does not stay [1], because the inner array was shared, not copied.',
-            py: 'Not correct: a[0] does not stay [1], because the inner list was shared, not copied.',
+            js: 'Not correct: x[0] does not stay [1], because the inner array was shared, not copied.',
+            py: 'Not correct: x[0] does not stay [1], because the inner list was shared, not copied.',
           },
           verdict: 'incorrect',
         },
@@ -410,22 +410,22 @@ export const copiesLevel: UnnumberedLevel = level(
     }),
     write({
       title: 'A shallow object copy',
-      given: { js: 'let p = { tags: ["x"] };', ts: 'let p: { tags: string[] } = { tags: ["x"] };', py: 'p = {"tags": ["x"]}' },
-      js: lines('let q = { ...p };', 'q.tags.push("y");'),
-      ts: lines('let q: { tags: string[] } = { ...p };', 'q.tags.push("y");'),
-      py: lines('q = dict(p)', 'q["tags"].append("y")'),
+      given: { js: 'let p = { tags: ["cat"] };', ts: 'let p: { tags: string[] } = { tags: ["cat"] };', py: 'p = {"tags": ["cat"]}' },
+      js: lines('let q = { ...p };', 'q.tags.push("dog");'),
+      ts: lines('let q: { tags: string[] } = { ...p };', 'q.tags.push("dog");'),
+      py: lines('q = dict(p)', 'q["tags"].append("dog")'),
       expected: graph(
         { p: ref('p'), q: ref('q') },
         {
           p: dict({ tags: ref('tags') }),
           q: dict({ tags: ref('tags') }),
-          tags: list('x', 'y'),
+          tags: list('cat', 'dog'),
         },
       ),
       reliesOn: ['copy.object', 'copy.shallow', 'array.push'],
       hint: {
-        js: 'Declare q as a copy of p, then grow the shared tags array in place so both end with ["x", "y"].',
-        py: 'Assign q as a copy of p, then grow the shared tags list in place so both end with ["x", "y"].',
+        js: 'Declare q as a copy of p, then grow the shared tags array in place so both end with ["cat", "dog"].',
+        py: 'Assign q as a copy of p, then grow the shared tags list in place so both end with ["cat", "dog"].',
       },
       hints: [
         {
@@ -447,20 +447,20 @@ export const copiesLevel: UnnumberedLevel = level(
         {
           rule: {
             js:
-              'The boss says that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p and the shared tags array must end with "y".',
+              'The boss says that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p and the shared tags array must end with "dog".',
             py:
-              'The boss says that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p and the shared tags list must end with "y".',
+              'The boss says that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p and the shared tags list must end with "dog".',
           },
           cases: [
             {
-              change: 'p starts with { tags: ["z"] }',
-              given: { js: 'let p = { tags: ["z"] };', ts: 'let p: { tags: string[] } = { tags: ["z"] };', py: 'p = {"tags": ["z"]}' },
+              change: 'p starts with { tags: ["fox"] }',
+              given: { js: 'let p = { tags: ["fox"] };', ts: 'let p: { tags: string[] } = { tags: ["fox"] };', py: 'p = {"tags": ["fox"]}' },
               expected: graph(
                 { p: ref('p'), q: ref('q') },
                 {
                   p: dict({ tags: ref('tags') }),
                   q: dict({ tags: ref('tags') }),
-                  tags: list('z', 'y'),
+                  tags: list('fox', 'dog'),
                 },
               ),
             },
@@ -474,8 +474,8 @@ export const copiesLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>let q = { ...p };</code> creates a new object <code>q</code>. Its <code>tags</code> property receives the reference from <code>p.tags</code>. When <code>q.tags.push("y");</code> changes that array in place, <code>p.tags</code> sees the change too because both point to the same array.</p>',
-            py: '<p><code>q = dict(p)</code> creates a new dictionary <code>q</code>. Its <code>"tags"</code> key receives the reference from <code>p["tags"]</code>. When <code>q["tags"].append("y")</code> changes that list in place, <code>p["tags"]</code> sees the change too because both point to the same list.</p>',
+            js: '<p><code>let q = { ...p };</code> creates a new object <code>q</code>. Its <code>tags</code> property receives the reference from <code>p.tags</code>. When <code>q.tags.push("dog");</code> changes that array in place, <code>p.tags</code> sees the change too because both point to the same array.</p>',
+            py: '<p><code>q = dict(p)</code> creates a new dictionary <code>q</code>. Its <code>"tags"</code> key receives the reference from <code>p["tags"]</code>. When <code>q["tags"].append("dog")</code> changes that list in place, <code>p["tags"]</code> sees the change too because both point to the same list.</p>',
           },
         },
         {
@@ -484,7 +484,7 @@ export const copiesLevel: UnnumberedLevel = level(
             {
               p: dict({ tags: ref('tags') }),
               q: dict({ tags: ref('tags') }),
-              tags: list('x', 'y'),
+              tags: list('cat', 'dog'),
             },
           ),
           caption: {
@@ -495,14 +495,14 @@ export const copiesLevel: UnnumberedLevel = level(
         },
         {
           html: {
-            js: '<p><strong>Also correct:</strong> <code>p.tags.push("y");</code> after the copy builds the same picture, because <code>p.tags</code> and <code>q.tags</code> are one array.</p>',
-            py: '<p><strong>Also correct:</strong> <code>p["tags"].append("y")</code> after the copy builds the same picture, because <code>p["tags"]</code> and <code>q["tags"]</code> are one list.</p>',
+            js: '<p><strong>Also correct:</strong> <code>p.tags.push("dog");</code> after the copy builds the same picture, because <code>p.tags</code> and <code>q.tags</code> are one array.</p>',
+            py: '<p><strong>Also correct:</strong> <code>p["tags"].append("dog")</code> after the copy builds the same picture, because <code>p["tags"]</code> and <code>q["tags"]</code> are one list.</p>',
           },
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> <code>let q = { tags: p.tags };</code> shares the array correctly but builds <code>q</code> by hand instead of copying <code>p</code>. And <code>let q = { tags: [...p.tags, "y"] };</code> gives <code>q</code> its own array, leaving <code>p.tags</code> as <code>["x"]</code>.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>q = {"tags": p["tags"]}</code> shares the list correctly but builds <code>q</code> by hand instead of copying <code>p</code>. And <code>q = {"tags": p["tags"] + ["y"]}</code> gives <code>q</code> its own list, leaving <code>p["tags"]</code> as <code>["x"]</code>.</p>',
+            js: '<p><strong>Not accepted:</strong> <code>let q = { tags: p.tags };</code> shares the array correctly but builds <code>q</code> by hand instead of copying <code>p</code>. And <code>let q = { tags: [...p.tags, "dog"] };</code> gives <code>q</code> its own array, leaving <code>p.tags</code> as <code>["cat"]</code>.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>q = {"tags": p["tags"]}</code> shares the list correctly but builds <code>q</code> by hand instead of copying <code>p</code>. And <code>q = {"tags": p["tags"] + ["dog"]}</code> gives <code>q</code> its own list, leaving <code>p["tags"]</code> as <code>["cat"]</code>.</p>',
           },
         },
         {
@@ -511,8 +511,8 @@ export const copiesLevel: UnnumberedLevel = level(
             {
               p: dict({ tags: ref('pTags') }),
               q: dict({ tags: ref('qTags') }),
-              pTags: list('x'),
-              qTags: list('x', 'y'),
+              pTags: list('cat'),
+              qTags: list('cat', 'dog'),
             },
           ),
           caption: {
@@ -662,15 +662,15 @@ export const copiesLevel: UnnumberedLevel = level(
     }),
     write({
       title: 'A copy that shares nothing',
-      given: { js: 'let a = [[1], [2]];', ts: 'let a: number[][] = [[1], [2]];', py: 'a = [[1], [2]]' },
-      js: 'let b = [[...a[0]], [...a[1]]];',
-      ts: 'let b: number[][] = [[...a[0]], [...a[1]]];',
-      py: 'b = [list(a[0]), list(a[1])]',
+      given: { js: 'let x = [[1], [2]];', ts: 'let x: number[][] = [[1], [2]];', py: 'x = [[1], [2]]' },
+      js: 'let y = [[...x[0]], [...x[1]]];',
+      ts: 'let y: number[][] = [[...x[0]], [...x[1]]];',
+      py: 'y = [list(x[0]), list(x[1])]',
       expected: graph(
-        { a: ref('a'), b: ref('b') },
+        { x: ref('x'), y: ref('y') },
         {
-          a: list(ref('a0'), ref('a1')),
-          b: list(ref('b0'), ref('b1')),
+          x: list(ref('a0'), ref('a1')),
+          y: list(ref('b0'), ref('b1')),
           a0: list(1),
           a1: list(2),
           b0: list(1),
@@ -679,33 +679,33 @@ export const copiesLevel: UnnumberedLevel = level(
       ),
       reliesOn: ['copy.shallow', 'copy.array'],
       hint: {
-        js: 'Declare b as a new outer array holding copies of each inner array, so no inner array is shared with a.',
-        py: 'Assign b a new outer list holding copies of each inner list, so no inner list is shared with a.',
+        js: 'Declare y as a new outer array holding copies of each inner array, so no inner array is shared with x.',
+        py: 'Assign y a new outer list holding copies of each inner list, so no inner list is shared with x.',
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
-          message: 'b should share nothing with a: each slot of b must point to its own copy of the matching inner container of a.',
+          message: 'y should share nothing with x: each slot of y must point to its own copy of the matching inner container of x.',
         },
       ],
       about: {
-        js: 'To copy a nested array without sharing inner arrays, copy one level deeper by hand: create a new outer array holding copies of each inner array. The special constraint says b must follow whatever a starts with, so build b from a instead of retyping its contents.',
-        py: 'To copy a nested list without sharing inner lists, copy one level deeper by hand: create a new outer list holding copies of each inner list. The special constraint says b must follow whatever a starts with, so build b from a instead of retyping its contents.',
+        js: 'To copy a nested array without sharing inner arrays, copy one level deeper by hand: create a new outer array holding copies of each inner array. The special constraint says y must follow whatever x starts with, so build y from x instead of retyping its contents.',
+        py: 'To copy a nested list without sharing inner lists, copy one level deeper by hand: create a new outer list holding copies of each inner list. The special constraint says y must follow whatever x starts with, so build y from x instead of retyping its contents.',
       },
       constraints: [
         {
           rule:
-            'The boss says that b must be built from a, so if another programmer updates what a starts with, b must still be a separate copy that shares nothing with a.',
+            'The boss says that y must be built from x, so if another programmer updates what x starts with, y must still be a separate copy that shares nothing with x.',
           cases: [
             {
-              change: 'a starts as [[3], [4]]',
-              given: { js: 'let a = [[3], [4]];', ts: 'let a: number[][] = [[3], [4]];', py: 'a = [[3], [4]]' },
+              change: 'x starts as [[3], [4]]',
+              given: { js: 'let x = [[3], [4]];', ts: 'let x: number[][] = [[3], [4]];', py: 'x = [[3], [4]]' },
               expected: graph(
-                { a: ref('a'), b: ref('b') },
+                { x: ref('x'), y: ref('y') },
                 {
-                  a: list(ref('a0'), ref('a1')),
-                  b: list(ref('b0'), ref('b1')),
+                  x: list(ref('a0'), ref('a1')),
+                  y: list(ref('b0'), ref('b1')),
                   a0: list(3),
                   a1: list(4),
                   b0: list(3),
@@ -717,21 +717,21 @@ export const copiesLevel: UnnumberedLevel = level(
         },
       ],
       process: {
-        runtime: runtime(preserve('a'), preserve('a', 0), preserve('a', 1)),
+        runtime: runtime(preserve('x'), preserve('x', 0), preserve('x', 1)),
       },
       debrief: [
         {
           html: {
-            js: '<p>A plain shallow copy <code>let b = [...a];</code> would leave <code>b[0]</code> and <code>b[1]</code> pointing to the same inner arrays as <code>a[0]</code> and <code>a[1]</code>. To make <code>b</code> share nothing, copy each inner array too: <code>let b = [[...a[0]], [...a[1]]];</code> builds a new outer array whose slots point to two new inner arrays.</p>',
-            py: '<p>A plain shallow copy <code>b = list(a)</code> would leave <code>b[0]</code> and <code>b[1]</code> pointing to the same inner lists as <code>a[0]</code> and <code>a[1]</code>. To make <code>b</code> share nothing, copy each inner list too: <code>b = [list(a[0]), list(a[1])]</code> builds a new outer list whose slots point to two new inner lists.</p>',
+            js: '<p>A plain shallow copy <code>let y = [...x];</code> would leave <code>y[0]</code> and <code>y[1]</code> pointing to the same inner arrays as <code>x[0]</code> and <code>x[1]</code>. To make <code>y</code> share nothing, copy each inner array too: <code>let y = [[...x[0]], [...x[1]]];</code> builds a new outer array whose slots point to two new inner arrays.</p>',
+            py: '<p>A plain shallow copy <code>y = list(x)</code> would leave <code>y[0]</code> and <code>y[1]</code> pointing to the same inner lists as <code>x[0]</code> and <code>x[1]</code>. To make <code>y</code> share nothing, copy each inner list too: <code>y = [list(x[0]), list(x[1])]</code> builds a new outer list whose slots point to two new inner lists.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b') },
+            { x: ref('x'), y: ref('y') },
             {
-              a: list(ref('a0'), ref('a1')),
-              b: list(ref('b0'), ref('b1')),
+              x: list(ref('a0'), ref('a1')),
+              y: list(ref('b0'), ref('b1')),
               a0: list(1),
               a1: list(2),
               b0: list(1),
@@ -739,37 +739,37 @@ export const copiesLevel: UnnumberedLevel = level(
             },
           ),
           caption: {
-            js: 'b shares nothing with a: its outer array and both inner arrays are new.',
-            py: 'b shares nothing with a: its outer list and both inner lists are new.',
+            js: 'y shares nothing with x: its outer array and both inner arrays are new.',
+            py: 'y shares nothing with x: its outer list and both inner lists are new.',
           },
           verdict: 'correct',
         },
         {
           html: {
-            js: '<p><strong>Also correct:</strong> <code>let b = a.map((row) => [...row]);</code> copies every inner array, however many there are.</p>',
-            py: '<p><strong>Also correct:</strong> <code>b = [list(row) for row in a]</code> copies every inner list, however many there are.</p>',
+            js: '<p><strong>Also correct:</strong> <code>let y = x.map((row) => [...row]);</code> copies every inner array, however many there are.</p>',
+            py: '<p><strong>Also correct:</strong> <code>y = [list(row) for row in x]</code> copies every inner list, however many there are.</p>',
           },
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> <code>let b = [[1], [2]];</code> builds the right picture by retyping the contents of <code>a</code>, so it would be wrong if <code>a</code> started with other values.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>b = [[1], [2]]</code> builds the right picture by retyping the contents of <code>a</code>, so it would be wrong if <code>a</code> started with other values.</p>',
+            js: '<p><strong>Not accepted:</strong> <code>let y = [[1], [2]];</code> builds the right picture by retyping the contents of <code>x</code>, so it would be wrong if <code>x</code> started with other values.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>y = [[1], [2]]</code> builds the right picture by retyping the contents of <code>x</code>, so it would be wrong if <code>x</code> started with other values.</p>',
           },
         },
         {
           html: {
-            js: '<p><strong>Not correct:</strong> <code>let b = [...a];</code> leaves the inner arrays shared between <code>a</code> and <code>b</code>.</p>',
-            py: '<p><strong>Not correct:</strong> <code>b = list(a)</code> leaves the inner lists shared between <code>a</code> and <code>b</code>.</p>',
+            js: '<p><strong>Not correct:</strong> <code>let y = [...x];</code> leaves the inner arrays shared between <code>x</code> and <code>y</code>.</p>',
+            py: '<p><strong>Not correct:</strong> <code>y = list(x)</code> leaves the inner lists shared between <code>x</code> and <code>y</code>.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b') },
-            { a: list(ref('a0'), ref('a1')), b: list(ref('a0'), ref('a1')), a0: list(1), a1: list(2) },
+            { x: ref('x'), y: ref('y') },
+            { x: list(ref('a0'), ref('a1')), y: list(ref('a0'), ref('a1')), a0: list(1), a1: list(2) },
           ),
           caption: {
-            js: 'Not correct: a shallow copy shares the inner arrays with a.',
-            py: 'Not correct: a shallow copy shares the inner lists with a.',
+            js: 'Not correct: a shallow copy shares the inner arrays with x.',
+            py: 'Not correct: a shallow copy shares the inner lists with x.',
           },
           verdict: 'incorrect',
         },
@@ -779,22 +779,22 @@ export const copiesLevel: UnnumberedLevel = level(
   [
     write({
       title: 'A shallow copy, changed twice',
-      given: { js: 'let p = { tags: ["a"] };', ts: 'let p: { tags: string[] } = { tags: ["a"] };', py: 'p = {"tags": ["a"]}' },
-      js: lines('let q = { ...p };', 'q.extra = true;', 'q.tags.push("b");'),
-      ts: lines('let q: { tags: string[]; extra?: boolean } = { ...p };', 'q.extra = true;', 'q.tags.push("b");'),
-      py: lines('q = dict(p)', 'q["extra"] = True', 'q["tags"].append("b")'),
+      given: { js: 'let p = { tags: ["cat"] };', ts: 'let p: { tags: string[] } = { tags: ["cat"] };', py: 'p = {"tags": ["cat"]}' },
+      js: lines('let q = { ...p };', 'q.extra = true;', 'q.tags.push("dog");'),
+      ts: lines('let q: { tags: string[]; extra?: boolean } = { ...p };', 'q.extra = true;', 'q.tags.push("dog");'),
+      py: lines('q = dict(p)', 'q["extra"] = True', 'q["tags"].append("dog")'),
       expected: graph(
         { p: ref('p'), q: ref('q') },
         {
           p: dict({ tags: ref('tags') }),
           q: dict({ tags: ref('tags'), extra: true }),
-          tags: list('a', 'b'),
+          tags: list('cat', 'dog'),
         },
       ),
       reliesOn: ['copy.object', 'copy.shallow', 'array.push'],
       hint: {
-        js: 'Declare q as a copy of p, then add extra holding true to q and grow the shared tags array to ["a", "b"].',
-        py: 'Assign q as a copy of p, then add extra holding True to q and grow the shared tags list to ["a", "b"].',
+        js: 'Declare q as a copy of p, then add extra holding true to q and grow the shared tags array to ["cat", "dog"].',
+        py: 'Assign q as a copy of p, then add extra holding True to q and grow the shared tags list to ["cat", "dog"].',
       },
       hints: [
         {
@@ -816,20 +816,20 @@ export const copiesLevel: UnnumberedLevel = level(
         {
           rule: {
             js:
-              'The boss says that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p with extra added and the shared tags array ending with "b".',
+              'The boss says that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p with extra added and the shared tags array ending with "dog".',
             py:
-              'The boss says that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p with extra added and the shared tags list ending with "b".',
+              'The boss says that q must be built by copying p, so if another programmer updates what p starts with, q must still be a shallow copy of that p with extra added and the shared tags list ending with "dog".',
           },
           cases: [
             {
-              change: 'p starts with { tags: ["c"] }',
-              given: { js: 'let p = { tags: ["c"] };', ts: 'let p: { tags: string[] } = { tags: ["c"] };', py: 'p = {"tags": ["c"]}' },
+              change: 'p starts with { tags: ["fox"] }',
+              given: { js: 'let p = { tags: ["fox"] };', ts: 'let p: { tags: string[] } = { tags: ["fox"] };', py: 'p = {"tags": ["fox"]}' },
               expected: graph(
                 { p: ref('p'), q: ref('q') },
                 {
                   p: dict({ tags: ref('tags') }),
                   q: dict({ tags: ref('tags'), extra: true }),
-                  tags: list('c', 'b'),
+                  tags: list('fox', 'dog'),
                 },
               ),
             },
@@ -843,8 +843,8 @@ export const copiesLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>let q = { ...p };</code> creates a new outer object whose <code>tags</code> property points to the same array as <code>p.tags</code>. Setting <code>q.extra = true;</code> adds <code>extra</code> only to <code>q</code>. But <code>q.tags.push("b");</code> changes the shared array in place, so both <code>p</code> and <code>q</code> see <code>tags: ["a", "b"]</code>.</p>',
-            py: '<p><code>q = dict(p)</code> creates a new outer dictionary whose <code>"tags"</code> key points to the same list as <code>p["tags"]</code>. Setting <code>q["extra"] = True</code> adds <code>"extra"</code> only to <code>q</code>. But <code>q["tags"].append("b")</code> changes the shared list in place, so both <code>p</code> and <code>q</code> see <code>"tags": ["a", "b"]</code>.</p>',
+            js: '<p><code>let q = { ...p };</code> creates a new outer object whose <code>tags</code> property points to the same array as <code>p.tags</code>. Setting <code>q.extra = true;</code> adds <code>extra</code> only to <code>q</code>. But <code>q.tags.push("dog");</code> changes the shared array in place, so both <code>p</code> and <code>q</code> see <code>tags: ["cat", "dog"]</code>.</p>',
+            py: '<p><code>q = dict(p)</code> creates a new outer dictionary whose <code>"tags"</code> key points to the same list as <code>p["tags"]</code>. Setting <code>q["extra"] = True</code> adds <code>"extra"</code> only to <code>q</code>. But <code>q["tags"].append("dog")</code> changes the shared list in place, so both <code>p</code> and <code>q</code> see <code>"tags": ["cat", "dog"]</code>.</p>',
           },
         },
         {
@@ -853,7 +853,7 @@ export const copiesLevel: UnnumberedLevel = level(
             {
               p: dict({ tags: ref('tags') }),
               q: dict({ tags: ref('tags'), extra: true }),
-              tags: list('a', 'b'),
+              tags: list('cat', 'dog'),
             },
           ),
           caption: 'extra belongs only to q, while tags is shared and changed for both.',
@@ -877,8 +877,8 @@ export const copiesLevel: UnnumberedLevel = level(
             {
               p: dict({ tags: ref('pTags') }),
               q: dict({ tags: ref('qTags'), extra: true }),
-              pTags: list('a'),
-              qTags: list('a', 'b'),
+              pTags: list('cat'),
+              qTags: list('cat', 'dog'),
             },
           ),
           caption: {
@@ -891,31 +891,31 @@ export const copiesLevel: UnnumberedLevel = level(
     }),
     draw({
       title: 'Replacing a shared inner object',
-      js: lines('let a = { inner: { n: 1 } };', 'let b = { ...a };', 'b.inner = { n: 2 };'),
-      py: lines('a = {"inner": {"n": 1}}', 'b = dict(a)', 'b["inner"] = {"n": 2}'),
+      js: lines('let x = { inner: { n: 1 } };', 'let y = { ...x };', 'y.inner = { n: 2 };'),
+      py: lines('x = {"inner": {"n": 1}}', 'y = dict(x)', 'y["inner"] = {"n": 2}'),
       expected: graph(
-        { a: ref('a'), b: ref('b') },
+        { x: ref('x'), y: ref('y') },
         {
-          a: dict({ inner: ref('old') }),
-          b: dict({ inner: ref('new') }),
+          x: dict({ inner: ref('old') }),
+          y: dict({ inner: ref('new') }),
           old: dict({ n: 1 }),
           new: dict({ n: 2 }),
         },
       ),
       hint: {
-        js: 'Copying shares the inner object at first; assigning b.inner a new object repoints only b.inner, leaving a with the original.',
-        py: 'Copying shares the inner dictionary at first; assigning b["inner"] a new dictionary repoints only b["inner"], leaving a with the original.',
+        js: 'Copying shares the inner object at first; assigning y.inner a new object repoints only y.inner, leaving x with the original.',
+        py: 'Copying shares the inner dictionary at first; assigning y["inner"] a new dictionary repoints only y["inner"], leaving x with the original.',
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
-          message: 'The last line gives b a brand new inner container, so a and b no longer share one. Reassigning a key repoints only that key of b.',
+          message: 'The last line gives y a brand new inner container, so x and y no longer share one. Reassigning a key repoints only that key of y.',
         },
         {
-          variable: 'a',
+          variable: 'x',
           value: 2,
-          message: "a's inner container still holds n: 1. Reassigning b's inner key repoints b's arrow; it does not change the container a points to.",
+          message: "x's inner container still holds n: 1. Reassigning y's inner key repoints y's arrow; it does not change the container x points to.",
         },
       ],
       about: {
@@ -925,40 +925,40 @@ export const copiesLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>let b = { ...a };</code> at first points <code>b.inner</code> at the same object as <code>a.inner</code>. But <code>b.inner = { n: 2 };</code> creates a <strong>brand new object</strong> and repoints <code>b.inner</code> at it. Nothing changed the old object, so <code>a.inner</code> still refers to <code>{ n: 1 }</code>.</p>',
-            py: '<p><code>b = dict(a)</code> at first points <code>b["inner"]</code> at the same dictionary as <code>a["inner"]</code>. But <code>b["inner"] = {"n": 2}</code> creates a <strong>brand new dictionary</strong> and repoints <code>b["inner"]</code> at it. Nothing changed the old dictionary, so <code>a["inner"]</code> still refers to <code>{"n": 1}</code>.</p>',
+            js: '<p><code>let y = { ...x };</code> at first points <code>y.inner</code> at the same object as <code>x.inner</code>. But <code>y.inner = { n: 2 };</code> creates a <strong>brand new object</strong> and repoints <code>y.inner</code> at it. Nothing changed the old object, so <code>x.inner</code> still refers to <code>{ n: 1 }</code>.</p>',
+            py: '<p><code>y = dict(x)</code> at first points <code>y["inner"]</code> at the same dictionary as <code>x["inner"]</code>. But <code>y["inner"] = {"n": 2}</code> creates a <strong>brand new dictionary</strong> and repoints <code>y["inner"]</code> at it. Nothing changed the old dictionary, so <code>x["inner"]</code> still refers to <code>{"n": 1}</code>.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b') },
+            { x: ref('x'), y: ref('y') },
             {
-              a: dict({ inner: ref('old') }),
-              b: dict({ inner: ref('new') }),
+              x: dict({ inner: ref('old') }),
+              y: dict({ inner: ref('new') }),
               old: dict({ n: 1 }),
               new: dict({ n: 2 }),
             },
           ),
           caption: {
-            js: 'b.inner repointed to a new object; a.inner keeps the original { n: 1 }.',
-            py: 'b["inner"] repointed to a new dictionary; a["inner"] keeps the original {"n": 1}.',
+            js: 'y.inner repointed to a new object; x.inner keeps the original { n: 1 }.',
+            py: 'y["inner"] repointed to a new dictionary; x["inner"] keeps the original {"n": 1}.',
           },
           verdict: 'correct',
         },
         {
           html: {
-            js: '<p><strong>Contrast with mutation:</strong> if the code had written <code>b.inner.n = 2;</code>, it would have changed the shared object in place, and <code>a.inner</code> would see <code>n: 2</code> too. Reassigning <code>b.inner = ...</code> ends the sharing instead.</p>',
-            py: '<p><strong>Contrast with mutation:</strong> if the code had written <code>b["inner"]["n"] = 2</code>, it would have changed the shared dictionary in place, and <code>a["inner"]</code> would see <code>"n": 2</code> too. Reassigning <code>b["inner"] = ...</code> ends the sharing instead.</p>',
+            js: '<p><strong>Contrast with mutation:</strong> if the code had written <code>y.inner.n = 2;</code>, it would have changed the shared object in place, and <code>x.inner</code> would see <code>n: 2</code> too. Reassigning <code>y.inner = ...</code> ends the sharing instead.</p>',
+            py: '<p><strong>Contrast with mutation:</strong> if the code had written <code>y["inner"]["n"] = 2</code>, it would have changed the shared dictionary in place, and <code>x["inner"]</code> would see <code>"n": 2</code> too. Reassigning <code>y["inner"] = ...</code> ends the sharing instead.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b') },
-            { a: dict({ inner: ref('shared') }), b: dict({ inner: ref('shared') }), shared: dict({ n: 2 }) },
+            { x: ref('x'), y: ref('y') },
+            { x: dict({ inner: ref('shared') }), y: dict({ inner: ref('shared') }), shared: dict({ n: 2 }) },
           ),
           caption: {
-            js: 'Not correct: reassigning b.inner does not change the old inner object in place.',
-            py: 'Not correct: reassigning b["inner"] does not change the old inner dictionary in place.',
+            js: 'Not correct: reassigning y.inner does not change the old inner object in place.',
+            py: 'Not correct: reassigning y["inner"] does not change the old inner dictionary in place.',
           },
           verdict: 'incorrect',
         },
@@ -1017,54 +1017,54 @@ export const copiesLevel: UnnumberedLevel = level(
     }),
     write({
       title: 'Copy, then add a row',
-      given: { js: 'let a = [[1], [2]];', ts: 'let a: number[][] = [[1], [2]];', py: 'a = [[1], [2]]' },
-      js: lines('let b = [...a];', 'b.push([3]);'),
-      ts: lines('let b: number[][] = [...a];', 'b.push([3]);'),
-      py: lines('b = list(a)', 'b.append([3])'),
+      given: { js: 'let x = [[1], [2]];', ts: 'let x: number[][] = [[1], [2]];', py: 'x = [[1], [2]]' },
+      js: lines('let y = [...x];', 'y.push([3]);'),
+      ts: lines('let y: number[][] = [...x];', 'y.push([3]);'),
+      py: lines('y = list(x)', 'y.append([3])'),
       expected: graph(
-        { a: ref('a'), b: ref('b') },
+        { x: ref('x'), y: ref('y') },
         {
-          a: list(ref('r1'), ref('r2')),
-          b: list(ref('r1'), ref('r2'), ref('r3')),
+          x: list(ref('r1'), ref('r2')),
+          y: list(ref('r1'), ref('r2'), ref('r3')),
           r1: list(1),
           r2: list(2),
           r3: list(3),
         },
       ),
       hint: {
-        js: 'Declare b as a copy of a, then add a new row [3] to b in place; a stays with two rows.',
-        py: 'Assign b as a copy of a, then add a new row [3] to b in place; a stays with two rows.',
+        js: 'Declare y as a copy of x, then add a new row [3] to y in place; x stays with two rows.',
+        py: 'Assign y as a copy of x, then add a new row [3] to y in place; x stays with two rows.',
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'separate',
-          message: 'b should be a shallow copy of a: its first two slots must point to the same inner containers as the slots of a.',
+          message: 'y should be a shallow copy of x: its first two slots must point to the same inner containers as the slots of x.',
         },
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
-          message: 'b must be a new outer container, not an alias of a; a should still have only two rows.',
+          message: 'y must be a new outer container, not an alias of x; x should still have only two rows.',
         },
       ],
       reliesOn: ['copy.shallow', 'copy.array', 'array.push'],
       about: {
-        js: 'Adding a row to a shallow copy gives only the copy an extra slot. The rows it got from the original are still shared with the original array. The special constraint says b must follow whatever a starts with, so build b by copying a instead of retyping its contents.',
-        py: 'Adding a row to a shallow copy gives only the copy an extra slot. The rows it got from the original are still shared with the original list. The special constraint says b must follow whatever a starts with, so build b by copying a instead of retyping its contents.',
+        js: 'Adding a row to a shallow copy gives only the copy an extra slot. The rows it got from the original are still shared with the original array. The special constraint says y must follow whatever x starts with, so build y by copying x instead of retyping its contents.',
+        py: 'Adding a row to a shallow copy gives only the copy an extra slot. The rows it got from the original are still shared with the original list. The special constraint says y must follow whatever x starts with, so build y by copying x instead of retyping its contents.',
       },
       constraints: [
         {
           rule:
-            'The boss says that b must be built from a, so if another programmer updates what a starts with, b must still be a shallow copy of that a with the new row [3] added.',
+            'The boss says that y must be built from x, so if another programmer updates what x starts with, y must still be a shallow copy of that x with the new row [3] added.',
           cases: [
             {
-              change: 'a starts as [[5], [6]]',
-              given: { js: 'let a = [[5], [6]];', ts: 'let a: number[][] = [[5], [6]];', py: 'a = [[5], [6]]' },
+              change: 'x starts as [[5], [6]]',
+              given: { js: 'let x = [[5], [6]];', ts: 'let x: number[][] = [[5], [6]];', py: 'x = [[5], [6]]' },
               expected: graph(
-                { a: ref('a'), b: ref('b') },
+                { x: ref('x'), y: ref('y') },
                 {
-                  a: list(ref('r1'), ref('r2')),
-                  b: list(ref('r1'), ref('r2'), ref('r3')),
+                  x: list(ref('r1'), ref('r2')),
+                  y: list(ref('r1'), ref('r2'), ref('r3')),
                   r1: list(5),
                   r2: list(6),
                   r3: list(3),
@@ -1075,77 +1075,77 @@ export const copiesLevel: UnnumberedLevel = level(
         },
       ],
       process: {
-        runtime: runtime(preserve('a'), preserve('a', 0), preserve('a', 1)),
-        source: [copiesOrCombinesFrom('b', 'a')],
+        runtime: runtime(preserve('x'), preserve('x', 0), preserve('x', 1)),
+        source: [copiesOrCombinesFrom('y', 'x')],
       },
       debrief: [
         {
           html: {
-            js: '<p><code>let b = [...a];</code> creates a new outer array whose two slots point to the same <code>[1]</code> and <code>[2]</code> as <code>a</code>. Then <code>b.push([3]);</code> adds a third slot pointing to a new row <code>[3]</code>. <code>a</code> is left with its original two rows.</p>',
-            py: '<p><code>b = list(a)</code> creates a new outer list whose two slots point to the same <code>[1]</code> and <code>[2]</code> as <code>a</code>. Then <code>b.append([3])</code> adds a third slot pointing to a new row <code>[3]</code>. <code>a</code> is left with its original two rows.</p>',
+            js: '<p><code>let y = [...x];</code> creates a new outer array whose two slots point to the same <code>[1]</code> and <code>[2]</code> as <code>x</code>. Then <code>y.push([3]);</code> adds a third slot pointing to a new row <code>[3]</code>. <code>x</code> is left with its original two rows.</p>',
+            py: '<p><code>y = list(x)</code> creates a new outer list whose two slots point to the same <code>[1]</code> and <code>[2]</code> as <code>x</code>. Then <code>y.append([3])</code> adds a third slot pointing to a new row <code>[3]</code>. <code>x</code> is left with its original two rows.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b') },
+            { x: ref('x'), y: ref('y') },
             {
-              a: list(ref('r1'), ref('r2')),
-              b: list(ref('r1'), ref('r2'), ref('r3')),
+              x: list(ref('r1'), ref('r2')),
+              y: list(ref('r1'), ref('r2'), ref('r3')),
               r1: list(1),
               r2: list(2),
               r3: list(3),
             },
           ),
-          caption: 'b has three rows; the first two are shared with a.',
+          caption: 'y has three rows; the first two are shared with x.',
           verdict: 'correct',
         },
         {
           html: {
-            js: '<p><strong>Also correct:</strong> <code>let b = [...a, [3]];</code> or <code>let b = a.concat([[3]]);</code> builds this same picture directly.</p>',
-            py: '<p><strong>Also correct:</strong> <code>b = a + [[3]]</code> builds this same picture directly.</p>',
+            js: '<p><strong>Also correct:</strong> <code>let y = [...x, [3]];</code> or <code>let y = x.concat([[3]]);</code> builds this same picture directly.</p>',
+            py: '<p><strong>Also correct:</strong> <code>y = x + [[3]]</code> builds this same picture directly.</p>',
           },
         },
         {
           html: {
-            js: '<p><strong>Not correct:</strong> copying each row as well, as in <code>let b = [[...a[0]], [...a[1]], [3]];</code>, gives <code>b</code> its own rows. A shallow copy shares them.</p>',
-            py: '<p><strong>Not correct:</strong> copying each row as well, as in <code>b = [list(a[0]), list(a[1]), [3]]</code>, gives <code>b</code> its own rows. A shallow copy shares them.</p>',
+            js: '<p><strong>Not correct:</strong> copying each row as well, as in <code>let y = [[...x[0]], [...x[1]], [3]];</code>, gives <code>y</code> its own rows. A shallow copy shares them.</p>',
+            py: '<p><strong>Not correct:</strong> copying each row as well, as in <code>y = [list(x[0]), list(x[1]), [3]]</code>, gives <code>y</code> its own rows. A shallow copy shares them.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b') },
-            { a: list(ref('r1'), ref('r2')), b: list(ref('br1'), ref('br2'), ref('r3')), r1: list(1), r2: list(2), br1: list(1), br2: list(2), r3: list(3) },
+            { x: ref('x'), y: ref('y') },
+            { x: list(ref('r1'), ref('r2')), y: list(ref('br1'), ref('br2'), ref('r3')), r1: list(1), r2: list(2), br1: list(1), br2: list(2), r3: list(3) },
           ),
           caption: {
-            js: 'Not correct: a shallow copy shares the existing inner arrays with a instead of creating new ones.',
-            py: 'Not correct: a shallow copy shares the existing inner lists with a instead of creating new ones.',
+            js: 'Not correct: a shallow copy shares the existing inner arrays with x instead of creating new ones.',
+            py: 'Not correct: a shallow copy shares the existing inner lists with x instead of creating new ones.',
           },
           verdict: 'incorrect',
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> <code>let b = [[1], [2], [3]];</code>. The checker reruns your code from another starting array to make sure you built <code>b</code> from <code>a</code>.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>b = [[1], [2], [3]]</code>. The checker reruns your code from another starting list to make sure you built <code>b</code> from <code>a</code>.</p>',
+            js: '<p><strong>Not accepted:</strong> <code>let y = [[1], [2], [3]];</code>. The checker reruns your code from another starting array to make sure you built <code>y</code> from <code>x</code>.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>y = [[1], [2], [3]]</code>. The checker reruns your code from another starting list to make sure you built <code>y</code> from <code>x</code>.</p>',
           },
         },
       ],
     }),
     draw({
       title: 'Changing the original after copying',
-      js: lines('let a = [1, 2];', 'let b = [...a];', 'a[0] = 9;'),
-      py: lines('a = [1, 2]', 'b = list(a)', 'a[0] = 9'),
-      expected: graph({ a: ref('a'), b: ref('b') }, { a: list(9, 2), b: list(1, 2) }),
-      hint: 'Copying captures the slot values: changing slot 0 of a to 9 afterward leaves b holding [1, 2].',
+      js: lines('let x = [1, 2];', 'let y = [...x];', 'x[0] = 9;'),
+      py: lines('x = [1, 2]', 'y = list(x)', 'x[0] = 9'),
+      expected: graph({ x: ref('x'), y: ref('y') }, { x: list(9, 2), y: list(1, 2) }),
+      hint: 'Copying captures the slot values: changing slot 0 of x to 9 afterward leaves y holding [1, 2].',
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
-          message: 'a and b are separate containers. Reassigning slot 0 of a changes only a, not b.',
+          message: 'x and y are separate containers. Reassigning slot 0 of x changes only x, not y.',
         },
         {
-          variable: 'b',
+          variable: 'y',
           value: 9,
-          message: 'b was copied before a[0] was changed to 9, so b[0] is still 1.',
+          message: 'y was copied before x[0] was changed to 9, so y[0] is still 1.',
         },
       ],
       about: {
@@ -1155,26 +1155,26 @@ export const copiesLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>let b = [...a];</code> gives <code>b</code> its own slots, pointing to <code>1</code> and <code>2</code>. When <code>a[0] = 9;</code> runs afterward, it repoints slot 0 of <code>a</code>. <code>b</code> is a separate array, so its slot 0 still points to <code>1</code>.</p>',
-            py: '<p><code>b = list(a)</code> gives <code>b</code> its own slots, pointing to <code>1</code> and <code>2</code>. When <code>a[0] = 9</code> runs afterward, it repoints slot 0 of <code>a</code>. <code>b</code> is a separate list, so its slot 0 still points to <code>1</code>.</p>',
+            js: '<p><code>let y = [...x];</code> gives <code>y</code> its own slots, pointing to <code>1</code> and <code>2</code>. When <code>x[0] = 9;</code> runs afterward, it repoints slot 0 of <code>x</code>. <code>y</code> is a separate array, so its slot 0 still points to <code>1</code>.</p>',
+            py: '<p><code>y = list(x)</code> gives <code>y</code> its own slots, pointing to <code>1</code> and <code>2</code>. When <code>x[0] = 9</code> runs afterward, it repoints slot 0 of <code>x</code>. <code>y</code> is a separate list, so its slot 0 still points to <code>1</code>.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: list(9, 2), b: list(1, 2) }),
-          caption: 'Correct: a[0] is 9; b[0] remains 1.',
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: list(9, 2), y: list(1, 2) }),
+          caption: 'Correct: x[0] is 9; y[0] remains 1.',
           verdict: 'correct',
         },
         {
           html: {
-            js: '<p><strong>Not correct:</strong> if you gave <code>b[0]</code> the value <code>9</code>, you were treating the copy as if it still followed <code>a</code>. The copy\'s slots are its own, so repointing a slot of <code>a</code> leaves <code>b</code> alone. Only an alias (<code>let b = a;</code>) would see the change.</p>',
-            py: '<p><strong>Not correct:</strong> if you gave <code>b[0]</code> the value <code>9</code>, you were treating the copy as if it still followed <code>a</code>. The copy\'s slots are its own, so repointing a slot of <code>a</code> leaves <code>b</code> alone. Only an alias (<code>b = a</code>) would see the change.</p>',
+            js: '<p><strong>Not correct:</strong> if you gave <code>y[0]</code> the value <code>9</code>, you were treating the copy as if it still followed <code>x</code>. The copy\'s slots are its own, so repointing a slot of <code>x</code> leaves <code>y</code> alone. Only an alias (<code>let y = x;</code>) would see the change.</p>',
+            py: '<p><strong>Not correct:</strong> if you gave <code>y[0]</code> the value <code>9</code>, you were treating the copy as if it still followed <code>x</code>. The copy\'s slots are its own, so repointing a slot of <code>x</code> leaves <code>y</code> alone. Only an alias (<code>y = x</code>) would see the change.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: list(9, 2), b: list(9, 2) }),
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: list(9, 2), y: list(9, 2) }),
           caption: {
-            js: 'Not correct: b is a separate array, so repointing a slot of a does not change b.',
-            py: 'Not correct: b is a separate list, so repointing a slot of a does not change b.',
+            js: 'Not correct: y is a separate array, so repointing a slot of x does not change y.',
+            py: 'Not correct: y is a separate list, so repointing a slot of x does not change y.',
           },
           verdict: 'incorrect',
         },

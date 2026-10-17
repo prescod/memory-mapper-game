@@ -22,12 +22,12 @@ The user will interact with the following "building blocks" (Nodes) and "pointer
 1.  **Level Selection:** The user lands on a dashboard showing a list of levels (persisted in browser state).
 2.  **Language mode:** Every puzzle exists in JavaScript, TypeScript, and Python (different syntax, same expected memory picture). A language toggle switches the shown code, and progress is tracked separately per language. TypeScript falls back to JavaScript when unannotated, stripping types at runtime.
 3.  **The Challenge:**
-    *   The left sidebar displays a code snippet (e.g., `let a = [1]; let b = a;`).
+    *   The left sidebar displays a code snippet (e.g., `let x = [1]; let y = x;`).
     *   A toolbar offers draggable nodes: [Add Variable], [Add Primitive], [Add Array], [Add Object].
     *   An on-demand Help hint is available on every puzzle. Hints are neutral where possible and language-specific where spelling differs (`true`/`True`, `null`/`None`, `let` declare vs assignment, `concat` vs `+`).
 4.  **Assembly (The Canvas):**
     *   The user drags nodes onto the main canvas.
-    *   The user configures the nodes (e.g., types "a" into a Variable node, types "1" into a Scalar node, adds a slot to an Array node).
+    *   The user configures the nodes (e.g., types "x" into a Variable node, types "1" into a Scalar node, adds a slot to an Array node).
     *   The user drags lines between the nodes to establish relationships.
     *   Diagram node labels follow the selected language (`array`/`object` in JavaScript and TypeScript, `list`/`dict` in Python; `true`/`false`/`null` vs `True`/`False`/`None`).
 5.  **Verification:** The user clicks "Check Answer".
@@ -48,10 +48,10 @@ height = 5;
 
 **Level 2: Objects with Identity and Multiple References**
 ```javascript
-let a = Pet("Alice");
-let b = a;
+let x = Pet("Alice");
+let y = x;
 ```
-*Expected Graph:* Variables `a` and `b` both point to the *exact same* Pet node named `"Alice"`. Two `Pet("Alice")` calls would build two separate Pets with the same name. `Pet` is built in for this level (an alias for `Symbol` in JavaScript, a minimal class in Python); learners see calls to it, never its definition, which the grader prepends at run time only. Pet nodes are opaque: the diagram shows the name and nothing else.
+*Expected Graph:* Variables `x` and `y` both point to the *exact same* Pet node named `"Alice"`. Two `Pet("Alice")` calls would build two separate Pets with the same name. `Pet` is built in for this level (an alias for `Symbol` in JavaScript, a minimal class in Python); learners see calls to it, never its definition, which the grader prepends at run time only. Pet nodes are opaque: the diagram shows the name and nothing else.
 
 **Level 3: Arrays (Python: Lists)**
 ```javascript
@@ -73,12 +73,12 @@ let nums = [1, 2, 3];
 Validating the user's graph is the most complex technical requirement. We cannot simply compare X/Y coordinates. We must compare the *topology* of the graph.
 
 **Algorithm:**
-1.  **Extract Expected State:** Each level contains a JSON representation of the expected final state (e.g., `Variables: {a: ref1, b: ref1}, Memory: {ref1: Array([ref2]), ref2: Scalar(42)}`).
+1.  **Extract Expected State:** Each level contains a JSON representation of the expected final state (e.g., `Variables: {x: ref1, y: ref1}, Memory: {ref1: Array([ref2]), ref2: Scalar(42)}`).
 2.  **Extract User State:** Translate the React Flow nodes/edges into a similar internal JSON structure.
 3.  **Traverse & Compare:**
     *   Start at the Variable nodes (the "roots").
     *   Follow the edges. Check if the type of node being pointed to matches the expected type.
-    *   Ensure identity checks pass (e.g., if `a` and `b` are supposed to point to the *same* array, check that `userGraph.a.targetNodeId === userGraph.b.targetNodeId`).
+    *   Ensure identity checks pass (e.g., if `x` and `y` are supposed to point to the *same* array, check that `userGraph.x.targetNodeId === userGraph.y.targetNodeId`).
     *   Check contents (Array lengths, Object keys, Scalar values).
 
 ## 6. MVP (Minimum Viable Product) Milestones

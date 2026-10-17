@@ -568,32 +568,32 @@ export const nestingLevel: UnnumberedLevel = level(
     }),
     write({
       title: { js: 'Two arrays, one object', py: 'Two lists, one dictionary' },
-      js: lines('let o = { v: 1 };', 'let a = [o];', 'let b = [o];'),
+      js: lines('let o = { v: 1 };', 'let x = [o];', 'let y = [o];'),
       ts: lines(
         'let o: { v: number } = { v: 1 };',
-        'let a: { v: number }[] = [o];',
-        'let b: { v: number }[] = [o];',
+        'let x: { v: number }[] = [o];',
+        'let y: { v: number }[] = [o];',
       ),
-      py: lines('o = {"v": 1}', 'a = [o]', 'b = [o]'),
+      py: lines('o = {"v": 1}', 'x = [o]', 'y = [o]'),
       expected: graph(
-        { a: ref('a'), b: ref('b') },
-        { a: list(ref('shared')), b: list(ref('shared')), shared: dict({ v: 1 }) },
+        { x: ref('x'), y: ref('y') },
+        { x: list(ref('shared')), y: list(ref('shared')), shared: dict({ v: 1 }) },
       ),
       hint: {
-        js: 'Create the object once, then put it into two separate arrays a and b.',
-        py: 'Create the dictionary once, then put it into two separate lists a and b.',
+        js: 'Create the object once, then put it into two separate arrays x and y.',
+        py: 'Create the dictionary once, then put it into two separate lists x and y.',
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'separate',
           message:
-            'The slots of a and b should point to one shared container, not two separate containers.',
+            'The slots of x and y should point to one shared container, not two separate containers.',
         },
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
-          message: 'a and b should be two separate containers. Only the container their slots point to is shared.',
+          message: 'x and y should be two separate containers. Only the container their slots point to is shared.',
         },
       ],
       about: {
@@ -603,27 +603,27 @@ export const nestingLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>let o = { v: 1 };</code> creates one object. Then <code>let a = [o];</code> and <code>let b = [o];</code> create two separate arrays whose slots point to that one object.</p>',
-            py: '<p><code>o = {"v": 1}</code> creates one dictionary. Then <code>a = [o]</code> and <code>b = [o]</code> create two separate lists whose slots point to that one dictionary.</p>',
+            js: '<p><code>let o = { v: 1 };</code> creates one object. Then <code>let x = [o];</code> and <code>let y = [o];</code> create two separate arrays whose slots point to that one object.</p>',
+            py: '<p><code>o = {"v": 1}</code> creates one dictionary. Then <code>x = [o]</code> and <code>y = [o]</code> create two separate lists whose slots point to that one dictionary.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b') },
-            { a: list(ref('shared')), b: list(ref('shared')), shared: dict({ v: 1 }) },
+            { x: ref('x'), y: ref('y') },
+            { x: list(ref('shared')), y: list(ref('shared')), shared: dict({ v: 1 }) },
           ),
           caption: {
-            js: 'Correct: a and b are separate arrays sharing one inner object.',
-            py: 'Correct: a and b are separate lists sharing one inner dictionary.',
+            js: 'Correct: x and y are separate arrays sharing one inner object.',
+            py: 'Correct: x and y are separate lists sharing one inner dictionary.',
           },
           verdict: 'correct',
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b') },
+            { x: ref('x'), y: ref('y') },
             {
-              a: list(ref('o1')),
-              b: list(ref('o2')),
+              x: list(ref('o1')),
+              y: list(ref('o2')),
               o1: dict({ v: 1 }),
               o2: dict({ v: 1 }),
             },
@@ -636,14 +636,14 @@ export const nestingLevel: UnnumberedLevel = level(
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> <code>let b = a;</code>. That makes <code>b</code> an alias for the array <code>a</code> refers to, but the picture shows two separate arrays.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>b = a</code>. That makes <code>b</code> an alias for the list <code>a</code> refers to, but the picture shows two separate lists.</p>',
+            js: '<p><strong>Not accepted:</strong> <code>let y = x;</code>. That makes <code>y</code> an alias for the array <code>x</code> refers to, but the picture shows two separate arrays.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>y = x</code>. That makes <code>y</code> an alias for the list <code>x</code> refers to, but the picture shows two separate lists.</p>',
           },
         },
         {
           html: {
-            js: '<p>Because <code>a[0]</code> and <code>b[0]</code> lead to one object, running <code>a[0].v = 2;</code> would change what <code>b[0].v</code> shows as well.</p>',
-            py: '<p>Because <code>a[0]</code> and <code>b[0]</code> lead to one dictionary, running <code>a[0]["v"] = 2</code> would change what <code>b[0]["v"]</code> shows as well.</p>',
+            js: '<p>Because <code>x[0]</code> and <code>y[0]</code> lead to one object, running <code>x[0].v = 2;</code> would change what <code>y[0].v</code> shows as well.</p>',
+            py: '<p>Because <code>x[0]</code> and <code>y[0]</code> lead to one dictionary, running <code>x[0]["v"] = 2</code> would change what <code>y[0]["v"]</code> shows as well.</p>',
           },
         },
       ],
@@ -783,13 +783,13 @@ export const nestingLevel: UnnumberedLevel = level(
     }),
     draw({
       title: 'Pointing at each other',
-      js: lines('let a = { n: 1 };', 'let b = { n: 2 };', 'a.other = b;', 'b.other = a;'),
-      py: lines('a = {"n": 1}', 'b = {"n": 2}', 'a["other"] = b', 'b["other"] = a'),
+      js: lines('let x = { n: 1 };', 'let y = { n: 2 };', 'x.other = y;', 'y.other = x;'),
+      py: lines('x = {"n": 1}', 'y = {"n": 2}', 'x["other"] = y', 'y["other"] = x'),
       expected: graph(
-        { a: ref('a'), b: ref('b') },
+        { x: ref('x'), y: ref('y') },
         {
-          a: dict({ n: 1, other: ref('b') }),
-          b: dict({ n: 2, other: ref('a') }),
+          x: dict({ n: 1, other: ref('y') }),
+          y: dict({ n: 2, other: ref('x') }),
         },
       ),
       hint: {
@@ -798,10 +798,10 @@ export const nestingLevel: UnnumberedLevel = level(
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'separate',
           message:
-            "b's other arrow should point back to the container a refers to, not to a separate copy of it.",
+            "y's other arrow should point back to the container x refers to, not to a separate copy of it.",
         },
       ],
       about: {
@@ -811,33 +811,33 @@ export const nestingLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>a</code> and <code>b</code> are created as two separate objects. Then <code>a.other = b;</code> points <code>a.other</code> at the object <code>b</code> refers to, and <code>b.other = a;</code> points <code>b.other</code> back at the object <code>a</code> refers to, closing the loop.</p>',
-            py: '<p><code>a</code> and <code>b</code> are created as two separate dictionaries. Then <code>a["other"] = b</code> points <code>a["other"]</code> at the dictionary <code>b</code> refers to, and <code>b["other"] = a</code> points <code>b["other"]</code> back at the dictionary <code>a</code> refers to, closing the loop.</p>',
+            js: '<p><code>x</code> and <code>y</code> are created as two separate objects. Then <code>x.other = y;</code> points <code>x.other</code> at the object <code>y</code> refers to, and <code>y.other = x;</code> points <code>y.other</code> back at the object <code>x</code> refers to, closing the loop.</p>',
+            py: '<p><code>x</code> and <code>y</code> are created as two separate dictionaries. Then <code>x["other"] = y</code> points <code>x["other"]</code> at the dictionary <code>y</code> refers to, and <code>y["other"] = x</code> points <code>y["other"]</code> back at the dictionary <code>x</code> refers to, closing the loop.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b') },
+            { x: ref('x'), y: ref('y') },
             {
-              a: dict({ n: 1, other: ref('b') }),
-              b: dict({ n: 2, other: ref('a') }),
+              x: dict({ n: 1, other: ref('y') }),
+              y: dict({ n: 2, other: ref('x') }),
             },
           ),
-          caption: 'Correct: a and b refer to each other.',
+          caption: 'Correct: x and y refer to each other.',
           verdict: 'correct',
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b') },
+            { x: ref('x'), y: ref('y') },
             {
-              a: dict({ n: 1, other: ref('b') }),
-              b: dict({ n: 2, other: ref('copyA') }),
+              x: dict({ n: 1, other: ref('y') }),
+              y: dict({ n: 2, other: ref('copyA') }),
               copyA: dict({ n: 1 }),
             },
           ),
           caption: {
-            js: 'Not correct: b.other points to a snapshot of a. Assigning never copies, so b.other points to a itself.',
-            py: 'Not correct: b["other"] points to a snapshot of a. Assigning never copies, so b["other"] points to a itself.',
+            js: 'Not correct: y.other points to a snapshot of x. Assigning never copies, so y.other points to x itself.',
+            py: 'Not correct: y["other"] points to a snapshot of x. Assigning never copies, so y["other"] points to x itself.',
           },
           verdict: 'incorrect',
         },
@@ -926,11 +926,11 @@ export const nestingLevel: UnnumberedLevel = level(
     }),
     draw({
       title: { js: 'One array in two objects', py: 'One list in two dictionaries' },
-      js: lines('let labels = ["new"];', 'let a = { tags: labels };', 'let b = { tags: labels };'),
-      py: lines('labels = ["new"]', 'a = {"tags": labels}', 'b = {"tags": labels}'),
+      js: lines('let labels = ["new"];', 'let x = { tags: labels };', 'let y = { tags: labels };'),
+      py: lines('labels = ["new"]', 'x = {"tags": labels}', 'y = {"tags": labels}'),
       expected: graph(
-        { labels: ref('labels'), a: ref('a'), b: ref('b') },
-        { labels: list('new'), a: dict({ tags: ref('labels') }), b: dict({ tags: ref('labels') }) },
+        { labels: ref('labels'), x: ref('x'), y: ref('y') },
+        { labels: list('new'), x: dict({ tags: ref('labels') }), y: dict({ tags: ref('labels') }) },
       ),
       hint: {
         js: 'Count how many arrays the code creates, then follow where each tags property points.',
@@ -938,10 +938,10 @@ export const nestingLevel: UnnumberedLevel = level(
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'separate',
           message:
-            'The tags of a and b should both point to the one container that labels refers to, not to separate containers.',
+            'The tags of x and y should both point to the one container that labels refers to, not to separate containers.',
         },
       ],
       about: {
@@ -951,41 +951,41 @@ export const nestingLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>let labels = ["new"];</code> creates a single array. When <code>a</code> and <code>b</code> are created with <code>tags: labels</code>, both objects point their <code>tags</code> property at that one array.</p>',
-            py: '<p><code>labels = ["new"]</code> creates a single list. When <code>a</code> and <code>b</code> are created with <code>"tags": labels</code>, both dictionaries point their <code>"tags"</code> key at that one list.</p>',
+            js: '<p><code>let labels = ["new"];</code> creates a single array. When <code>x</code> and <code>y</code> are created with <code>tags: labels</code>, both objects point their <code>tags</code> property at that one array.</p>',
+            py: '<p><code>labels = ["new"]</code> creates a single list. When <code>x</code> and <code>y</code> are created with <code>"tags": labels</code>, both dictionaries point their <code>"tags"</code> key at that one list.</p>',
           },
         },
         {
           diagram: graph(
-            { labels: ref('labels'), a: ref('a'), b: ref('b') },
-            { labels: list('new'), a: dict({ tags: ref('labels') }), b: dict({ tags: ref('labels') }) },
+            { labels: ref('labels'), x: ref('x'), y: ref('y') },
+            { labels: list('new'), x: dict({ tags: ref('labels') }), y: dict({ tags: ref('labels') }) },
           ),
           caption: {
-            js: 'Correct: a.tags and b.tags point to the one array labels refers to.',
-            py: 'Correct: a["tags"] and b["tags"] point to the one list labels refers to.',
+            js: 'Correct: x.tags and y.tags point to the one array labels refers to.',
+            py: 'Correct: x["tags"] and y["tags"] point to the one list labels refers to.',
           },
           verdict: 'correct',
         },
         {
           diagram: graph(
-            { labels: ref('labels'), a: ref('a'), b: ref('b') },
+            { labels: ref('labels'), x: ref('x'), y: ref('y') },
             {
               labels: list('new'),
-              a: dict({ tags: ref('labels') }),
-              b: dict({ tags: ref('copy') }),
+              x: dict({ tags: ref('labels') }),
+              y: dict({ tags: ref('copy') }),
               copy: list('new'),
             },
           ),
           caption: {
-            js: 'Not correct: b.tags points to a separate copy of the array. Using labels in a literal adds an arrow to it; it does not copy it.',
-            py: 'Not correct: b["tags"] points to a separate copy of the list. Using labels in a literal adds an arrow to it; it does not copy it.',
+            js: 'Not correct: y.tags points to a separate copy of the array. Using labels in a literal adds an arrow to it; it does not copy it.',
+            py: 'Not correct: y["tags"] points to a separate copy of the list. Using labels in a literal adds an arrow to it; it does not copy it.',
           },
           verdict: 'incorrect',
         },
         {
           html: {
-            js: '<p>If code later runs <code>a.tags.push("sale");</code>, the change is seen through <code>b.tags</code> and <code>labels</code> as well, because all three lead to one array.</p>',
-            py: '<p>If code later runs <code>a["tags"].append("sale")</code>, the change is seen through <code>b["tags"]</code> and <code>labels</code> as well, because all three lead to one list.</p>',
+            js: '<p>If code later runs <code>x.tags.push("sale");</code>, the change is seen through <code>y.tags</code> and <code>labels</code> as well, because all three lead to one array.</p>',
+            py: '<p>If code later runs <code>x["tags"].append("sale")</code>, the change is seen through <code>y["tags"]</code> and <code>labels</code> as well, because all three lead to one list.</p>',
           },
         },
       ],

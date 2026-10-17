@@ -124,9 +124,11 @@ interface DebriefViewProps {
   debrief: DebriefBlock[]
   language: Language
   formatCaption: (text: string) => string
+  /** The complete reference program, shown first so the lesson text never relies on names the learner may not have typed. */
+  solutionCode?: string
 }
 
-export function DebriefView({ debrief, language, formatCaption }: DebriefViewProps) {
+export function DebriefView({ debrief, language, formatCaption, solutionCode }: DebriefViewProps) {
   return (
     <div className="debrief" role="region" aria-label="Problem debrief">
       <div className="debrief-banner" role="status">
@@ -137,6 +139,14 @@ export function DebriefView({ debrief, language, formatCaption }: DebriefViewPro
       </div>
       <h3 className="debrief-heading">What this problem shows</h3>
       <div className="debrief-body">
+        {solutionCode && (
+          <div className="debrief-html">
+            <p>A correct solution, the program this picture comes from:</p>
+            <pre>
+              <code>{solutionCode}</code>
+            </pre>
+          </div>
+        )}
         {debrief.map((block, index) => {
           if ('html' in block) {
             const html = textIn(block.html, language)

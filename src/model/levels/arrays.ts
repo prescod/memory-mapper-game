@@ -353,8 +353,8 @@ export const arraysLevel: UnnumberedLevel = level(
         },
       ],
       about: {
-        js: 'When a variable appears in an array literal, the slot points to the value that variable refers to at that moment, just as b = a does. The special constraint says row must follow whatever number n starts at, so build the slot from n instead of typing the number.',
-        py: 'When a variable appears in a list literal, the slot points to the value that variable refers to at that moment, just as b = a does. The special constraint says row must follow whatever number n starts at, so build the slot from n instead of typing the number.',
+        js: 'When a variable appears in an array literal, the slot points to the value that variable refers to at that moment, just as y = x does. The special constraint says row must follow whatever number n starts at, so build the slot from n instead of typing the number.',
+        py: 'When a variable appears in a list literal, the slot points to the value that variable refers to at that moment, just as y = x does. The special constraint says row must follow whatever number n starts at, so build the slot from n instead of typing the number.',
       },
       debrief: [
         {
@@ -400,16 +400,16 @@ export const arraysLevel: UnnumberedLevel = level(
     }),
     draw({
       title: { js: 'Two matching array literals', py: 'Two matching list literals' },
-      js: lines('let a = [1];', 'let b = [1];'),
-      py: lines('a = [1]', 'b = [1]'),
-      expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1), b: list(1) }),
+      js: lines('let x = [1];', 'let y = [1];'),
+      py: lines('x = [1]', 'y = [1]'),
+      expected: graph({ x: ref('x'), y: ref('y') }, { x: list(1), y: list(1) }),
       hint: 'Each line has its own pair of square brackets. Work out how many containers that builds.',
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
           message:
-            'a and b come from two separate literals, so they refer to two separate containers, even though their slots match. Each [...] builds a new one.',
+            'x and y come from two separate literals, so they refer to two separate containers, even though their slots match. Each [...] builds a new one.',
         },
       ],
       about: {
@@ -419,12 +419,12 @@ export const arraysLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p>Every time <code>[...]</code> runs, JavaScript builds a <strong>new</strong> array. The code has two array literals, so <code>a</code> and <code>b</code> refer to two separate arrays, even though both have one slot pointing to 1.</p>',
-            py: '<p>Every time <code>[...]</code> runs, Python builds a <strong>new</strong> list. The code has two list literals, so <code>a</code> and <code>b</code> refer to two separate lists, even though both have one slot pointing to 1.</p>',
+            js: '<p>Every time <code>[...]</code> runs, JavaScript builds a <strong>new</strong> array. The code has two array literals, so <code>x</code> and <code>y</code> refer to two separate arrays, even though both have one slot pointing to 1.</p>',
+            py: '<p>Every time <code>[...]</code> runs, Python builds a <strong>new</strong> list. The code has two list literals, so <code>x</code> and <code>y</code> refer to two separate lists, even though both have one slot pointing to 1.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: list(1), b: list(1) }),
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: list(1), y: list(1) }),
           caption: {
             js: 'Two separate arrays with matching contents.',
             py: 'Two separate lists with matching contents.',
@@ -432,7 +432,7 @@ export const arraysLevel: UnnumberedLevel = level(
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: list(1) }),
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: list(1) }),
           caption: {
             js: 'Not correct: matching contents do not make one array. Each [...] builds a new array.',
             py: 'Not correct: matching contents do not make one list. Each [...] builds a new list.',
@@ -441,8 +441,8 @@ export const arraysLevel: UnnumberedLevel = level(
         },
         {
           html: {
-            js: '<p>Compare this to <code>let b = a;</code>, which would point <code>b</code> at the array <code>a</code> already refers to, just as assigning a Pet shares it. When arrays start changing in place, in a later level, this difference decides whether a change made through <code>a</code> shows up through <code>b</code>.</p>',
-            py: '<p>Compare this to <code>b = a</code>, which would point <code>b</code> at the list <code>a</code> already refers to, just as assigning a Pet shares it. When lists start changing in place, in a later level, this difference decides whether a change made through <code>a</code> shows up through <code>b</code>.</p>',
+            js: '<p>Compare this to <code>let y = x;</code>, which would point <code>y</code> at the array <code>x</code> already refers to, just as assigning a Pet shares it. When arrays start changing in place, in a later level, this difference decides whether a change made through <code>x</code> shows up through <code>y</code>.</p>',
+            py: '<p>Compare this to <code>y = x</code>, which would point <code>y</code> at the list <code>x</code> already refers to, just as assigning a Pet shares it. When lists start changing in place, in a later level, this difference decides whether a change made through <code>x</code> shows up through <code>y</code>.</p>',
           },
         },
       ],

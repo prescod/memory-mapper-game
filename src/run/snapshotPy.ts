@@ -57,6 +57,16 @@ interface Frame {
   func: string | undefined
 }
 
+/** Learner-facing names for the Python types a Pet's name might wrongly hold. */
+const PYTHON_KINDS: Record<string, string> = {
+  int: 'a number',
+  float: 'a number',
+  bool: 'a boolean',
+  NoneType: 'None',
+  list: 'a list',
+  dict: 'a dict',
+}
+
 /**
  * Turns a MicroPython traceback into one sentence for the learner. Frames
  * after the first `snapshot` frame belong to the learner's code; the first
@@ -73,6 +83,11 @@ export function describePythonError(traceback: string, skippedLines = 0): string
   const unsupported = /^TypeError: Unsupported value in snapshot: (.*)$/.exec(last)
   if (unsupported) {
     return `A variable holds ${unsupported[1]}, which can't be shown here. Use only numbers, strings, booleans, None, lists and dicts.`
+  }
+  const badPetName = /^TypeError: Pet name is not a string: (.*)$/.exec(last)
+  if (badPetName) {
+    const kind = PYTHON_KINDS[badPetName[1]] ?? `a ${badPetName[1]}`
+    return `A Pet's name must be a string, but one Pet's name is ${kind}.`
   }
   const badKey = /^TypeError: Non-string key in snapshot: (.*)$/.exec(last)
   if (badKey) return `A dict has the key ${badKey[1]}. Use only strings as keys.`

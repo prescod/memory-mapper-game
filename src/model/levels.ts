@@ -147,6 +147,10 @@ export function problemHint(problem: Problem, language: Language): string | unde
   return problem.hint ? textIn(problem.hint, language) : undefined
 }
 
+export function problemTip(problem: Problem, language: Language): string | undefined {
+  return problem.tip ? textIn(problem.tip, language) : undefined
+}
+
 export function problemAbout(problem: Problem, language: Language): string | undefined {
   return problem.about ? textIn(problem.about, language) : undefined
 }

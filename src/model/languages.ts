@@ -9,6 +9,13 @@ export const LANGUAGES: Language[] = ['javascript', 'typescript', 'python']
 /** `addMilk` becomes `add_milk`. */
 export const pythonName = (fn: string) => fn.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
 
+/**
+ * Marks a JavaScript `Pet` from the hidden prelude: a symbol key, so it never
+ * shows up among the Pet's own fields. Python marks the class with `_dt_pet`.
+ */
+export const PET_MARKER = 'memory-mapper.pet'
+const JSON_PET = JSON.stringify(PET_MARKER)
+
 export interface RuntimeTraits {
   keywords: { true: string; false: string; null: string }
   kindNames: Record<ScalarKind, string>
@@ -24,7 +31,7 @@ const RUNTIME_TRAITS: Record<Runtime, RuntimeTraits> = {
     kindNames: { number: 'number', string: 'string', boolean: 'boolean', null: 'null' },
     containers: { array: 'array', object: 'object' },
     indent: '  ',
-    opaquePrelude: 'const Pet = Symbol;',
+    opaquePrelude: `const Pet = (name) => ({ [Symbol.for(${JSON_PET})]: true, name });`,
     functionName: (name) => name,
   },
   python: {
@@ -32,7 +39,7 @@ const RUNTIME_TRAITS: Record<Runtime, RuntimeTraits> = {
     kindNames: { number: 'number', string: 'str', boolean: 'bool', null: 'NoneType' },
     containers: { array: 'list', object: 'dict' },
     indent: '    ',
-    opaquePrelude: 'class Pet:\n    def __init__(self, name):\n        self._pet_label = name',
+    opaquePrelude: 'class Pet:\n    _dt_pet = True\n    def __init__(self, name):\n        self.name = name',
     functionName: pythonName,
   },
 }

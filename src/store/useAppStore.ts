@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { isLanguage, type Language } from '../model/languages'
 import { toPersistableDraft, type Draft } from './draft'
+import { migrateV9ToV10 } from './migrations'
 
 export interface AppState {
   language: Language
@@ -23,7 +24,7 @@ export interface AppState {
 }
 
 export const STORAGE_KEY = 'memory-model-visualizer'
-const STORAGE_VERSION = 9
+const STORAGE_VERSION = 10
 
 export const progressKey = (problemId: string, language: Language) => `${problemId}:${language}`
 
@@ -68,14 +69,16 @@ export const useAppStore = create<AppState>()(
         lastProblemId,
       }),
       migrate: (persisted, version) => {
-        if (version < STORAGE_VERSION) {
-          const lang = (persisted as Partial<AppState>).language
+        let state = persisted as Partial<AppState> & { hints?: boolean }
+        if (version === 9) state = migrateV9ToV10(state)
+        else if (version < 9) {
+          const lang = state.language
           return {
             ...initialState,
             ...(isLanguage(lang) ? { language: lang } : {}),
           }
         }
-        const { hints: _hints, ...kept } = persisted as Partial<AppState> & { hints?: boolean }
+        const { hints: _hints, ...kept } = state
         return { ...initialState, ...kept }
       },
     },

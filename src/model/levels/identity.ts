@@ -1,4 +1,5 @@
-import { graph, pet, ref, scalar, withGarbage } from '../builders'
+import { graph, pet, ref } from '../builders'
+import { preserve, runtime } from '../process'
 import type { UnnumberedLevel } from '../types'
 import { draw, L, level, lines, write } from './common'
 
@@ -9,56 +10,56 @@ export const identityLevel: UnnumberedLevel = level(
     'Objects with Identity and Multiple References',
   ),
   L(
-    'Unlike numbers and strings, a Pet has an identity: it is a separate thing in memory, and a variable refers to it with an arrow. Two variables can share one Pet, while two Pet("Milo") calls always build two separate Pets, even with the same name. Pet is built in for this level: call Pet("name") with no new. On the canvas, Add Pet draws one Pet: name it and connect variables to it.',
-    'Unlike numbers and strings, a Pet has an identity: it is a separate thing in memory, and a variable refers to it with an arrow. Two variables can share one Pet, while two Pet("Milo") calls always build two separate Pets, even with the same name. Pet is built in for this level: call Pet("name"). On the canvas, Add Pet draws one Pet: name it and connect variables to it.',
+    'Unlike numbers and strings, x Pet has an identity: it is a separate thing in memory, and a variable refers to it with an arrow. Two variables can share one Pet, while two Pet("Milo") calls always build two separate Pets, even with the same name. A Pet\'s name can change, as in y.name = "Rex": the Pet itself changes, so every variable that shares it sees the new name. Pet is built in for this level: call Pet("name") with no new. On the canvas, Add Pet draws one Pet: name it and connect variables to it.',
+    'Unlike numbers and strings, x Pet has an identity: it is a separate thing in memory, and a variable refers to it with an arrow. Two variables can share one Pet, while two Pet("Milo") calls always build two separate Pets, even with the same name. A Pet\'s name can change, as in y.name = "Rex": the Pet itself changes, so every variable that shares it sees the new name. Pet is built in for this level: call Pet("name"). On the canvas, Add Pet draws one Pet: name it and connect variables to it.',
   ),
   [
     draw({
       title: 'One Pet',
-      js: 'let a = Pet("Buddy");',
-      py: 'a = Pet("Buddy")',
-      expected: graph({ a: ref('o') }, { o: pet('Buddy') }),
-      hint: 'Add a variable named a and a Pet named "Buddy", then connect a to the Pet.',
+      js: 'let x = Pet("Buddy");',
+      py: 'x = Pet("Buddy")',
+      expected: graph({ x: ref('o') }, { o: pet('Buddy') }),
+      hint: 'Add a variable named x and a Pet named "Buddy", then connect x to the Pet.',
       about:
         'A Pet is a separate thing in memory from the variable that refers to it. Calling Pet creates the Pet, and assigning points the variable\'s arrow at it.',
       debrief: [
         {
           html: {
-            js: '<p><code>let a = Pet("Buddy");</code> creates two things: a variable named <code>a</code> and a Pet named "Buddy". The arrow means "a currently refers to that Pet."</p>',
-            py: '<p><code>a = Pet("Buddy")</code> creates two things: a variable named <code>a</code> and a Pet named "Buddy". The arrow means "a currently refers to that Pet."</p>',
+            js: '<p><code>let x = Pet("Buddy");</code> creates two things: a variable named <code>x</code> and a Pet named "Buddy". The arrow means "x currently refers to that Pet."</p>',
+            py: '<p><code>x = Pet("Buddy")</code> creates two things: a variable named <code>x</code> and a Pet named "Buddy". The arrow means "x currently refers to that Pet."</p>',
           },
         },
         {
           html: '<p>"Buddy" is only the label on the Pet. The Pet itself is a separate thing in memory with an identity of its own, and variables connect to it with arrows.</p>',
         },
         {
-          diagram: graph({ a: ref('o') }, { o: pet('Buddy') }),
+          diagram: graph({ x: ref('o') }, { o: pet('Buddy') }),
           caption: 'One variable pointing to one Pet.',
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: 'Buddy' }),
-          caption: 'Not correct: a refers to a Pet, not to the string "Buddy".',
+          diagram: graph({ x: 'Buddy' }),
+          caption: 'Not correct: x refers to a Pet, not to the string "Buddy".',
           verdict: 'incorrect',
         },
         {
-          html: '<p><strong>Not accepted:</strong> pointing a at a string "Buddy". The name is written on the Pet, but the Pet is more than its name.</p>',
+          html: '<p><strong>Not accepted:</strong> pointing x at a string "Buddy". The name is written on the Pet, but the Pet is more than its name.</p>',
         },
       ],
       opaquePrelude: true,
     }),
     draw({
       title: 'Assigning from a Pet',
-      js: lines('let a = Pet("Max");', 'let b = a;'),
-      py: lines('a = Pet("Max")', 'b = a'),
-      expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: pet('Max') }),
-      hint: 'Assigning b = a makes both names refer to the same Pet, not a second copy.',
+      js: lines('let x = Pet("Max");', 'let y = x;'),
+      py: lines('x = Pet("Max")', 'y = x'),
+      expected: graph({ x: ref('shared'), y: ref('shared') }, { shared: pet('Max') }),
+      hint: 'Assigning y = x makes both names refer to the same Pet, not a second copy.',
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'separate',
           message:
-            'b = a copies the reference, not the Pet. Both variables refer to the same Pet in memory.',
+            'y = x copies the reference, not the Pet. Both variables refer to the same Pet in memory.',
         },
       ],
       about:
@@ -66,21 +67,21 @@ export const identityLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>let a = Pet("Max");</code> creates one Pet. Then <code>let b = a;</code> copies the reference from <code>a</code> to <code>b</code>. It does not call <code>Pet()</code> again, so no second Pet is created.</p>',
-            py: '<p><code>a = Pet("Max")</code> creates one Pet. Then <code>b = a</code> copies the reference from <code>a</code> to <code>b</code>. It does not call <code>Pet()</code> again, so no second Pet is created.</p>',
+            js: '<p><code>let x = Pet("Max");</code> creates one Pet. Then <code>let y = x;</code> copies the reference from <code>x</code> to <code>y</code>. It does not call <code>Pet()</code> again, so no second Pet is created.</p>',
+            py: '<p><code>x = Pet("Max")</code> creates one Pet. Then <code>y = x</code> copies the reference from <code>x</code> to <code>y</code>. It does not call <code>Pet()</code> again, so no second Pet is created.</p>',
           },
         },
         {
-          html: '<p>Both <code>a</code> and <code>b</code> now refer to the very same Pet in memory. Having multiple names for one object is called <strong>aliasing</strong>.</p>',
+          html: '<p>Both <code>x</code> and <code>y</code> now refer to the very same Pet in memory. Having multiple names for one object is called <strong>aliasing</strong>.</p>',
         },
         {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: pet('Max') }),
-          caption: 'Correct: a and b refer to the same Pet.',
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: pet('Max') }),
+          caption: 'Correct: x and y refer to the same Pet.',
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: pet('Max'), b: pet('Max') }),
-          caption: 'Not correct: b = a copies the reference, not the Pet.',
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: pet('Max'), y: pet('Max') }),
+          caption: 'Not correct: y = x copies the reference, not the Pet.',
           verdict: 'incorrect',
         },
         {
@@ -91,26 +92,26 @@ export const identityLevel: UnnumberedLevel = level(
     }),
     write({
       title: 'Three names, one object',
-      js: lines('let a = Pet("Rex");', 'let b = a;', 'let c = a;'),
-      ts: lines('let a: Pet = Pet("Rex");', 'let b: Pet = a;', 'let c: Pet = a;'),
-      py: lines('a = Pet("Rex")', 'b = a', 'c = a'),
+      js: lines('let x = Pet("Rex");', 'let y = x;', 'let z = x;'),
+      ts: lines('let x: Pet = Pet("Rex");', 'let y: Pet = x;', 'let z: Pet = x;'),
+      py: lines('x = Pet("Rex")', 'y = x', 'z = x'),
       expected: graph(
-        { a: ref('shared'), b: ref('shared'), c: ref('shared') },
+        { x: ref('shared'), y: ref('shared'), z: ref('shared') },
         { shared: pet('Rex') },
       ),
-      hint: 'Each assignment from a adds another name for the same Pet.',
+      hint: 'Each assignment from x adds another name for the same Pet.',
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'separate',
           message:
-            'All three variables should share one Pet. Assign b from an existing variable instead of calling Pet again.',
+            'All three variables should share one Pet. Assign y from an existing variable instead of calling Pet again.',
         },
         {
-          variable: 'c',
+          variable: 'z',
           aliasing: 'separate',
           message:
-            'All three variables should share one Pet. Assign c from an existing variable instead of calling Pet again.',
+            'All three variables should share one Pet. Assign z from an existing variable instead of calling Pet again.',
         },
       ],
       about:
@@ -118,13 +119,13 @@ export const identityLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>let a = Pet("Rex");</code> creates the Pet. Each later assignment, <code>let b = a;</code> and <code>let c = a;</code>, points another variable at that same Pet.</p>',
-            py: '<p><code>a = Pet("Rex")</code> creates the Pet. Each later assignment, <code>b = a</code> and <code>c = a</code>, points another variable at that same Pet.</p>',
+            js: '<p><code>let x = Pet("Rex");</code> creates the Pet. Each later assignment, <code>let y = x;</code> and <code>let z = x;</code>, points another variable at that same Pet.</p>',
+            py: '<p><code>x = Pet("Rex")</code> creates the Pet. Each later assignment, <code>y = x</code> and <code>z = x</code>, points another variable at that same Pet.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('shared'), b: ref('shared'), c: ref('shared') },
+            { x: ref('shared'), y: ref('shared'), z: ref('shared') },
             { shared: pet('Rex') },
           ),
           caption: 'Three names pointing to one shared Pet.',
@@ -132,16 +133,16 @@ export const identityLevel: UnnumberedLevel = level(
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b'), c: ref('c') },
-            { a: pet('Rex'), b: pet('Rex'), c: pet('Rex') },
+            { x: ref('x'), y: ref('y'), z: ref('z') },
+            { x: pet('Rex'), y: pet('Rex'), z: pet('Rex') },
           ),
           caption: 'Not correct: three separate Pets that happen to share a name.',
           verdict: 'incorrect',
         },
         {
           html: {
-            js: '<p><strong>Also correct:</strong> writing <code>let c = b;</code> instead of <code>let c = a;</code>. Because <code>b</code> already refers to Rex, assigning <code>c</code> from <code>b</code> points <code>c</code> at the exact same Pet.</p>',
-            py: '<p><strong>Also correct:</strong> writing <code>c = b</code> instead of <code>c = a</code>. Because <code>b</code> already refers to Rex, assigning <code>c</code> from <code>b</code> points <code>c</code> at the exact same Pet.</p>',
+            js: '<p><strong>Also correct:</strong> writing <code>let z = y;</code> instead of <code>let z = x;</code>. Because <code>y</code> already refers to Rex, assigning <code>z</code> from <code>y</code> points <code>z</code> at the exact same Pet.</p>',
+            py: '<p><strong>Also correct:</strong> writing <code>z = y</code> instead of <code>z = x</code>. Because <code>y</code> already refers to Rex, assigning <code>z</code> from <code>y</code> points <code>z</code> at the exact same Pet.</p>',
           },
         },
         {
@@ -192,84 +193,28 @@ export const identityLevel: UnnumberedLevel = level(
       ],
       opaquePrelude: true,
     }),
-    draw({
-      title: 'Assigning from a string',
-      js: lines('let s = "hi";', 'let t = s;'),
-      py: lines('s = "hi"', 't = s'),
-      expected: graph({ s: 'hi', t: 'hi' }),
-      hint:
-        'Assigning t from s gives t the value "hi". Strings cannot change in place, so one shared string primitive node or two separate nodes are both correct.',
-      hints: [
-        {
-          variable: 't',
-          value: 's',
-          message:
-            'The value "s" is not correct. Assigning from s looks up the value s refers to, "hi", rather than using its name as text.',
-        },
-      ],
-      about:
-        'Assigning a string from another variable works just as it does for a number. A string cannot be changed in place, so drawing one shared string or two equal strings is equally correct.',
-      debrief: [
-        {
-          html: {
-            js: '<p><code>let t = s;</code> looks up the value <code>s</code> refers to, <code>"hi"</code>, and points <code>t</code> at that value.</p>',
-            py: '<p><code>t = s</code> looks up the value <code>s</code> refers to, <code>"hi"</code>, and points <code>t</code> at that value.</p>',
-          },
-        },
-        {
-          html: '<p>There are two equally correct ways to draw this:</p>',
-        },
-        {
-          diagram: graph({ s: 'hi', t: 'hi' }),
-          caption: 'Two separate "hi" strings.',
-          verdict: 'correct',
-        },
-        {
-          diagram: graph({ s: ref('shared'), t: ref('shared') }, { shared: scalar('hi') }),
-          caption: 'One "hi" string shared by both.',
-          verdict: 'correct',
-        },
-        {
-          diagram: graph({ s: 'hi', t: 's' }),
-          caption: 'Not correct: t gets the value s refers to, "hi", not the text "s".',
-          verdict: 'incorrect',
-        },
-        {
-          html: {
-            js: '<p>JavaScript describes <code>let t = s;</code> as copying the string into t, which matches the first picture.</p>',
-            py: '<p>In Python, t now refers to the very same string object as s, which matches the second picture.</p>',
-          },
-        },
-        {
-          html: '<p>Either way, a string can never be changed in place, so no program can tell the two pictures apart, and the checker accepts both.</p>',
-        },
-        {
-          html: '<p>A Pet is different. Each <code>Pet()</code> call builds a Pet with its own identity, so the checker always cares which Pet a variable refers to.</p>',
-        },
-      ],
-    }),
     write({
       title: "Two share, one doesn't",
-      js: lines('let a = Pet("Bella");', 'let b = a;', 'let c = Pet("Daisy");'),
-      ts: lines('let a: Pet = Pet("Bella");', 'let b: Pet = a;', 'let c: Pet = Pet("Daisy");'),
-      py: lines('a = Pet("Bella")', 'b = a', 'c = Pet("Daisy")'),
+      js: lines('let x = Pet("Bella");', 'let y = x;', 'let z = Pet("Daisy");'),
+      ts: lines('let x: Pet = Pet("Bella");', 'let y: Pet = x;', 'let z: Pet = Pet("Daisy");'),
+      py: lines('x = Pet("Bella")', 'y = x', 'z = Pet("Daisy")'),
       expected: graph(
-        { a: ref('shared'), b: ref('shared'), c: ref('alone') },
+        { x: ref('shared'), y: ref('shared'), z: ref('alone') },
         { shared: pet('Bella'), alone: pet('Daisy') },
       ),
-      hint: 'b = a shares one Pet; c = Pet("Daisy") creates a second, separate Pet.',
+      hint: 'y = x shares one Pet; z = Pet("Daisy") creates a second, separate Pet.',
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'separate',
           message:
-            'b should share one Pet with a. Assign b from a instead of calling Pet again.',
+            'y should share one Pet with x. Assign y from x instead of calling Pet again.',
         },
         {
-          variable: 'c',
+          variable: 'z',
           aliasing: 'shared',
           message:
-            'c must refer to its own separate Pet. Call Pet("Daisy") instead of assigning from a or b.',
+            'z must refer to its own separate Pet. Call Pet("Daisy") instead of assigning from x or y.',
         },
       ],
       about:
@@ -277,181 +222,47 @@ export const identityLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>let a = Pet("Bella");</code> creates Bella. <code>let b = a;</code> makes <code>b</code> an alias for that same Pet. Then <code>let c = Pet("Daisy");</code> calls <code>Pet()</code> again, creating a separate Pet named Daisy.</p>',
-            py: '<p><code>a = Pet("Bella")</code> creates Bella. <code>b = a</code> makes <code>b</code> an alias for that same Pet. Then <code>c = Pet("Daisy")</code> calls <code>Pet()</code> again, creating a separate Pet named Daisy.</p>',
+            js: '<p><code>let x = Pet("Bella");</code> creates Bella. <code>let y = x;</code> makes <code>y</code> an alias for that same Pet. Then <code>let z = Pet("Daisy");</code> calls <code>Pet()</code> again, creating a separate Pet named Daisy.</p>',
+            py: '<p><code>x = Pet("Bella")</code> creates Bella. <code>y = x</code> makes <code>y</code> an alias for that same Pet. Then <code>z = Pet("Daisy")</code> calls <code>Pet()</code> again, creating a separate Pet named Daisy.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('shared'), b: ref('shared'), c: ref('alone') },
+            { x: ref('shared'), y: ref('shared'), z: ref('alone') },
             { shared: pet('Bella'), alone: pet('Daisy') },
           ),
-          caption: 'a and b share Bella; c refers to Daisy.',
+          caption: 'x and y share Bella; z refers to Daisy.',
           verdict: 'correct',
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b'), c: ref('c') },
-            { a: pet('Bella'), b: pet('Bella'), c: pet('Daisy') },
+            { x: ref('x'), y: ref('y'), z: ref('z') },
+            { x: pet('Bella'), y: pet('Bella'), z: pet('Daisy') },
           ),
-          caption: 'Not correct: a and b point to two separate Bellas instead of sharing one.',
+          caption: 'Not correct: x and y point to two separate Bellas instead of sharing one.',
           verdict: 'incorrect',
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> <code>let b = Pet("Bella");</code> would give <code>b</code> a Pet with the same label, but it would be a separate object in memory rather than sharing with <code>a</code>.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>b = Pet("Bella")</code> would give <code>b</code> a Pet with the same label, but it would be a separate object in memory rather than sharing with <code>a</code>.</p>',
+            js: '<p><strong>Not accepted:</strong> <code>let y = Pet("Bella");</code> would give <code>y</code> a Pet with the same label, but it would be a separate object in memory rather than sharing with <code>x</code>.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>y = Pet("Bella")</code> would give <code>y</code> a Pet with the same label, but it would be a separate object in memory rather than sharing with <code>x</code>.</p>',
           },
         },
       ],
       opaquePrelude: true,
     }),
-    write({
-      title: 'A full name',
-      given: {
-        js: lines('let first = "Ada";', 'let last = "Lovelace";'),
-        ts: lines('let first: string = "Ada";', 'let last: string = "Lovelace";'),
-        py: lines('first = "Ada"', 'last = "Lovelace"'),
-      },
-      js: 'let full = first + " " + last;',
-      ts: 'let full: string = first + " " + last;',
-      py: 'full = first + " " + last',
-      expected: graph({ first: 'Ada', last: 'Lovelace', full: 'Ada Lovelace' }),
-      hint: {
-        js: 'Declare full by joining first, a space " ", and last.',
-        py: 'Assign full by joining first, a space " ", and last.',
-      },
-      hints: [
-        {
-          variable: 'full',
-          value: 'AdaLovelace',
-          message: 'Remember to include a space " " between first and last.',
-        },
-      ],
-      process: {
-        hidden: [
-          {
-            given: {
-              js: lines('let first = "Grace";', 'let last = "Hopper";'),
-              ts: lines('let first: string = "Grace";', 'let last: string = "Hopper";'),
-              py: lines('first = "Grace"', 'last = "Hopper"'),
-            },
-            expected: graph({ first: 'Grace', last: 'Hopper', full: 'Grace Hopper' }),
-          },
-        ],
-      },
-      about:
-        'Combining strings with + builds a new string value. It reads the values of existing variables without changing them.',
-      debrief: [
-        {
-          html: {
-            js: '<p><code>let full = first + " " + last;</code> joins the three strings and points <code>full</code> at the new string <code>"Ada Lovelace"</code>. Neither <code>first</code> nor <code>last</code> is changed.</p>',
-            py: '<p><code>full = first + " " + last</code> joins the three strings and points <code>full</code> at the new string <code>"Ada Lovelace"</code>. Neither <code>first</code> nor <code>last</code> is changed.</p>',
-          },
-        },
-        {
-          diagram: graph({ first: 'Ada', last: 'Lovelace', full: 'Ada Lovelace' }),
-          caption: 'first and last unchanged, full refers to the joined string.',
-          verdict: 'correct',
-        },
-        {
-          diagram: graph({ first: 'Ada', last: 'Lovelace', full: 'AdaLovelace' }),
-          caption: 'Not correct: missing the space between first and last.',
-          verdict: 'incorrect',
-        },
-        {
-          html: {
-            js: '<p><strong>Also correct:</strong> a template literal, <code>let full = `${first} ${last}`;</code>, builds the same new string from the same parts.</p>',
-            py: '<p><strong>Also correct:</strong> an f-string, <code>full = f"{first} {last}"</code>, builds the same new string from the same parts.</p>',
-          },
-        },
-        {
-          html: {
-            js: '<p><strong>Not accepted:</strong> <code>let full = "Ada Lovelace";</code> produces the right picture for these names, but retypes the result. The checker also runs your code with other starting names, and a retyped result is wrong for them.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>full = "Ada Lovelace"</code> produces the right picture for these names, but retypes the result. The checker also runs your code with other starting names, and a retyped result is wrong for them.</p>',
-          },
-        },
-      ],
-    }),
-    draw({
-      title: 'Building a new string',
-      js: lines('let s = "hi";', 'let t = s;', 's = s + "!";'),
-      py: lines('s = "hi"', 't = s', 's = s + "!"'),
-      expected: graph({ s: 'hi!', t: 'hi' }),
-      hint: 'Adding "!" builds a new string. Trace which variable is reassigned to it.',
-      hints: [
-        {
-          variable: 't',
-          value: 'hi!',
-          message:
-            'The value "hi!" for t is not correct. s = s + "!" builds a new string and moves only s\'s arrow. The string "hi" that t refers to cannot change.',
-        },
-        {
-          variable: 's',
-          value: 'hi',
-          message:
-            'The value "hi" for s is not correct. s = s + "!" builds "hi!" and moves s\'s arrow to that new string.',
-        },
-        {
-          variable: 's',
-          value: '!',
-          message:
-            'The value "!" for s is not correct. s = s + "!" joins the old value of s, "hi", with "!", producing "hi!".',
-        },
-      ],
-      about:
-        'A string cannot be changed in place. Adding to a string builds a new string, and reassigning moves only that one variable\'s arrow to it.',
-      debrief: [
-        {
-          html: {
-            js: '<p>After <code>let t = s;</code> both variables refer to <code>"hi"</code>. Then <code>s = s + "!";</code> does not change that string. It builds a brand new string, <code>"hi!"</code>, and moves only <code>s</code>\'s arrow to it, so <code>t</code> still refers to <code>"hi"</code>.</p>',
-            py: '<p>After <code>t = s</code> both variables refer to <code>"hi"</code>. Then <code>s = s + "!"</code> does not change that string. It builds a brand new string, <code>"hi!"</code>, and moves only <code>s</code>\'s arrow to it, so <code>t</code> still refers to <code>"hi"</code>.</p>',
-          },
-        },
-        {
-          diagram: graph({ s: 'hi!', t: 'hi' }),
-          caption: 'Correct: s refers to the new "hi!", and t still refers to "hi".',
-          verdict: 'correct',
-        },
-        {
-          diagram: graph({ s: 'hi!', t: 'hi!' }),
-          caption: 'Not correct: this is what would happen if strings changed in place.',
-          verdict: 'incorrect',
-        },
-        {
-          html: '<p><strong>Also correct:</strong> leaving a second "hi" on the canvas with nothing referring to it, if you first drew s and t with separate strings. As with numbers, unreferenced values are garbage-collected.</p>',
-        },
-        {
-          diagram: withGarbage(graph({ s: 'hi!', t: 'hi' }), 'hi'),
-          caption: 'Also correct: an old "hi" left behind with nothing pointing to it.',
-          verdict: 'correct',
-        },
-        {
-          html: {
-            js: '<p><strong>Also correct:</strong> <code>s += "!";</code> is a shorter way to write the last line. It also builds a new string and moves only s\'s arrow.</p>',
-            py: '<p><strong>Also correct:</strong> <code>s += "!"</code> is a shorter way to write the last line. It also builds a new string and moves only s\'s arrow.</p>',
-          },
-        },
-        {
-          html: {
-            js: '<p>Later levels introduce arrays and objects, which can be changed in place. A change made through one name is then seen through every name that shares the array or object. Strings never work that way.</p>',
-            py: '<p>Later levels introduce lists and dictionaries, which can be changed in place. A change made through one name is then seen through every name that shares the list or dictionary. Strings never work that way.</p>',
-          },
-        },
-      ],
-    }),
     draw({
       title: 'Same label, separate objects',
-      js: lines('let a = Pet("Milo");', 'let b = Pet("Milo");'),
-      py: lines('a = Pet("Milo")', 'b = Pet("Milo")'),
-      expected: graph({ a: ref('a'), b: ref('b') }, { a: pet('Milo'), b: pet('Milo') }),
+      js: lines('let x = Pet("Milo");', 'let y = Pet("Milo");'),
+      py: lines('x = Pet("Milo")', 'y = Pet("Milo")'),
+      expected: graph({ x: ref('x'), y: ref('y') }, { x: pet('Milo'), y: pet('Milo') }),
       hint: 'Two Pet calls with the same name still build two separate Pets in memory.',
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
           message:
-            'a and b are built from separate Pet calls, so they refer to two separate Pets even though both are named Milo.',
+            'x and y are built from separate Pet calls, so they refer to two separate Pets even though both are named Milo.',
         },
       ],
       about:
@@ -459,17 +270,17 @@ export const identityLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p>Each call to <code>Pet()</code> constructs a separate object in memory. <code>let a = Pet("Milo");</code> and <code>let b = Pet("Milo");</code> create two different Pets, even though both have the label "Milo".</p>',
-            py: '<p>Each call to <code>Pet()</code> constructs a separate object in memory. <code>a = Pet("Milo")</code> and <code>b = Pet("Milo")</code> create two different Pets, even though both have the label "Milo".</p>',
+            js: '<p>Each call to <code>Pet()</code> constructs a separate object in memory. <code>let x = Pet("Milo");</code> and <code>let y = Pet("Milo");</code> create two different Pets, even though both have the label "Milo".</p>',
+            py: '<p>Each call to <code>Pet()</code> constructs a separate object in memory. <code>x = Pet("Milo")</code> and <code>y = Pet("Milo")</code> create two different Pets, even though both have the label "Milo".</p>',
           },
         },
         {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: pet('Milo'), b: pet('Milo') }),
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: pet('Milo'), y: pet('Milo') }),
           caption: 'Correct: two separate Pets, each named Milo.',
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: pet('Milo') }),
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: pet('Milo') }),
           caption: 'Not correct: two Pet calls build two separate Pets, not one shared Pet.',
           verdict: 'incorrect',
         },
@@ -478,96 +289,231 @@ export const identityLevel: UnnumberedLevel = level(
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> one Milo shared by a and b. Sharing comes only from assigning one variable from another, as <code>let b = a;</code> would.</p>',
-            py: '<p><strong>Not accepted:</strong> one Milo shared by a and b. Sharing comes only from assigning one variable from another, as <code>b = a</code> would.</p>',
+            js: '<p><strong>Not accepted:</strong> one Milo shared by x and y. Sharing comes only from assigning one variable from another, as <code>let y = x;</code> would.</p>',
+            py: '<p><strong>Not accepted:</strong> one Milo shared by x and y. Sharing comes only from assigning one variable from another, as <code>y = x</code> would.</p>',
           },
         },
       ],
       opaquePrelude: true,
     }),
     write({
-      title: 'Same Pet as a',
-      given: { js: 'let a = Pet("Duke");', ts: 'let a: Pet = Pet("Duke");', py: 'a = Pet("Duke")' },
-      js: 'let b = a;',
-      ts: 'let b: Pet = a;',
-      py: 'b = a',
-      expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: pet('Duke') }),
+      title: 'Same Pet as x',
+      given: { js: 'let x = Pet("Duke");', ts: 'let x: Pet = Pet("Duke");', py: 'x = Pet("Duke")' },
+      js: 'let y = x;',
+      ts: 'let y: Pet = x;',
+      py: 'y = x',
+      expected: graph({ x: ref('shared'), y: ref('shared') }, { shared: pet('Duke') }),
       process: {
         hidden: [
           {
-            given: { js: 'let a = Pet("Rex");', ts: 'let a: Pet = Pet("Rex");', py: 'a = Pet("Rex")' },
-            expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: pet('Rex') }),
+            given: { js: 'let x = Pet("Rex");', ts: 'let x: Pet = Pet("Rex");', py: 'x = Pet("Rex")' },
+            expected: graph({ x: ref('shared'), y: ref('shared') }, { shared: pet('Rex') }),
           },
         ],
       },
       hint: {
-        js: 'Declare b and assign it from a instead of calling Pet again.',
-        py: 'Set b from a instead of calling Pet again.',
+        js: 'Declare y and assign it from x instead of calling Pet again.',
+        py: 'Set y from x instead of calling Pet again.',
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'separate',
           message:
-            'These references should share one Pet, but they point to different ones. Assign b from a instead of calling Pet again.',
+            'These references should share one Pet, but they point to different ones. Assign y from x instead of calling Pet again.',
         },
       ],
       about:
-        'To make b refer to the same Pet as a, assign it directly from a. Calling Pet again would construct a second, separate Pet.',
+        'To make y refer to the same Pet as x, assign it directly from x. Calling Pet again would construct a second, separate Pet.',
       debrief: [
         {
           html: {
-            js: '<p><code>let b = a;</code> copies the reference from <code>a</code> to <code>b</code>, making both variables refer to Duke.</p>',
-            py: '<p><code>b = a</code> copies the reference from <code>a</code> to <code>b</code>, making both variables refer to Duke.</p>',
+            js: '<p><code>let y = x;</code> copies the reference from <code>x</code> to <code>y</code>, making both variables refer to Duke.</p>',
+            py: '<p><code>y = x</code> copies the reference from <code>x</code> to <code>y</code>, making both variables refer to Duke.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: pet('Duke') }),
-          caption: 'a and b sharing Duke.',
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: pet('Duke') }),
+          caption: 'x and y sharing Duke.',
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: pet('Duke'), b: pet('Duke') }),
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: pet('Duke'), y: pet('Duke') }),
           caption: 'Not correct: calling Pet again creates a separate Pet.',
           verdict: 'incorrect',
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> <code>let b = Pet("Duke");</code> creates a second Pet in memory that happens to have the same name, so a and b no longer share one Pet.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>b = Pet("Duke")</code> creates a second Pet in memory that happens to have the same name, so a and b no longer share one Pet.</p>',
+            js: '<p><strong>Not accepted:</strong> <code>let y = Pet("Duke");</code> creates a second Pet in memory that happens to have the same name, so x and y no longer share one Pet.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>y = Pet("Duke")</code> creates a second Pet in memory that happens to have the same name, so x and y no longer share one Pet.</p>',
           },
         },
       ],
       opaquePrelude: true,
     }),
+    draw({
+      title: 'Renaming through a second name',
+      js: lines('let x = Pet("Lucy");', 'let y = x;', 'y.name = "Lola";'),
+      py: lines('x = Pet("Lucy")', 'y = x', 'y.name = "Lola"'),
+      expected: graph({ x: ref('shared'), y: ref('shared') }, { shared: pet('Lola') }),
+      hint: 'Work out how many Pets this code builds before you think about the new name.',
+      hints: [
+        {
+          variable: 'y',
+          aliasing: 'separate',
+          message:
+            'y = x did not build another Pet, so there is only one Pet to rename. x and y both refer to it, and both see its new name.',
+        },
+      ],
+      about:
+        'A Pet\'s name can change after it is built. Changing it through one variable changes the Pet itself, so every variable that refers to that Pet sees the new name.',
+      debrief: [
+        {
+          html: {
+            js: '<p><code>let x = Pet("Lucy");</code> builds one Pet, and <code>let y = x;</code> points y at that same Pet. <code>y.name = "Lola";</code> follows y\'s arrow and changes the name written on the Pet. No variable is reassigned.</p>',
+            py: '<p><code>x = Pet("Lucy")</code> builds one Pet, and <code>y = x</code> points y at that same Pet. <code>y.name = "Lola"</code> follows y\'s arrow and changes the name written on the Pet. No variable is reassigned.</p>',
+          },
+        },
+        {
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: pet('Lola') }),
+          caption: 'Correct: one Pet, now named Lola, shared by x and y.',
+          verdict: 'correct',
+        },
+        {
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: pet('Lucy'), y: pet('Lola') }),
+          caption: 'Not correct: this is what would happen if y = x copied the Pet.',
+          verdict: 'incorrect',
+        },
+        {
+          html: '<p>This is the payoff of identity. Because x and y share one Pet, a change made through either name is a change to the one thing they both refer to.</p>',
+        },
+      ],
+      opaquePrelude: true,
+      teaches: ['pet.name'],
+    }),
+    draw({
+      title: 'Renaming one of two look-alikes',
+      js: lines('let x = Pet("Ginger");', 'let y = Pet("Ginger");', 'y.name = "Honey";'),
+      py: lines('x = Pet("Ginger")', 'y = Pet("Ginger")', 'y.name = "Honey"'),
+      expected: graph({ x: ref('x'), y: ref('y') }, { x: pet('Ginger'), y: pet('Honey') }),
+      hint: 'Count the Pet calls. A new name goes only on the Pet that y refers to.',
+      hints: [
+        {
+          variable: 'y',
+          aliasing: 'shared',
+          message:
+            'x and y come from separate Pet calls, so they refer to two separate Pets even though both started as Ginger. Renaming y\'s Pet leaves x\'s Pet alone.',
+        },
+      ],
+      about:
+        'Changing one Pet\'s name changes only that Pet. Another Pet that happened to have the same name is separate in memory and keeps its own name.',
+      debrief: [
+        {
+          html: {
+            js: '<p>The two <code>Pet("Ginger")</code> calls build two separate Pets. <code>y.name = "Honey";</code> follows y\'s arrow to its own Pet and renames that one. x still refers to a Pet named Ginger.</p>',
+            py: '<p>The two <code>Pet("Ginger")</code> calls build two separate Pets. <code>y.name = "Honey"</code> follows y\'s arrow to its own Pet and renames that one. x still refers to a Pet named Ginger.</p>',
+          },
+        },
+        {
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: pet('Ginger'), y: pet('Honey') }),
+          caption: 'Correct: only y\'s Pet is renamed.',
+          verdict: 'correct',
+        },
+        {
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: pet('Honey') }),
+          caption: 'Not correct: matching names never made these one Pet.',
+          verdict: 'incorrect',
+        },
+        {
+          html: '<p>Compare this with "Renaming through a second name". There, a change through y showed up in x because they shared one Pet. Here they never shared, so nothing y does to its Pet can reach x.</p>',
+        },
+      ],
+      opaquePrelude: true,
+      reliesOn: ['pet.name'],
+    }),
+    write({
+      title: 'Rename the shared Pet',
+      given: {
+        js: lines('let x = Pet("Teddy");', 'let y = x;'),
+        ts: lines('let x: Pet = Pet("Teddy");', 'let y: Pet = x;'),
+        py: lines('x = Pet("Teddy")', 'y = x'),
+      },
+      js: 'x.name = "Bear";',
+      py: 'x.name = "Bear"',
+      expected: graph({ x: ref('shared'), y: ref('shared') }, { shared: pet('Bear') }),
+      process: { runtime: runtime(preserve('x')) },
+      hint: 'x and y already share one Pet. Change that Pet\'s name instead of building another.',
+      hints: [
+        {
+          variable: 'y',
+          aliasing: 'separate',
+          message:
+            'x and y should still share one Pet. Rename the Pet they already share instead of calling Pet again.',
+        },
+      ],
+      about:
+        'To change something that several variables share, change it in place through any one of them. Building another Pet would leave the old one, and anything else that refers to it, unchanged.',
+      debrief: [
+        {
+          html: {
+            js: '<p><code>x.name = "Bear";</code> renames the Pet that x refers to. y refers to the same Pet, so y sees the new name too, and nothing else had to change.</p>',
+            py: '<p><code>x.name = "Bear"</code> renames the Pet that x refers to. y refers to the same Pet, so y sees the new name too, and nothing else had to change.</p>',
+          },
+        },
+        {
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: pet('Bear') }),
+          caption: 'Correct: the original Pet, renamed Bear, still shared by x and y.',
+          verdict: 'correct',
+        },
+        {
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: pet('Bear'), y: pet('Teddy') }),
+          caption: 'Not correct: renaming one Pet never splits it in two.',
+          verdict: 'incorrect',
+        },
+        {
+          html: {
+            js: '<p><strong>Also correct:</strong> <code>y.name = "Bear";</code>. Either name reaches the same Pet.</p>',
+            py: '<p><strong>Also correct:</strong> <code>y.name = "Bear"</code>. Either name reaches the same Pet.</p>',
+          },
+        },
+        {
+          html: {
+            js: '<p><strong>Not accepted:</strong> <code>x = Pet("Bear");</code> followed by <code>y = x;</code>. The picture looks the same, but it builds a new Pet and moves both arrows to it. The Pet the starter code built is still named Teddy, so the checker rejects it.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>x = Pet("Bear")</code> followed by <code>y = x</code>. The picture looks the same, but it builds a new Pet and moves both arrows to it. The Pet the starter code built is still named Teddy, so the checker rejects it.</p>',
+          },
+        },
+      ],
+      opaquePrelude: true,
+      reliesOn: ['pet.name'],
+    }),
   ],
   [
     draw({
       title: 'Repointing the start of a chain',
-      js: lines('let a = Pet("Olive");', 'let b = a;', 'let c = b;', 'a = Pet("Toby");'),
-      py: lines('a = Pet("Olive")', 'b = a', 'c = b', 'a = Pet("Toby")'),
+      js: lines('let x = Pet("Olive");', 'let y = x;', 'let z = y;', 'x = Pet("Toby");'),
+      py: lines('x = Pet("Olive")', 'y = x', 'z = y', 'x = Pet("Toby")'),
       expected: graph(
-        { a: ref('toby'), b: ref('olive'), c: ref('olive') },
+        { x: ref('toby'), y: ref('olive'), z: ref('olive') },
         { olive: pet('Olive'), toby: pet('Toby') },
       ),
       hint: 'Trace the lines in order, and remember that a variable never refers to another variable.',
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
           message:
-            'a and b should refer to separate Pets. b = a gave b the Pet a referred to at that moment, Olive, and reassigning a afterward moves only a\'s arrow.',
+            'x and y should refer to separate Pets. y = x gave y the Pet x referred to at that moment, Olive, and reassigning x afterward moves only x\'s arrow.',
         },
         {
-          variable: 'c',
+          variable: 'z',
           aliasing: 'shared',
           message:
-            'a and c should refer to separate Pets. c = b gave c the Pet b referred to, Olive, and reassigning a afterward moves only a\'s arrow.',
+            'x and z should refer to separate Pets. z = y gave z the Pet y referred to, Olive, and reassigning x afterward moves only x\'s arrow.',
         },
         {
-          variable: 'c',
+          variable: 'z',
           aliasing: 'separate',
-          message: 'c was assigned from b (c = b), so it shares Olive with b rather than having an Olive of its own.',
+          message: 'z was assigned from y (z = y), so it shares Olive with y rather than having an Olive of its own.',
         },
       ],
       about:
@@ -575,36 +521,36 @@ export const identityLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>let b = a;</code> and <code>let c = b;</code> point b and c at Olive. The last line calls <code>Pet()</code> again, building a new Pet named Toby, and moves only <code>a</code>\'s arrow to it. b and c still share Olive.</p>',
-            py: '<p><code>b = a</code> and <code>c = b</code> point b and c at Olive. The last line calls <code>Pet()</code> again, building a new Pet named Toby, and moves only <code>a</code>\'s arrow to it. b and c still share Olive.</p>',
+            js: '<p><code>let y = x;</code> and <code>let z = y;</code> point y and z at Olive. The last line calls <code>Pet()</code> again, building a new Pet named Toby, and moves only <code>x</code>\'s arrow to it. y and z still share Olive.</p>',
+            py: '<p><code>y = x</code> and <code>z = y</code> point y and z at Olive. The last line calls <code>Pet()</code> again, building a new Pet named Toby, and moves only <code>x</code>\'s arrow to it. y and z still share Olive.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('toby'), b: ref('olive'), c: ref('olive') },
+            { x: ref('toby'), y: ref('olive'), z: ref('olive') },
             { olive: pet('Olive'), toby: pet('Toby') },
           ),
-          caption: 'Correct: a refers to Toby; b and c still share Olive.',
+          caption: 'Correct: x refers to Toby; y and z still share Olive.',
           verdict: 'correct',
         },
         {
           diagram: graph(
-            { a: ref('toby'), b: ref('toby'), c: ref('toby') },
+            { x: ref('toby'), y: ref('toby'), z: ref('toby') },
             { toby: pet('Toby') },
           ),
-          caption: 'Not correct: b and c do not follow a. Variables refer to Pets, never to other variables.',
+          caption: 'Not correct: y and z do not follow x. Variables refer to Pets, never to other variables.',
           verdict: 'incorrect',
         },
         {
           diagram: graph(
-            { a: ref('toby'), b: ref('b'), c: ref('c') },
-            { toby: pet('Toby'), b: pet('Olive'), c: pet('Olive') },
+            { x: ref('toby'), y: ref('y'), z: ref('z') },
+            { toby: pet('Toby'), y: pet('Olive'), z: pet('Olive') },
           ),
           caption: 'Not correct: assigning from a variable never creates a new Pet.',
           verdict: 'incorrect',
         },
         {
-          html: '<p>This is the same rule you met with numbers: reassigning one variable never changes any other. With Pets, it also matters which Pet the others share, and here b and c still share the one original Olive.</p>',
+          html: '<p>This is the same rule you met with numbers: reassigning one variable never changes any other. With Pets, it also matters which Pet the others share, and here y and z still share the one original Olive.</p>',
         },
       ],
       opaquePrelude: true,
@@ -612,27 +558,27 @@ export const identityLevel: UnnumberedLevel = level(
     write({
       title: 'Join the right Pet',
       given: {
-        js: lines('let a = Pet("Rocky");', 'let b = Pet("Pepper");'),
-        ts: lines('let a: Pet = Pet("Rocky");', 'let b: Pet = Pet("Pepper");'),
-        py: lines('a = Pet("Rocky")', 'b = Pet("Pepper")'),
+        js: lines('let x = Pet("Rocky");', 'let y = Pet("Pepper");'),
+        ts: lines('let x: Pet = Pet("Rocky");', 'let y: Pet = Pet("Pepper");'),
+        py: lines('x = Pet("Rocky")', 'y = Pet("Pepper")'),
       },
-      js: lines('let c = b;', 'let d = a;', 'let e = c;'),
-      ts: lines('let c: Pet = b;', 'let d: Pet = a;', 'let e: Pet = c;'),
-      py: lines('c = b', 'd = a', 'e = c'),
+      js: lines('let z = y;', 'let d = x;', 'let e = z;'),
+      ts: lines('let z: Pet = y;', 'let d: Pet = x;', 'let e: Pet = z;'),
+      py: lines('z = y', 'd = x', 'e = z'),
       expected: graph(
-        { a: ref('rocky'), b: ref('pepper'), c: ref('pepper'), d: ref('rocky'), e: ref('pepper') },
+        { x: ref('rocky'), y: ref('pepper'), z: ref('pepper'), d: ref('rocky'), e: ref('pepper') },
         { rocky: pet('Rocky'), pepper: pet('Pepper') },
       ),
       process: {
         hidden: [
           {
             given: {
-              js: lines('let a = Pet("Max");', 'let b = Pet("Nala");'),
-              ts: lines('let a: Pet = Pet("Max");', 'let b: Pet = Pet("Nala");'),
-              py: lines('a = Pet("Max")', 'b = Pet("Nala")'),
+              js: lines('let x = Pet("Max");', 'let y = Pet("Nala");'),
+              ts: lines('let x: Pet = Pet("Max");', 'let y: Pet = Pet("Nala");'),
+              py: lines('x = Pet("Max")', 'y = Pet("Nala")'),
             },
             expected: graph(
-              { a: ref('max'), b: ref('nala'), c: ref('nala'), d: ref('max'), e: ref('nala') },
+              { x: ref('max'), y: ref('nala'), z: ref('nala'), d: ref('max'), e: ref('nala') },
               { max: pet('Max'), nala: pet('Nala') },
             ),
           },
@@ -644,19 +590,19 @@ export const identityLevel: UnnumberedLevel = level(
       },
       hints: [
         {
-          variable: 'c',
+          variable: 'z',
           aliasing: 'separate',
-          message: 'c must share Pepper with b. Assign c from b instead of calling Pet.',
+          message: 'z must share Pepper with y. Assign z from y instead of calling Pet.',
         },
         {
           variable: 'd',
           aliasing: 'separate',
-          message: 'd must share Rocky with a. Assign d from a instead of calling Pet.',
+          message: 'd must share Rocky with x. Assign d from x instead of calling Pet.',
         },
         {
           variable: 'e',
           aliasing: 'separate',
-          message: 'e must share Pepper with b and c. Assign e from b or c instead of calling Pet.',
+          message: 'e must share Pepper with y and z. Assign e from y or z instead of calling Pet.',
         },
       ],
       about:
@@ -664,36 +610,36 @@ export const identityLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>let c = b;</code> points c at Pepper, <code>let d = a;</code> points d at Rocky, and <code>let e = c;</code> points e at whatever c refers to, which is Pepper.</p>',
-            py: '<p><code>c = b</code> points c at Pepper, <code>d = a</code> points d at Rocky, and <code>e = c</code> points e at whatever c refers to, which is Pepper.</p>',
+            js: '<p><code>let z = y;</code> points z at Pepper, <code>let d = x;</code> points d at Rocky, and <code>let e = z;</code> points e at whatever z refers to, which is Pepper.</p>',
+            py: '<p><code>z = y</code> points z at Pepper, <code>d = x</code> points d at Rocky, and <code>e = z</code> points e at whatever z refers to, which is Pepper.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('rocky'), b: ref('pepper'), c: ref('pepper'), d: ref('rocky'), e: ref('pepper') },
+            { x: ref('rocky'), y: ref('pepper'), z: ref('pepper'), d: ref('rocky'), e: ref('pepper') },
             { rocky: pet('Rocky'), pepper: pet('Pepper') },
           ),
-          caption: 'a and d share Rocky; b, c, and e share Pepper.',
+          caption: 'x and d share Rocky; y, z, and e share Pepper.',
           verdict: 'correct',
         },
         {
           diagram: graph(
-            { a: ref('rocky'), b: ref('pepper'), c: ref('c'), d: ref('rocky'), e: ref('e') },
-            { rocky: pet('Rocky'), pepper: pet('Pepper'), c: pet('Pepper'), e: pet('Pepper') },
+            { x: ref('rocky'), y: ref('pepper'), z: ref('z'), d: ref('rocky'), e: ref('e') },
+            { rocky: pet('Rocky'), pepper: pet('Pepper'), z: pet('Pepper'), e: pet('Pepper') },
           ),
-          caption: 'Not correct: c and e refer to new Pets instead of sharing Pepper.',
+          caption: 'Not correct: z and e refer to new Pets instead of sharing Pepper.',
           verdict: 'incorrect',
         },
         {
           html: {
-            js: '<p><strong>Also correct:</strong> <code>let e = b;</code>. Since <code>b</code> and <code>c</code> refer to the same Pet, assigning from either one has the same result.</p>',
-            py: '<p><strong>Also correct:</strong> <code>e = b</code>. Since <code>b</code> and <code>c</code> refer to the same Pet, assigning from either one has the same result.</p>',
+            js: '<p><strong>Also correct:</strong> <code>let e = y;</code>. Since <code>y</code> and <code>z</code> refer to the same Pet, assigning from either one has the same result.</p>',
+            py: '<p><strong>Also correct:</strong> <code>e = y</code>. Since <code>y</code> and <code>z</code> refer to the same Pet, assigning from either one has the same result.</p>',
           },
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> <code>let c = Pet("Pepper");</code>, which builds a look-alike instead of sharing b\'s Pet. Rebuilding a and b with new <code>Pet()</code> calls fails too: the checker also runs your code with other starting Pets.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>c = Pet("Pepper")</code>, which builds a look-alike instead of sharing b\'s Pet. Rebuilding a and b with new <code>Pet()</code> calls fails too: the checker also runs your code with other starting Pets.</p>',
+            js: '<p><strong>Not accepted:</strong> <code>let z = Pet("Pepper");</code>, which builds a look-alike instead of sharing y\'s Pet. Rebuilding x and y with new <code>Pet()</code> calls fails too: the checker also runs your code with other starting Pets.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>z = Pet("Pepper")</code>, which builds a look-alike instead of sharing y\'s Pet. Rebuilding x and y with new <code>Pet()</code> calls fails too: the checker also runs your code with other starting Pets.</p>',
           },
         },
       ],
@@ -702,32 +648,32 @@ export const identityLevel: UnnumberedLevel = level(
     draw({
       title: 'Two pairs',
       js: lines(
-        'let a = Pet("Scout");',
-        'let b = a;',
-        'let c = Pet("Rosie");',
-        'let d = c;',
+        'let x = Pet("Scout");',
+        'let y = x;',
+        'let z = Pet("Rosie");',
+        'let d = z;',
       ),
       py: lines(
-        'a = Pet("Scout")',
-        'b = a',
-        'c = Pet("Rosie")',
-        'd = c',
+        'x = Pet("Scout")',
+        'y = x',
+        'z = Pet("Rosie")',
+        'd = z',
       ),
       expected: graph(
-        { a: ref('first'), b: ref('first'), c: ref('second'), d: ref('second') },
+        { x: ref('first'), y: ref('first'), z: ref('second'), d: ref('second') },
         { first: pet('Scout'), second: pet('Rosie') },
       ),
-      hint: 'a and b share Scout; c and d share a different Pet, Rosie.',
+      hint: 'x and y share Scout; z and d share a different Pet, Rosie.',
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'separate',
-          message: 'b was assigned from a (b = a), so it shares Scout with a.',
+          message: 'y was assigned from x (y = x), so it shares Scout with x.',
         },
         {
           variable: 'd',
           aliasing: 'separate',
-          message: 'd was assigned from c (d = c), so it shares Rosie with c.',
+          message: 'd was assigned from z (d = z), so it shares Rosie with z.',
         },
       ],
       about:
@@ -735,13 +681,13 @@ export const identityLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>let a = Pet("Scout");</code> creates Scout, and <code>let b = a;</code> makes <code>b</code> an alias for Scout. Then <code>let c = Pet("Rosie");</code> creates Rosie, and <code>let d = c;</code> makes <code>d</code> an alias for Rosie.</p>',
-            py: '<p><code>a = Pet("Scout")</code> creates Scout, and <code>b = a</code> makes <code>b</code> an alias for Scout. Then <code>c = Pet("Rosie")</code> creates Rosie, and <code>d = c</code> makes <code>d</code> an alias for Rosie.</p>',
+            js: '<p><code>let x = Pet("Scout");</code> creates Scout, and <code>let y = x;</code> makes <code>y</code> an alias for Scout. Then <code>let z = Pet("Rosie");</code> creates Rosie, and <code>let d = z;</code> makes <code>d</code> an alias for Rosie.</p>',
+            py: '<p><code>x = Pet("Scout")</code> creates Scout, and <code>y = x</code> makes <code>y</code> an alias for Scout. Then <code>z = Pet("Rosie")</code> creates Rosie, and <code>d = z</code> makes <code>d</code> an alias for Rosie.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('first'), b: ref('first'), c: ref('second'), d: ref('second') },
+            { x: ref('first'), y: ref('first'), z: ref('second'), d: ref('second') },
             { first: pet('Scout'), second: pet('Rosie') },
           ),
           caption: 'Two separate pairs of references.',
@@ -749,10 +695,10 @@ export const identityLevel: UnnumberedLevel = level(
         },
         {
           diagram: graph(
-            { a: ref('first'), b: ref('b'), c: ref('second'), d: ref('second') },
-            { first: pet('Scout'), b: pet('Scout'), second: pet('Rosie') },
+            { x: ref('first'), y: ref('y'), z: ref('second'), d: ref('second') },
+            { first: pet('Scout'), y: pet('Scout'), second: pet('Rosie') },
           ),
-          caption: 'Not correct: b was assigned from a, so it must share Scout.',
+          caption: 'Not correct: y was assigned from x, so it must share Scout.',
           verdict: 'incorrect',
         },
         {
@@ -763,25 +709,25 @@ export const identityLevel: UnnumberedLevel = level(
     }),
     draw({
       title: 'Which names share?',
-      js: lines('let a = Pet("Charlie");', 'let b = Pet("Charlie");', 'let c = a;'),
-      py: lines('a = Pet("Charlie")', 'b = Pet("Charlie")', 'c = a'),
+      js: lines('let x = Pet("Charlie");', 'let y = Pet("Charlie");', 'let z = x;'),
+      py: lines('x = Pet("Charlie")', 'y = Pet("Charlie")', 'z = x'),
       expected: graph(
-        { a: ref('shared'), b: ref('alone'), c: ref('shared') },
+        { x: ref('shared'), y: ref('alone'), z: ref('shared') },
         { shared: pet('Charlie'), alone: pet('Charlie') },
       ),
-      hint: "c = a joins c with a's Pet; b keeps its own Pet, also named Charlie.",
+      hint: "z = x joins z with x's Pet; y keeps its own Pet, also named Charlie.",
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
           message:
-            'b was created by its own Pet("Charlie") call. It is a separate Pet from a and c, even though they share the same label.',
+            'y was created by its own Pet("Charlie") call. It is a separate Pet from x and z, even though they share the same label.',
         },
         {
-          variable: 'c',
+          variable: 'z',
           aliasing: 'separate',
           message:
-            'c was assigned from a (c = a), so c must share the very same Pet as a.',
+            'z was assigned from x (z = x), so z must share the very same Pet as x.',
         },
       ],
       about:
@@ -789,24 +735,24 @@ export const identityLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>let a = Pet("Charlie");</code> and <code>let b = Pet("Charlie");</code> each call <code>Pet()</code>, creating two separate Pets in memory that happen to have the same name. Then <code>let c = a;</code> points <code>c</code> at <code>a</code>\'s Pet.</p>',
-            py: '<p><code>a = Pet("Charlie")</code> and <code>b = Pet("Charlie")</code> each call <code>Pet()</code>, creating two separate Pets in memory that happen to have the same name. Then <code>c = a</code> points <code>c</code> at <code>a</code>\'s Pet.</p>',
+            js: '<p><code>let x = Pet("Charlie");</code> and <code>let y = Pet("Charlie");</code> each call <code>Pet()</code>, creating two separate Pets in memory that happen to have the same name. Then <code>let z = x;</code> points <code>z</code> at <code>x</code>\'s Pet.</p>',
+            py: '<p><code>x = Pet("Charlie")</code> and <code>y = Pet("Charlie")</code> each call <code>Pet()</code>, creating two separate Pets in memory that happen to have the same name. Then <code>z = x</code> points <code>z</code> at <code>x</code>\'s Pet.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('shared'), b: ref('alone'), c: ref('shared') },
+            { x: ref('shared'), y: ref('alone'), z: ref('shared') },
             { shared: pet('Charlie'), alone: pet('Charlie') },
           ),
-          caption: 'Correct: a and c share one Charlie; b has a separate Charlie.',
+          caption: 'Correct: x and z share one Charlie; y has a separate Charlie.',
           verdict: 'correct',
         },
         {
           diagram: graph(
-            { a: ref('shared'), b: ref('shared'), c: ref('shared') },
+            { x: ref('shared'), y: ref('shared'), z: ref('shared') },
             { shared: pet('Charlie') },
           ),
-          caption: 'Not correct: having the same label does not make b the same Pet as a.',
+          caption: 'Not correct: having the same label does not make y the same Pet as x.',
           verdict: 'incorrect',
         },
         {
@@ -815,65 +761,59 @@ export const identityLevel: UnnumberedLevel = level(
       ],
       opaquePrelude: true,
     }),
-    write({
-      title: 'Clear one, keep the backup',
-      given: {
-        js: lines('let name = "Ada";', 'let backup = name;'),
-        ts: lines('let name: string = "Ada";', 'let backup: string = name;'),
-        py: lines('name = "Ada"', 'backup = name'),
-      },
-      js: 'name = null;',
-      py: 'name = None',
-      expected: graph({ name: null, backup: 'Ada' }),
-      hint: {
-        js: 'Reassign name to null. The backup variable will keep its value.',
-        py: 'Reassign name to None. The backup variable will keep its value.',
-      },
+    draw({
+      title: 'Renaming after a repoint',
+      js: lines('let x = Pet("Oscar");', 'let y = x;', 'let z = Pet("Penny");', 'x = z;', 'y.name = "Jack";'),
+      py: lines('x = Pet("Oscar")', 'y = x', 'z = Pet("Penny")', 'x = z', 'y.name = "Jack"'),
+      expected: graph(
+        { x: ref('penny'), y: ref('oscar'), z: ref('penny') },
+        { oscar: pet('Jack'), penny: pet('Penny') },
+      ),
+      hint: 'Trace the lines in order. Before the last line, find which Pet y refers to.',
       hints: [
         {
-          variable: 'backup',
-          value: null,
+          variable: 'y',
+          aliasing: 'shared',
           message:
-            'Reassigning name does not affect backup. backup still refers to "Ada".',
+            'y should not share its Pet with x. y = x gave y the first Pet, and x = z moved only x\'s arrow, so y still refers to that first Pet.',
+        },
+        {
+          variable: 'x',
+          aliasing: 'separate',
+          message: 'x = z points x at the Pet z refers to, so x and z share one Pet.',
         },
       ],
-      about: {
-        js: 'Reassigning a variable moves only its own arrow. Reassigning name to null leaves backup pointing to the original value.',
-        py: 'Reassigning a variable moves only its own arrow. Reassigning name to None leaves backup pointing to the original value.',
-      },
+      about:
+        'A change made through one variable reaches whichever Pet that variable refers to at that moment. Earlier repointing decides which Pet that is.',
       debrief: [
         {
           html: {
-            js: '<p><code>name = null;</code> moves only <code>name</code>\'s arrow to <code>null</code>. <code>backup</code> continues to refer to <code>"Ada"</code>.</p>',
-            py: '<p><code>name = None</code> moves only <code>name</code>\'s arrow to <code>None</code>. <code>backup</code> continues to refer to <code>"Ada"</code>.</p>',
+            js: '<p><code>let y = x;</code> points y at the first Pet, Oscar. <code>x = z;</code> moves only x\'s arrow, to Penny. So when <code>y.name = "Jack";</code> runs, y still refers to the first Pet, and that Pet becomes Jack. Penny is untouched.</p>',
+            py: '<p><code>y = x</code> points y at the first Pet, Oscar. <code>x = z</code> moves only x\'s arrow, to Penny. So when <code>y.name = "Jack"</code> runs, y still refers to the first Pet, and that Pet becomes Jack. Penny is untouched.</p>',
           },
         },
         {
-          diagram: graph({ name: null, backup: 'Ada' }),
-          caption: {
-            js: 'name refers to null; backup keeps "Ada".',
-            py: 'name refers to None; backup keeps "Ada".',
-          },
+          diagram: graph(
+            { x: ref('penny'), y: ref('oscar'), z: ref('penny') },
+            { oscar: pet('Jack'), penny: pet('Penny') },
+          ),
+          caption: 'Correct: y\'s Pet is renamed Jack; x and z share Penny.',
           verdict: 'correct',
         },
         {
-          diagram: graph({ name: null, backup: null }),
-          caption: 'Not correct: reassigning name does not change backup.',
+          diagram: graph(
+            { x: ref('penny'), y: ref('penny'), z: ref('penny') },
+            { penny: pet('Jack') },
+          ),
+          caption: 'Not correct: y never followed x to Penny. Variables refer to Pets, never to other variables.',
           verdict: 'incorrect',
         },
         {
-          html: {
-            js: '<p>Variables never point to other variables. When <code>let backup = name;</code> ran, it gave backup the value name referred to, <code>"Ada"</code>. Reassigning <code>name</code> later leaves <code>backup</code> untouched.</p>',
-            py: '<p>Variables never point to other variables. When <code>backup = name</code> ran, it gave backup the value name referred to, <code>"Ada"</code>. Reassigning <code>name</code> later leaves <code>backup</code> untouched.</p>',
-          },
-        },
-        {
-          html: {
-            js: '<p><strong>Not accepted:</strong> <code>name = "";</code>. An empty string is still a string, not <code>null</code>.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>name = ""</code>. An empty string is still a string, not <code>None</code>.</p>',
-          },
+          html: '<p>Renaming and repointing are different. Repointing moves one variable\'s arrow; renaming changes a Pet, and everyone pointing at that Pet sees it.</p>',
         },
       ],
+      opaquePrelude: true,
+      reliesOn: ['pet.name'],
     }),
   ],
 )

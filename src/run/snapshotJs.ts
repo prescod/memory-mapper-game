@@ -1,5 +1,6 @@
 import { graph, type ContainerSpec, type Value } from '../model/builders'
 import type { RuntimeChecks } from '../model/process'
+import { PET_MARKER } from '../model/languages'
 import type { MemoryGraph } from '../model/types'
 import { UserCodeError } from './errors'
 import { joinProgram } from './protocol'
@@ -26,6 +27,12 @@ const SUPPORTED_NOTE = 'Use only numbers, strings, booleans, null, arrays and ob
 function isPlainObject(value: object): boolean {
   const prototype = Object.getPrototypeOf(value)
   return prototype === Object.prototype || prototype === null
+}
+
+const PET_KEY = Symbol.for(PET_MARKER)
+
+function isPet(value: unknown): value is object {
+  return typeof value === 'object' && value !== null && (value as Record<symbol, unknown>)[PET_KEY] === true
 }
 
 /** Evaluates `code` with no starter code and no process rules. */
@@ -71,14 +78,17 @@ export function runJavaScript(
     if (value === null || ['number', 'string', 'boolean'].includes(typeof value)) {
       return value as Value
     }
-    if (typeof value === 'symbol') {
-      // A `Pet` from the hidden prelude (an alias for `Symbol`): opaque, unique
-      // by construction, labelled by its description. Never shown as an object.
+    if (isPet(value)) {
+      // A `Pet` from the hidden prelude: shown by its name alone, never as an object.
       const existing = ids.get(value)
       if (existing) return { ref: existing }
+      const { name } = value as { name: unknown }
+      if (typeof name !== 'string') {
+        throw new UserCodeError(`A Pet's name must be a string, but one Pet's name is ${describeUnsupported(name)}.`)
+      }
       const id = `c${ids.size}`
       ids.set(value, id)
-      containers[id] = { kind: 'pet', label: value.description ?? '' }
+      containers[id] = { kind: 'pet', label: name }
       return { ref: id }
     }
     if (typeof value !== 'object' || (!Array.isArray(value) && !isPlainObject(value))) {

@@ -28,7 +28,7 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 
 - draw a variable, a value, and the arrow between them, and read such a picture;
 - predict the result of reassignment: the arrow moves, and the old value is left behind;
-- predict that `b = a` gives b a's current value, and that later reassigning either one leaves the other alone;
+- predict that `y = x` gives y x's current value, and that later reassigning either one leaves the other alone;
 - trace a short sequence of assignments in order, including a swap with a temporary variable;
 - decide, from what the code is for, whether a new variable should be assigned from an existing one or given its own value (the constraints in "Two equal values" and "Two teams");
 - recognize numbers, strings, booleans, and `null`/`None` as values that get arrows like any other.
@@ -36,9 +36,9 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 **Misconceptions it targets:**
 
 - *Spreadsheet thinking*: changing `height` should update `area` ("Area after a change", and the contrast "Area before a change").
-- *Variables point at variables*: `b = a` makes b follow a (the canvas allows the arrow and always marks it wrong).
-- *Reassignment travels*: changing b after `b = a` changes a too ("Reassigning the second variable", "Reassigning the original leaves the other unchanged", "A chain of assignments").
-- *Swaps are two assignments*: `a = b; b = a` loses a value ("Swapped", "Rotate left").
+- *Variables point at variables*: `y = x` makes y follow x (the canvas allows the arrow and always marks it wrong).
+- *Reassignment travels*: changing y after `y = x` changes x too ("Reassigning the second variable", "Reassigning the original leaves the other unchanged", "A chain of assignments").
+- *Swaps are two assignments*: `x = y; y = x` loses a value ("Swapped", "Rotate left").
 
 **Sets up.** The idea that sharing a value can matter. Level 1 says explicitly that sharing a number and keeping two equal numbers are both correct, because numbers cannot change; Level 2 introduces values where the difference is visible.
 
@@ -52,30 +52,28 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 
 ## Level 2: Objects with Identity and Multiple References (`identity`)
 
-**Big idea.** A Pet is a separate thing in memory, and a variable holds a reference to it. Identity, not the name on the label, decides whether two variables refer to the same Pet.
+**Big idea.** A Pet is a separate thing in memory, and a variable holds a reference to it. Identity, not the name on the label, decides whether two variables refer to the same Pet. The payoff: renaming a Pet through one variable is seen through every variable that shares it, and by no other Pet.
 
 **By the end, a learner can:**
 
 - draw several names referring to one Pet, and several Pets with names of their own;
-- tell from code whether two variables share a Pet (`b = a`) or refer to separate Pets (two `Pet(...)` calls), even when the Pets have the same name;
-- contrast Pets with strings: assigning a string from a variable, or building a new string with `+`, behaves like the values in Level 1;
-- write code that shares an existing Pet rather than building a look-alike.
+- tell from code whether two variables share a Pet (`y = x`) or refer to separate Pets (two `Pet(...)` calls), even when the Pets have the same name;
+- write code that shares an existing Pet rather than building a look-alike;
+- predict which variables see a Pet's new name after `y.name = "Lola"`, and rename a shared Pet in place rather than replacing it.
 
 **Misconceptions it targets:**
 
 - *Same label means same object*: two `Pet("Milo")` calls share ("Same label, separate objects", "Which names share?").
-- *Assignment copies objects*: `b = a` makes a second Pet.
-- *Strings change in place*: `s = s + "!"` alters the old string ("Building a new string").
+- *Assignment copies objects*: `y = x` makes a second Pet, so renaming through y leaves x alone ("Renaming through a second name").
+- *A change reaches every look-alike*: renaming one of two `Pet("Ginger")`s renames both ("Renaming one of two look-alikes").
 
 **Builds on** Level 1's assignment rules, now applied to values with identity. **Sets up** containers, which have identity in the same way and can also change.
 
-**How the level checks it.** The checker compares sharing exactly for Pets: merging two names onto one Pet, or splitting one Pet into two, is an error, and "Same label, separate objects" explains the specific mistake. Hidden alternate starters reject answers that rebuild the starter Pets or retype a string instead of using the existing one.
+**How the level checks it.** The checker compares sharing exactly for Pets: merging two names onto one Pet, or splitting one Pet into two, is an error, and "Same label, separate objects" explains the specific mistake. Hidden alternate starters reject answers that rebuild the starter Pets instead of using the existing ones. The checker compares each Pet's name as well as its sharing, and "Rename the shared Pet" uses a `preserve` rule, so building a new Pet with the new name fails even though the picture matches.
 
-**Out of scope.** What is inside a Pet. Pets are opaque: they have a name and an identity, nothing else. `Pet` is defined invisibly by the game; learners never see or write its definition.
+**Out of scope.** Anything inside a Pet besides its name. A Pet has an identity and one changeable field, `name`, set with `p.name = "Rex"` in every language; no other fields are shown or compared. `Pet` is defined invisibly by the game; learners never see or write its definition. Changing containers in place (`push`, keys) belongs to Levels 5 and 6: Level 2 renames a Pet only to show what identity is for.
 
-**Challenge problems** retest chains of names, pairs, same-name Pets, and a string backup that survives reassignment.
-
-**Gaps.** Puzzles have no `about` or `debrief` text yet.
+**Challenge problems** retest chains of names, pairs, same-name Pets, and a rename after a repoint.
 
 ---
 
@@ -113,7 +111,7 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 **By the end, a learner can:**
 
 - draw objects with keys pointing to values of any kind, including an empty object and a key holding `null`/`None`;
-- tell aliasing (`b = a`) from two equal but separate objects;
+- tell aliasing (`y = x`) from two equal but separate objects;
 - write code that builds several objects and shares some of them.
 
 **Misconceptions it targets:**
@@ -146,13 +144,13 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 
 **Misconceptions it targets:**
 
-- *Changing through b leaves a alone* ("Mutating through an alias", "Add for both").
-- *Reassigning a changes the array b still refers to* ("Pointing a name elsewhere", "Split them apart").
+- *Changing through y leaves x alone* ("Mutating through an alias", "Add for both").
+- *Reassigning x changes the array y still refers to* ("Pointing a name elsewhere", "Split them apart").
 - *Repointing and then mutating affects the old array* ("Repoint, then grow").
 
 **Builds on** Level 3's slots and Level 2's aliasing. **Sets up** Level 6, which applies the same distinction to objects, and Level 9, which adds operations that build new arrays.
 
-**How the level checks it.** Writing puzzles require that the starter array is still the same array afterward (`preserve`), so rebuilding it as a literal fails with "Change what "a" already refers to instead of creating a new one."
+**How the level checks it.** Writing puzzles require that the starter array is still the same array afterward (`preserve`), so rebuilding it as a literal fails with "Change what "x" already refers to instead of creating a new one."
 **Out of scope.** Methods that insert or remove in the middle, sorting, and methods that return new arrays.
 
 **Challenge problems** retest sequences of changes, mixed mutation and repointing, and changes from two names to one array.
@@ -252,7 +250,7 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 
 **By the end, a learner can:**
 
-- predict that string methods return new strings and never change the original;
+- predict that joining strings with `+` and string methods return new strings and never change the original, the same way numbers behave;
 - tell an operation that builds a new array or list from one that changes the existing one in place, and predict which names see the result;
 - predict that setting a name to `null`/`None` drops one reference, and that a value nothing refers to is garbage;
 - predict that repointing a variable initialized from a container slot leaves the container untouched;
@@ -260,14 +258,14 @@ Every level is taught in both JavaScript and Python with the same pictures. Wher
 
 **Misconceptions it targets:**
 
-- *String methods change the string* ("Strings never change", "Upper case through an alias").
+- *Strings change in place*: `s = s + "!"` or `s.toUpperCase()` alters the old string ("Building a new string", "Upper and lower", "Upper case through an alias").
 - *Combining creates changes in the original* ("Combine without changing the original", "In place, then new").
 - *Dropping one reference destroys the underlying value when another reference exists* ("Let it go").
 - *Assigning from a slot links the variable to the slot* ("A string taken from a list").
 
 **Builds on** Levels 5 and 6. **Sets up** Level 10, which applies reference and rebinding rules across function boundaries.
 
-**How the level checks it.** Source rules require the named operations (string methods, `concat`/`+`). Runtime rules enforce preservation of original containers and verify identity. Hidden alternate starters prevent hardcoding literals.
+**How the level checks it.** Source rules require the named operations (string methods, `concat`/`+`); "A full name" pairs with "Combine without changing the original" as the string and array versions of the same idea. Runtime rules enforce preservation of original containers and verify identity. Hidden alternate starters prevent hardcoding literals.
 
 **Out of scope.** Regular expressions, advanced string manipulation, and library immutability helpers.
 

@@ -21,8 +21,13 @@ import sys
 MISSING = object()
 
 
+def is_pet(value):
+    # A `Pet` from the hidden prelude, whose class is marked with `_dt_pet`.
+    return getattr(type(value), "_dt_pet", False) is True
+
+
 def is_container(value):
-    return isinstance(value, (list, dict))
+    return isinstance(value, (list, dict)) or is_pet(value)
 
 
 def resolve(namespace, location):
@@ -136,16 +141,15 @@ def snapshot(code, names, checks=None):
     def encode(value):
         if value is None or isinstance(value, (bool, int, float, str)):
             return value
-        pet_class = namespace.get("Pet")
-        if pet_class is not None and type(value) is pet_class:
-            # A `Pet` from the hidden prelude: opaque, labelled by its private
-            # name. Never shown as a dict, even though it is an instance.
-            label = getattr(value, "_pet_label", None)
-            if not isinstance(label, str):
-                raise TypeError(f"Unsupported value in snapshot: {value!r}")
+        if is_pet(value):
+            # A `Pet` from the hidden prelude: shown by its name alone, never as
+            # a dict, even though it is an instance.
             key = id(value)
             if key in ids:
                 return {"ref": ids[key]}
+            label = getattr(value, "name", None)
+            if not isinstance(label, str):
+                raise TypeError(f"Pet name is not a string: {type(label).__name__}")
             container_id = f"c{len(ids)}"
             ids[key] = container_id
             containers[container_id] = {"kind": "pet", "label": label}

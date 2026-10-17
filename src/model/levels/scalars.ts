@@ -31,6 +31,7 @@ export const scalarsLevel: UnnumberedLevel = level(
           message: 'The value 10 is a number, not a string. Do not put quotes around numbers.',
         },
       ],
+      tip: '<p>A number is a <strong>primitive</strong> value: a simple, single value. A variable is one block, its value is another, and an arrow connects them.</p>',
       about:
         'A variable and its value are two separate things. Assigning creates a name and points an arrow at its value.',
       debrief: [
@@ -75,6 +76,7 @@ export const scalarsLevel: UnnumberedLevel = level(
             'The value 5 is not correct here. x stopped referring to 5 when it was reassigned: the second line moved its arrow to 7.',
         },
       ],
+      tip: '<p>A value that no arrow points to is ignored, so you may delete the old value or leave it on the canvas.</p>',
       about:
         'Assigning to a variable that already exists moves its arrow to a new value. The variable keeps no memory of what it referred to before.',
       debrief: [
@@ -119,6 +121,7 @@ export const scalarsLevel: UnnumberedLevel = level(
             'The value "x" is not correct. Assigning from a variable evaluates that variable to find its value, 10, rather than using its name as text.',
         },
       ],
+      tip: '<p>Arrows go from variables to values, never to other variables. To draw a variable assigned from another, point it at the value the other one currently refers to.</p>',
       about:
         'Assigning one variable from another gives the new variable the value the first one refers to at that moment.',
       debrief: [
@@ -168,62 +171,66 @@ export const scalarsLevel: UnnumberedLevel = level(
     }),
     write({
       title: 'Two equal values',
-      given: { js: 'let a = 8;', ts: 'let a: number = 8;', py: 'a = 8' },
-      js: 'let b = a;',
-      ts: 'let b: number = a;',
-      py: 'b = a',
-      expected: graph({ a: 8, b: 8 }),
+      given: { js: 'let x = 8;', ts: 'let x: number = 8;', py: 'x = 8' },
+      js: 'let y = x;',
+      ts: 'let y: number = x;',
+      py: 'y = x',
+      expected: graph({ x: 8, y: 8 }),
       constraints: [
         {
           rule:
-            'The boss says that if another programmer updates the code so that a starts at a different number, b must also use that different number.',
+            'The boss says that if another programmer updates the code so that x starts at a different number, y must also use that different number.',
           cases: [
             {
-              change: 'a starts at 3',
-              given: { js: 'let a = 3;', ts: 'let a: number = 3;', py: 'a = 3' },
-              expected: graph({ a: 3, b: 3 }),
+              change: 'x starts at 3',
+              given: { js: 'let x = 3;', ts: 'let x: number = 3;', py: 'x = 3' },
+              expected: graph({ x: 3, y: 3 }),
             },
           ],
         },
       ],
       hint: {
-        js: 'Declare b and assign it from a instead of typing 8 again.',
-        py: 'Set b from a instead of typing 8 again.',
+        js: 'Declare y and assign it from x instead of typing 8 again.',
+        py: 'Set y from x instead of typing 8 again.',
       },
       hints: [
         {
-          variable: 'b',
-          value: 'a',
+          variable: 'y',
+          value: 'x',
           message:
-            'The value "a" is not correct. Assign from the variable a without quotes so that b receives its numerical value, 8.',
+            'The value "x" is not correct. Assign from the variable x without quotes so that y receives its numerical value, 8.',
         },
       ],
+      tip: {
+        js: '<p>A variable name stands for the value it refers to, so you can write the name wherever a value goes. <code>let</code> creates a new variable: use it only the first time a name appears.</p>',
+        py: '<p>A variable name stands for the value it refers to, so you can write the name wherever a value goes.</p>',
+      },
       about:
-        'Give b the value that a already refers to. The special constraint says b must follow whatever number a starts at, so assign from a instead of typing the number again.',
+        'Give y the value that x already refers to. The special constraint says y must follow whatever number x starts at, so assign from x instead of typing the number again.',
       debrief: [
         {
           html: {
-            js: '<p><code>let b = a;</code> gives b whatever value a refers to at that moment: 8.</p>',
-            py: '<p><code>b = a</code> gives b whatever value a refers to at that moment: 8.</p>',
+            js: '<p><code>let y = x;</code> gives y whatever value x refers to at that moment: 8.</p>',
+            py: '<p><code>y = x</code> gives y whatever value x refers to at that moment: 8.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: scalar(8) }),
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: scalar(8) }),
           caption: 'This picture, with one shared 8, shows the same memory as the one you matched.',
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: 8, b: 'a' }),
-          caption: 'Not correct: b must receive the value a refers to, not the text "a".',
+          diagram: graph({ x: 8, y: 'x' }),
+          caption: 'Not correct: y must receive the value x refers to, not the text "x".',
           verdict: 'incorrect',
         },
         {
-          html: "<p><strong>Also correct:</strong> b sharing a's 8, as above, or referring to a separate 8, as in the picture you matched. Numbers cannot change in place, so the two pictures behave the same.</p>",
+          html: "<p><strong>Also correct:</strong> y sharing x's 8, as above, or referring to a separate 8, as in the picture you matched. Numbers cannot change in place, so the two pictures behave the same.</p>",
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> <code>let b = 8;</code> builds exactly the same picture, so the picture alone cannot tell the two apart. The special constraint can. If another programmer changes the first line to <code>let a = 3;</code>, then <code>let b = a;</code> gives b 3 as well, as your boss asked, but <code>let b = 8;</code> leaves b at 8.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>b = 8</code> builds exactly the same picture, so the picture alone cannot tell the two apart. The special constraint can. If another programmer changes the first line to <code>a = 3</code>, then <code>b = a</code> gives b 3 as well, as your boss asked, but <code>b = 8</code> leaves b at 8.</p>',
+            js: '<p><strong>Not accepted:</strong> <code>let y = 8;</code> builds exactly the same picture, so the picture alone cannot tell the two apart. The special constraint can. If another programmer changes the first line to <code>let x = 3;</code>, then <code>let y = x;</code> gives y 3 as well, as your boss asked, but <code>let y = 8;</code> leaves y at 8.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>y = 8</code> builds exactly the same picture, so the picture alone cannot tell the two apart. The special constraint can. If another programmer changes the first line to <code>x = 3</code>, then <code>y = x</code> gives y 3 as well, as your boss asked, but <code>y = 8</code> leaves y at 8.</p>',
           },
         },
         {
@@ -251,6 +258,7 @@ export const scalarsLevel: UnnumberedLevel = level(
             'The value 4 is not correct for height. Remember that height was reassigned to 5 on the final line.',
         },
       ],
+      tip: '<p><code>*</code> multiplies. The result is a new number, calculated at the moment that line runs.</p>',
       about:
         'An assignment calculates its value once, when that line runs. A variable is not a spreadsheet cell, so reassigning one of its inputs later does not update the calculated value.',
       debrief: [
@@ -352,21 +360,21 @@ export const scalarsLevel: UnnumberedLevel = level(
     }),
     draw({
       title: 'Reassigning the second variable',
-      js: lines('let a = 1;', 'let b = a;', 'b = 2;'),
-      py: lines('a = 1', 'b = a', 'b = 2'),
-      expected: graph({ a: 1, b: 2 }),
+      js: lines('let x = 1;', 'let y = x;', 'y = 2;'),
+      py: lines('x = 1', 'y = x', 'y = 2'),
+      expected: graph({ x: 1, y: 2 }),
       hint: 'Trace the lines in order. Which arrow does the last line move?',
       hints: [
         {
-          variable: 'a',
+          variable: 'x',
           value: 2,
           message:
-            "The value 2 for a is not correct. Reassigning b moves only b's arrow; a still refers to 1.",
+            "The value 2 for x is not correct. Reassigning y moves only y's arrow; x still refers to 1.",
         },
         {
-          variable: 'b',
+          variable: 'y',
           value: 1,
-          message: "The value 1 for b is not correct. The line b = 2 reassigned b to 2.",
+          message: "The value 1 for y is not correct. The line y = 2 reassigned y to 2.",
         },
       ],
       about:
@@ -374,28 +382,28 @@ export const scalarsLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: "<p>After <code>let b = a;</code> both variables refer to 1. Then <code>b = 2;</code> moves only b's arrow. Nothing happened to a, so a still refers to 1.</p>",
-            py: "<p>After <code>b = a</code> both variables refer to 1. Then <code>b = 2</code> moves only b's arrow. Nothing happened to a, so a still refers to 1.</p>",
+            js: "<p>After <code>let y = x;</code> both variables refer to 1. Then <code>y = 2;</code> moves only y's arrow. Nothing happened to x, so x still refers to 1.</p>",
+            py: "<p>After <code>y = x</code> both variables refer to 1. Then <code>y = 2</code> moves only y's arrow. Nothing happened to x, so x still refers to 1.</p>",
           },
         },
         {
-          diagram: graph({ a: 1, b: 2 }),
-          caption: 'a keeps 1. b now refers to 2.',
+          diagram: graph({ x: 1, y: 2 }),
+          caption: 'x keeps 1. y now refers to 2.',
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: 2, b: 2 }),
-          caption: 'Not correct: reassigning b does not change a.',
+          diagram: graph({ x: 2, y: 2 }),
+          caption: 'Not correct: reassigning y does not change x.',
           verdict: 'incorrect',
         },
         {
-          html: "<p>If you pictured a and b sharing one 1 after the second line, moving b's arrow leaves a pointing at that same 1. If you pictured two separate 1s, b's old 1 is left with nothing pointing to it. Both ways end at the same picture.</p>",
+          html: "<p>If you pictured x and y sharing one 1 after the second line, moving y's arrow leaves x pointing at that same 1. If you pictured two separate 1s, y's old 1 is left with nothing pointing to it. Both ways end at the same picture.</p>",
         },
         {
           html: '<p><strong>Also correct:</strong> leaving the old 1 on the canvas if separate nodes were used.</p>',
         },
         {
-          html: "<p><strong>Not accepted:</strong> moving a's arrow to 2. Reassigning a variable never changes any other variable. That stays true for every kind of value you will meet in this game.</p>",
+          html: "<p><strong>Not accepted:</strong> moving x's arrow to 2. Reassigning a variable never changes any other variable. That stays true for every kind of value you will meet in this game.</p>",
         },
         {
           html: SHARING_REMINDER,
@@ -405,27 +413,27 @@ export const scalarsLevel: UnnumberedLevel = level(
     write({
       title: 'Swapped',
       given: {
-        js: lines('let a = 1;', 'let b = 2;'),
-        ts: lines('let a: number = 1;', 'let b: number = 2;'),
-        py: lines('a = 1', 'b = 2'),
+        js: lines('let x = 1;', 'let y = 2;'),
+        ts: lines('let x: number = 1;', 'let y: number = 2;'),
+        py: lines('x = 1', 'y = 2'),
       },
-      js: lines('let t = a;', 'a = b;', 'b = t;'),
-      ts: lines('let t: number = a;', 'a = b;', 'b = t;'),
-      py: lines('t = a', 'a = b', 'b = t'),
-      expected: graph({ a: 2, b: 1 }),
+      js: lines('let t = x;', 'x = y;', 'y = t;'),
+      ts: lines('let t: number = x;', 'x = y;', 'y = t;'),
+      py: lines('t = x', 'x = y', 'y = t'),
+      expected: graph({ x: 2, y: 1 }),
       constraints: [
         {
           rule:
-            'The boss says that if another programmer updates the code so that a and b start at different numbers, your code must still swap them.',
+            'The boss says that if another programmer updates the code so that x and y start at different numbers, your code must still swap them.',
           cases: [
             {
-              change: 'a starts at 5 and b starts at 9',
+              change: 'x starts at 5 and y starts at 9',
               given: {
-                js: lines('let a = 5;', 'let b = 9;'),
-                ts: lines('let a: number = 5;', 'let b: number = 9;'),
-                py: lines('a = 5', 'b = 9'),
+                js: lines('let x = 5;', 'let y = 9;'),
+                ts: lines('let x: number = 5;', 'let y: number = 9;'),
+                py: lines('x = 5', 'y = 9'),
               },
-              expected: graph({ a: 9, b: 5 }),
+              expected: graph({ x: 9, y: 5 }),
             },
           ],
         },
@@ -433,53 +441,57 @@ export const scalarsLevel: UnnumberedLevel = level(
       hint: 'It is okay to introduce a third variable to save one value during the swap.',
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           value: 2,
           message:
-            "b still refers to 2. If a = b ran first, it moved a's arrow before a's old value was saved anywhere, so the 1 was lost. Save a in a temporary variable first.",
+            "y still refers to 2. If x = y ran first, it moved x's arrow before x's old value was saved anywhere, so the 1 was lost. Save x in a temporary variable first.",
         },
         {
-          variable: 'a',
+          variable: 'x',
           value: 1,
           message:
-            "a still refers to 1. If b = a ran first, it moved b's arrow before b's old value was saved anywhere, so the 2 was lost. Save one of the values in a temporary variable first.",
+            "x still refers to 1. If y = x ran first, it moved y's arrow before y's old value was saved anywhere, so the 2 was lost. Save one of the values in a temporary variable first.",
         },
       ],
+      tip: {
+        js: '<p>You may create extra variables beyond the ones in the picture, and they are not checked. Reassigning a variable discards what it referred to unless another variable still refers to it, so an extra variable can hold a value for safekeeping. Use <code>let</code> only on the line that creates a variable.</p>',
+        py: '<p>You may create extra variables beyond the ones in the picture, and they are not checked. Reassigning a variable discards what it referred to unless another variable still refers to it, so an extra variable can hold a value for safekeeping.</p>',
+      },
       about:
         'Exchange the values of two variables. Each assignment replaces what a variable refers to, so one value must be saved in a temporary variable first.',
       debrief: [
         {
           html: {
-            js: "<p><code>a = b; b = a;</code> does not work: after the first line both variables refer to 2, and the 1 is lost. Saving a's value in a third variable first keeps it reachable:</p><pre><code>let t = a;\na = b;\nb = t;</code></pre>",
-            py: "<p><code>a = b</code> followed by <code>b = a</code> does not work: after the first line both variables refer to 2, and the 1 is lost. Saving a's value in a third variable first keeps it reachable:</p><pre><code>t = a\na = b\nb = t</code></pre>",
+            js: "<p><code>x = y; y = x;</code> does not work: after the first line both variables refer to 2, and the 1 is lost. Saving x's value in a third variable first keeps it reachable:</p><pre><code>let t = x;\nx = y;\ny = t;</code></pre>",
+            py: "<p><code>x = y</code> followed by <code>y = x</code> does not work: after the first line both variables refer to 2, and the 1 is lost. Saving x's value in a third variable first keeps it reachable:</p><pre><code>t = x\nx = y\ny = t</code></pre>",
           },
         },
         {
-          diagram: graph({ a: 2, b: 1 }),
-          caption: 'The final values: a refers to 2 and b refers to 1.',
+          diagram: graph({ x: 2, y: 1 }),
+          caption: 'The final values: x refers to 2 and y refers to 1.',
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: 2, b: 2 }),
+          diagram: graph({ x: 2, y: 2 }),
           caption: 'Not correct: without a temporary variable, both variables end up referring to 2.',
           verdict: 'incorrect',
         },
         {
           html: {
-            js: '<p><strong>Also correct:</strong> JavaScript can swap in one line: <code>[a, b] = [b, a];</code>. The right side is calculated first and holds both old values before either variable is reassigned.</p>',
-            py: '<p><strong>Also correct:</strong> Python can swap in one line: <code>a, b = b, a</code>. The right side is calculated first and holds both old values before either name is reassigned.</p>',
+            js: '<p><strong>Also correct:</strong> JavaScript can swap in one line: <code>[x, y] = [y, x];</code>. The right side is calculated first and holds both old values before either variable is reassigned.</p>',
+            py: '<p><strong>Also correct:</strong> Python can swap in one line: <code>x, y = y, x</code>. The right side is calculated first and holds both old values before either name is reassigned.</p>',
           },
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> <code>a = 2; b = 1;</code> builds the same picture because you can see the numbers, but the special constraint asks for a real swap, one that works whatever the starting values are.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>a = 2</code> and <code>b = 1</code> build the same picture because you can see the numbers, but the special constraint asks for a real swap, one that works whatever the starting values are.</p>',
+            js: '<p><strong>Not accepted:</strong> <code>x = 2; y = 1;</code> builds the same picture because you can see the numbers, but the special constraint asks for a real swap, one that works whatever the starting values are.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>x = 2</code> and <code>y = 1</code> build the same picture because you can see the numbers, but the special constraint asks for a real swap, one that works whatever the starting values are.</p>',
           },
         },
         {
-          diagram: graph({ a: 2, b: 1, t: 1 }),
+          diagram: graph({ x: 2, y: 1, t: 1 }),
           caption:
-            'Memory after the swap with a temporary variable. t still refers to 1; the picture you matched shows only a and b.',
+            'Memory after the swap with a temporary variable. t still refers to 1; the picture you matched shows only x and y.',
         },
         {
           html: SHARING_REMINDER,
@@ -510,6 +522,10 @@ export const scalarsLevel: UnnumberedLevel = level(
           message: 'The variable y still refers to 4. Reassign y to 9.',
         },
       ],
+      tip: {
+        js: '<p>Both variables already exist, so do not write <code>let</code> again. Reassigning is just the name, <code>=</code>, and the new value.</p>',
+        py: '',
+      },
       about:
         'To give one of two variables a new value, reassign that variable alone. It does not matter that one was assigned from the other: reassigning repoints only the variable you name.',
       debrief: [
@@ -581,6 +597,10 @@ export const scalarsLevel: UnnumberedLevel = level(
             'The value "7" is a string, but age should be the number 7 without quotes.',
         },
       ],
+      tip: {
+        js: '<p>Strings, booleans and <code>null</code> are primitive values too, like numbers. Only text needs quotes.</p>',
+        py: '<p>Strings, booleans and <code>None</code> are primitive values too, like numbers. Only text needs quotes.</p>',
+      },
       about: {
         js: 'Numbers are not the only simple values. A string, a boolean, and null are values too, and a variable refers to each one with an arrow.',
         py: 'Numbers are not the only simple values. A string, a boolean, and None are values too, and a variable refers to each one with an arrow.',
@@ -626,22 +646,22 @@ export const scalarsLevel: UnnumberedLevel = level(
   [
     draw({
       title: 'Reassigning the original leaves the other unchanged',
-      js: lines('let a = 3;', 'let b = a;', 'a = 8;'),
-      py: lines('a = 3', 'b = a', 'a = 8'),
-      expected: graph({ a: 8, b: 3 }),
-      hint: 'Trace the lines in order. When the second line runs, which value does a refer to?',
+      js: lines('let x = 3;', 'let y = x;', 'x = 8;'),
+      py: lines('x = 3', 'y = x', 'x = 8'),
+      expected: graph({ x: 8, y: 3 }),
+      hint: 'Trace the lines in order. When the second line runs, which value does x refer to?',
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           value: 8,
           message:
-            'The value 8 for b is not correct. Reassigning a to 8 does not change b; b still refers to 3.',
+            'The value 8 for y is not correct. Reassigning x to 8 does not change y; y still refers to 3.',
         },
         {
-          variable: 'a',
+          variable: 'x',
           value: 3,
           message:
-            'The value 3 for a is not correct. The line a = 8 reassigned a to 8.',
+            'The value 3 for x is not correct. The line x = 8 reassigned x to 8.',
         },
       ],
       about:
@@ -649,28 +669,28 @@ export const scalarsLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: "<p><code>let b = a;</code> gave b the value 3. It did not link b to a. When a is reassigned to 8, only a's arrow moves, so b still refers to 3.</p>",
-            py: "<p><code>b = a</code> gave b the value 3. It did not link b to a. When a is reassigned to 8, only a's arrow moves, so b still refers to 3.</p>",
+            js: "<p><code>let y = x;</code> gave y the value 3. It did not link y to x. When x is reassigned to 8, only x's arrow moves, so y still refers to 3.</p>",
+            py: "<p><code>y = x</code> gave y the value 3. It did not link y to x. When x is reassigned to 8, only x's arrow moves, so y still refers to 3.</p>",
           },
         },
         {
-          diagram: graph({ a: 8, b: 3 }),
-          caption: 'Correct: b keeps 3.',
+          diagram: graph({ x: 8, y: 3 }),
+          caption: 'Correct: y keeps 3.',
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: 8, b: 8 }),
-          caption: 'Not correct: b does not follow a.',
+          diagram: graph({ x: 8, y: 8 }),
+          caption: 'Not correct: y does not follow x.',
           verdict: 'incorrect',
         },
         {
-          html: "<p>If you pictured a and b sharing one 3, moving a's arrow to 8 leaves b pointing at that 3. If you pictured two separate 3s, a's old 3 is left with nothing pointing to it. Either way you end at the correct picture.</p>",
+          html: "<p>If you pictured x and y sharing one 3, moving x's arrow to 8 leaves y pointing at that 3. If you pictured two separate 3s, x's old 3 is left with nothing pointing to it. Either way you end at the correct picture.</p>",
         },
         {
-          html: '<p><strong>Also correct:</strong> sharing one 3 between a and b before the reassignment, or having two separate 3 nodes.</p>',
+          html: '<p><strong>Also correct:</strong> sharing one 3 between x and y before the reassignment, or having two separate 3 nodes.</p>',
         },
         {
-          html: "<p><strong>Not accepted:</strong> moving b to 8. Assigning b from a looks up a's value once; it does not bind b to a.</p>",
+          html: "<p><strong>Not accepted:</strong> moving y to 8. Assigning y from x looks up x's value once; it does not bind y to x.</p>",
         },
         {
           html: SHARING_REMINDER,
@@ -679,21 +699,21 @@ export const scalarsLevel: UnnumberedLevel = level(
     }),
     draw({
       title: 'A swap without a temporary variable',
-      js: lines('let a = "red";', 'let b = "blue";', 'a = b;', 'b = a;'),
-      py: lines('a = "red"', 'b = "blue"', 'a = b', 'b = a'),
-      expected: graph({ a: 'blue', b: 'blue' }),
-      hint: 'Trace the lines in order. When the last line runs, which value does a refer to?',
+      js: lines('let x = "red";', 'let y = "blue";', 'x = y;', 'y = x;'),
+      py: lines('x = "red"', 'y = "blue"', 'x = y', 'y = x'),
+      expected: graph({ x: 'blue', y: 'blue' }),
+      hint: 'Trace the lines in order. When the last line runs, which value does x refer to?',
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           value: 'red',
           message:
-            'The value "red" for b is not correct. By the time b = a runs, a already refers to "blue", so b gets "blue" too.',
+            'The value "red" for y is not correct. By the time y = x runs, x already refers to "blue", so y gets "blue" too.',
         },
         {
-          variable: 'a',
+          variable: 'x',
           value: 'red',
-          message: 'The value "red" for a is not correct. The line a = b moved a\'s arrow to "blue".',
+          message: 'The value "red" for x is not correct. The line x = y moved x\'s arrow to "blue".',
         },
       ],
       about:
@@ -701,22 +721,22 @@ export const scalarsLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p>Follow it one line at a time:</p><ol><li>a refers to "red" and b refers to "blue".</li><li><code>a = b;</code> moves a\'s arrow to "blue". Now nothing refers to "red".</li><li><code>b = a;</code> looks up a\'s value, which is now "blue", and points b at it. b already referred to "blue", so nothing visible changes.</li></ol>',
-            py: '<p>Follow it one line at a time:</p><ol><li>a refers to "red" and b refers to "blue".</li><li><code>a = b</code> moves a\'s arrow to "blue". Now nothing refers to "red".</li><li><code>b = a</code> looks up a\'s value, which is now "blue", and points b at it. b already referred to "blue", so nothing visible changes.</li></ol>',
+            js: '<p>Follow it one line at a time:</p><ol><li>x refers to "red" and y refers to "blue".</li><li><code>x = y;</code> moves x\'s arrow to "blue". Now nothing refers to "red".</li><li><code>y = x;</code> looks up x\'s value, which is now "blue", and points y at it. y already referred to "blue", so nothing visible changes.</li></ol>',
+            py: '<p>Follow it one line at a time:</p><ol><li>x refers to "red" and y refers to "blue".</li><li><code>x = y</code> moves x\'s arrow to "blue". Now nothing refers to "red".</li><li><code>y = x</code> looks up x\'s value, which is now "blue", and points y at it. y already referred to "blue", so nothing visible changes.</li></ol>',
           },
         },
         {
-          diagram: graph({ a: 'blue', b: 'blue' }),
+          diagram: graph({ x: 'blue', y: 'blue' }),
           caption: 'Both variables refer to "blue".',
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: ref('blue'), b: ref('blue') }, { blue: scalar('blue') }),
+          diagram: graph({ x: ref('blue'), y: ref('blue') }, { blue: scalar('blue') }),
           caption: 'Also correct: one "blue" shared by both.',
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: 'blue', b: 'red' }),
+          diagram: graph({ x: 'blue', y: 'red' }),
           caption: 'Not correct: this is what a real swap would do, and these two lines are not one.',
           verdict: 'incorrect',
         },
@@ -725,8 +745,8 @@ export const scalarsLevel: UnnumberedLevel = level(
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> b referring to "red". To keep "red", the code would have to save it first, with <code>let t = a;</code>, as in Swapped.</p>',
-            py: '<p><strong>Not accepted:</strong> b referring to "red". To keep "red", the code would have to save it first, with <code>t = a</code>, as in Swapped.</p>',
+            js: '<p><strong>Not accepted:</strong> y referring to "red". To keep "red", the code would have to save it first, with <code>let t = x;</code>, as in Swapped.</p>',
+            py: '<p><strong>Not accepted:</strong> y referring to "red". To keep "red", the code would have to save it first, with <code>t = x</code>, as in Swapped.</p>',
           },
         },
         {
@@ -736,50 +756,50 @@ export const scalarsLevel: UnnumberedLevel = level(
     }),
     draw({
       title: 'A chain of assignments',
-      js: lines('let a = 6;', 'let b = a;', 'let c = b;', 'a = 0;'),
-      py: lines('a = 6', 'b = a', 'c = b', 'a = 0'),
-      expected: graph({ a: 0, b: 6, c: 6 }),
+      js: lines('let x = 6;', 'let y = x;', 'let z = y;', 'x = 0;'),
+      py: lines('x = 6', 'y = x', 'z = y', 'x = 0'),
+      expected: graph({ x: 0, y: 6, z: 6 }),
       hint: 'Work out what each variable refers to right after its own line runs. Then check which arrow the last line moves.',
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           value: 0,
           message:
-            "The value 0 for b is not correct. Reassigning a moves only a's arrow; b still refers to 6.",
+            "The value 0 for y is not correct. Reassigning x moves only x's arrow; y still refers to 6.",
         },
         {
-          variable: 'c',
+          variable: 'z',
           value: 0,
           message:
-            "The value 0 for c is not correct. Reassigning a moves only a's arrow; c still refers to 6.",
+            "The value 0 for z is not correct. Reassigning x moves only x's arrow; z still refers to 6.",
         },
       ],
       about:
         'Each assignment from a variable takes the value it refers to at that moment. A chain of such assignments does not link the variables together.',
       debrief: [
         {
-          html: "<p>c got its value from b, and b got its value from a, but neither assignment linked the variables. Each one looked up a value, 6. Reassigning a to 0 moves only a's arrow, so b and c still refer to 6.</p>",
+          html: "<p>z got its value from y, and y got its value from x, but neither assignment linked the variables. Each one looked up a value, 6. Reassigning x to 0 moves only x's arrow, so y and z still refer to 6.</p>",
         },
         {
-          diagram: graph({ a: 0, b: 6, c: 6 }),
-          caption: 'Correct: b and c each refer to 6.',
+          diagram: graph({ x: 0, y: 6, z: 6 }),
+          caption: 'Correct: y and z each refer to 6.',
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: 0, b: ref('shared'), c: ref('shared') }, { shared: scalar(6) }),
-          caption: 'Also correct: b and c sharing one 6.',
+          diagram: graph({ x: 0, y: ref('shared'), z: ref('shared') }, { shared: scalar(6) }),
+          caption: 'Also correct: y and z sharing one 6.',
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: 0, b: 0, c: 0 }),
-          caption: 'Not correct: changing a does not travel down the chain to b or c.',
+          diagram: graph({ x: 0, y: 0, z: 0 }),
+          caption: 'Not correct: changing x does not travel down the chain to y or z.',
           verdict: 'incorrect',
         },
         {
-          html: "<p><strong>Also correct:</strong> leaving a's old 6 on the canvas with nothing pointing to it, if you drew a separate 6 for each variable.</p>",
+          html: "<p><strong>Also correct:</strong> leaving x's old 6 on the canvas with nothing pointing to it, if you drew a separate 6 for each variable.</p>",
         },
         {
-          html: '<p><strong>Not accepted:</strong> moving b or c to 0. A chain of assignments looks up values at each step; it never builds a live chain of connections between variables.</p>',
+          html: '<p><strong>Not accepted:</strong> moving y or z to 0. A chain of assignments looks up values at each step; it never builds a live chain of connections between variables.</p>',
         },
         {
           html: SHARING_REMINDER,
@@ -789,61 +809,61 @@ export const scalarsLevel: UnnumberedLevel = level(
     draw({
       title: 'Rotate left',
       js: lines(
-        'let a = 1;',
-        'let b = 2;',
-        'let c = 3;',
-        'let t = a;',
-        'a = b;',
-        'b = c;',
-        'c = t;',
+        'let x = 1;',
+        'let y = 2;',
+        'let z = 3;',
+        'let t = x;',
+        'x = y;',
+        'y = z;',
+        'z = t;',
       ),
-      py: lines('a = 1', 'b = 2', 'c = 3', 't = a', 'a = b', 'b = c', 'c = t'),
-      expected: graph({ a: 2, b: 3, c: 1, t: 1 }),
+      py: lines('x = 1', 'y = 2', 'z = 3', 't = x', 'x = y', 'y = z', 'z = t'),
+      expected: graph({ x: 2, y: 3, z: 1, t: 1 }),
       hint: 'Trace one line at a time, noting what every variable refers to after each line.',
       hints: [
         {
-          variable: 'c',
+          variable: 'z',
           value: 2,
           message:
-            "The value 2 for c is not correct. Notice that c gets its value from t (the original value of a, which was 1), not from a after a was reassigned to 2.",
+            "The value 2 for z is not correct. Notice that z gets its value from t (the original value of x, which was 1), not from x after x was reassigned to 2.",
         },
         {
-          variable: 'a',
+          variable: 'x',
           value: 1,
-          message: 'The value 1 for a is not correct. The line a = b reassigned a to 2.',
+          message: 'The value 1 for x is not correct. The line x = y reassigned x to 2.',
         },
         {
-          variable: 'b',
+          variable: 'y',
           value: 2,
-          message: 'The value 2 for b is not correct. The line b = c reassigned b to 3.',
+          message: 'The value 2 for y is not correct. The line y = z reassigned y to 3.',
         },
       ],
       about:
         'Rotating three values works like a swap: one value is saved in a temporary variable before its variable is reassigned, so it is still reachable at the end.',
       debrief: [
         {
-          html: "<p>Follow it one line at a time:</p><ol><li>t saves a's value: t is 1.</li><li>a takes b's value: a is 2.</li><li>b takes c's value: b is 3.</li><li>c takes the saved value: c is 1.</li></ol><p>Each value moves one place to the left, and the first one wraps around to the end.</p>",
+          html: "<p>Follow it one line at a time:</p><ol><li>t saves x's value: t is 1.</li><li>x takes y's value: x is 2.</li><li>y takes z's value: y is 3.</li><li>z takes the saved value: z is 1.</li></ol><p>Each value moves one place to the left, and the first one wraps around to the end.</p>",
         },
         {
-          diagram: graph({ a: 2, b: 3, c: 1, t: 1 }),
+          diagram: graph({ x: 2, y: 3, z: 1, t: 1 }),
           caption: 'After the rotation.',
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: 2, b: 3, c: ref('one'), t: ref('one') }, { one: scalar(1) }),
-          caption: 'Also correct: c and t sharing one 1.',
+          diagram: graph({ x: 2, y: 3, z: ref('one'), t: ref('one') }, { one: scalar(1) }),
+          caption: 'Also correct: z and t sharing one 1.',
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: 2, b: 3, c: 2, t: 1 }),
-          caption: "Not correct: c receives the saved value from t (1), not a's new value (2).",
+          diagram: graph({ x: 2, y: 3, z: 2, t: 1 }),
+          caption: "Not correct: z receives the saved value from t (1), not x's new value (2).",
           verdict: 'incorrect',
         },
         {
           html: '<p>t still exists and refers to 1, so it is part of the final memory too.</p>',
         },
         {
-          html: '<p><strong>Also correct:</strong> c and t sharing one 1, or each referring to its own 1.</p>',
+          html: '<p><strong>Also correct:</strong> z and t sharing one 1, or each referring to its own 1.</p>',
         },
         {
           html: '<p><strong>Not accepted:</strong> omitting t from the diagram. Even though t was used as a temporary variable, it still exists in memory after the code runs.</p>',

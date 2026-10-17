@@ -107,6 +107,13 @@ function DuplicateIcon() {
   )
 }
 
+function isTextField(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable || target.closest('input, textarea, select') !== null)
+  )
+}
+
 function MultiSelectIcon() {
   return (
     <svg
@@ -201,6 +208,8 @@ function CanvasInner({
   const onCanvasPointerDown = useCallback(
     (event: React.PointerEvent) => {
       if (event.pointerType !== 'touch') return
+      // Pressing and holding in a text field places the cursor; it is not a request for multi-select.
+      if (isTextField(event.target)) return
       const targetNodeEl = (event.target as HTMLElement).closest('.react-flow__node')
       const nodeId = targetNodeEl?.getAttribute('data-id')
       if (!nodeId) return
@@ -238,6 +247,10 @@ function CanvasInner({
     }
   }, [clearTouchTimer])
 
+  const onCanvasFocus = useCallback((event: React.FocusEvent) => {
+    if (isTextField(event.target)) setMultiSelectMode(false)
+  }, [])
+
   const onCanvasPointerCancel = useCallback(() => {
     clearTouchTimer()
     didLongPress.current = false
@@ -253,6 +266,7 @@ function CanvasInner({
 
   const onNodeContextMenu: NodeMouseHandler<MemFlowNode> = useCallback(
     (event, node) => {
+      if (isTextField(event.target)) return
       event.preventDefault()
       if (isReadOnly) return
       triggerLongPress(node.id)
@@ -500,6 +514,7 @@ function CanvasInner({
               onPointerMove={isReadOnly ? undefined : onCanvasPointerMove}
               onPointerUp={isReadOnly ? undefined : onCanvasPointerUp}
               onPointerCancel={isReadOnly ? undefined : onCanvasPointerCancel}
+              onFocus={isReadOnly ? undefined : onCanvasFocus}
             >
               <ReactFlow<MemFlowNode, MemFlowEdge>
                 nodes={displayedNodes}

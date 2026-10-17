@@ -818,6 +818,28 @@ textarea {
   line-height: 1.45;
 }
 
+.problem-tip {
+  margin: 6px 0;
+  padding: 8px 12px;
+  background: #e8f6ec;
+  border-left: 4px solid #3a9a5b;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.problem-tip-heading {
+  margin: 0 0 2px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.problem-tip p {
+  margin: 0;
+}
+
 .problem-constraints-heading {
   margin: 0 0 2px;
   font-size: 0.8rem;

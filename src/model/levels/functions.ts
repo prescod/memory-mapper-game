@@ -16,20 +16,20 @@ export const functionsLevel: UnnumberedLevel = level(
   [
     draw({
       title: { js: 'A function that changes an array', py: 'A function that changes a list' },
-      js: lines('function setFirst(arr) {', '  arr[0] = 2;', '}', 'let a = [1];', 'setFirst(a);'),
-      ts: lines('function setFirst(arr: number[]): void {', '  arr[0] = 2;', '}', 'let a = [1];', 'setFirst(a);'),
-      py: lines('def set_first(arr):', '    arr[0] = 2', '', 'a = [1]', 'set_first(a)'),
-      expected: graph({ a: ref('a') }, { a: list(2) }),
+      js: lines('function setFirst(arr) {', '  arr[0] = 2;', '}', 'let x = [1];', 'setFirst(x);'),
+      ts: lines('function setFirst(arr: number[]): void {', '  arr[0] = 2;', '}', 'let x = [1];', 'setFirst(x);'),
+      py: lines('def set_first(arr):', '    arr[0] = 2', '', 'x = [1]', 'set_first(x)'),
+      expected: graph({ x: ref('x') }, { x: list(2) }),
       hint: {
         js: 'arr refers to whatever array the caller passed in. Follow its arrow when arr[0] = 2 runs.',
         py: 'arr refers to whatever list the caller passed in. Follow its arrow when arr[0] = 2 runs.',
       },
       hints: [
         {
-          variable: 'a',
+          variable: 'x',
           value: 1,
           message:
-            'The value 1 is not correct. arr is not a private copy: it refers to the same container as a, so arr[0] = 2 changes the container a refers to.',
+            'The value 1 is not correct. arr is not a private copy: it refers to the same container as x, so arr[0] = 2 changes the container x refers to.',
         },
       ],
       about: {
@@ -39,26 +39,26 @@ export const functionsLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p>Calling <code>setFirst(a)</code> does not copy the array. The parameter <code>arr</code> starts out referring to the same array as <code>a</code>.</p>',
-            py: '<p>Calling <code>set_first(a)</code> does not copy the list. The parameter <code>arr</code> starts out referring to the same list as <code>a</code>.</p>',
+            js: '<p>Calling <code>setFirst(x)</code> does not copy the array. The parameter <code>arr</code> starts out referring to the same array as <code>x</code>.</p>',
+            py: '<p>Calling <code>set_first(x)</code> does not copy the list. The parameter <code>arr</code> starts out referring to the same list as <code>x</code>.</p>',
           },
         },
         {
           html: {
-            js: '<p><code>arr[0] = 2;</code> changes slot 0 of that array in place. When <code>setFirst</code> finishes, <code>arr</code> disappears, but the change stays in the array that <code>a</code> still refers to.</p>',
-            py: '<p><code>arr[0] = 2</code> changes slot 0 of that list in place. When <code>set_first</code> finishes, <code>arr</code> disappears, but the change stays in the list that <code>a</code> still refers to.</p>',
+            js: '<p><code>arr[0] = 2;</code> changes slot 0 of that array in place. When <code>setFirst</code> finishes, <code>arr</code> disappears, but the change stays in the array that <code>x</code> still refers to.</p>',
+            py: '<p><code>arr[0] = 2</code> changes slot 0 of that list in place. When <code>set_first</code> finishes, <code>arr</code> disappears, but the change stays in the list that <code>x</code> still refers to.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('a') }, { a: list(2) }),
+          diagram: graph({ x: ref('x') }, { x: list(2) }),
           caption: {
-            js: 'Correct: the function changed the array that a refers to.',
-            py: 'Correct: the function changed the list that a refers to.',
+            js: 'Correct: the function changed the array that x refers to.',
+            py: 'Correct: the function changed the list that x refers to.',
           },
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: ref('a') }, { a: list(1) }),
+          diagram: graph({ x: ref('x') }, { x: list(1) }),
           caption: {
             js: 'Not correct: this is what you would draw if the function worked on its own copy of the array.',
             py: 'Not correct: this is what you would draw if the function worked on its own copy of the list.',
@@ -77,35 +77,35 @@ export const functionsLevel: UnnumberedLevel = level(
         '  box.push(1);',
         '  box = [];',
         '}',
-        'let a = [0];',
-        'archive(a);',
+        'let x = [0];',
+        'archive(x);',
       ),
       ts: lines(
         'function archive(box: number[]): void {',
         '  box.push(1);',
         '  box = [];',
         '}',
-        'let a = [0];',
-        'archive(a);',
+        'let x = [0];',
+        'archive(x);',
       ),
-      py: lines('def archive(box):', '    box.append(1)', '    box = []', '', 'a = [0]', 'archive(a)'),
-      expected: graph({ a: ref('a') }, { a: list(0, 1) }),
+      py: lines('def archive(box):', '    box.append(1)', '    box = []', '', 'x = [0]', 'archive(x)'),
+      expected: graph({ x: ref('x') }, { x: list(0, 1) }),
       hint: 'Take the lines of archive in order. One changes a container and one moves an arrow. Which arrow does the second line move?',
       hints: [
         {
-          variable: 'a',
+          variable: 'x',
           length: 0,
           message: {
-            js: 'a should still hold two items. box = [] moves only the parameter box; it never empties the array a refers to.',
-            py: 'a should still hold two items. box = [] moves only the parameter box; it never empties the list a refers to.',
+            js: 'x should still hold two items. box = [] moves only the parameter box; it never empties the array x refers to.',
+            py: 'x should still hold two items. box = [] moves only the parameter box; it never empties the list x refers to.',
           },
         },
         {
-          variable: 'a',
+          variable: 'x',
           length: 1,
           message: {
-            js: 'a should hold two items. box.push(1) changes the array a refers to, because box refers to that same array. Only the second line moves box away from it.',
-            py: 'a should hold two items. box.append(1) changes the list a refers to, because box refers to that same list. Only the second line moves box away from it.',
+            js: 'x should hold two items. box.push(1) changes the array x refers to, because box refers to that same array. Only the second line moves box away from it.',
+            py: 'x should hold two items. box.append(1) changes the list x refers to, because box refers to that same list. Only the second line moves box away from it.',
           },
         },
       ],
@@ -116,31 +116,31 @@ export const functionsLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p>When <code>archive(a);</code> is called, the parameter <code>box</code> refers to the same array <code>[0]</code> as <code>a</code>. <code>box.push(1);</code> changes that array in place, so it becomes <code>[0, 1]</code>.</p>',
-            py: '<p>When <code>archive(a)</code> is called, the parameter <code>box</code> refers to the same list <code>[0]</code> as <code>a</code>. <code>box.append(1)</code> changes that list in place, so it becomes <code>[0, 1]</code>.</p>',
+            js: '<p>When <code>archive(x);</code> is called, the parameter <code>box</code> refers to the same array <code>[0]</code> as <code>x</code>. <code>box.push(1);</code> changes that array in place, so it becomes <code>[0, 1]</code>.</p>',
+            py: '<p>When <code>archive(x)</code> is called, the parameter <code>box</code> refers to the same list <code>[0]</code> as <code>x</code>. <code>box.append(1)</code> changes that list in place, so it becomes <code>[0, 1]</code>.</p>',
           },
         },
         {
           html: {
-            js: '<p><code>box = [];</code> builds a new empty array and repoints <code>box</code> at it. It moves only <code>box</code>\'s arrow, so the array <code>[0, 1]</code> and the variable <code>a</code> are left alone. The new array is garbage once <code>archive</code> returns.</p>',
-            py: '<p><code>box = []</code> builds a new empty list and repoints <code>box</code> at it. It moves only <code>box</code>\'s arrow, so the list <code>[0, 1]</code> and the variable <code>a</code> are left alone. The new list is garbage once <code>archive</code> returns.</p>',
+            js: '<p><code>box = [];</code> builds a new empty array and repoints <code>box</code> at it. It moves only <code>box</code>\'s arrow, so the array <code>[0, 1]</code> and the variable <code>x</code> are left alone. The new array is garbage once <code>archive</code> returns.</p>',
+            py: '<p><code>box = []</code> builds a new empty list and repoints <code>box</code> at it. It moves only <code>box</code>\'s arrow, so the list <code>[0, 1]</code> and the variable <code>x</code> are left alone. The new list is garbage once <code>archive</code> returns.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('a') }, { a: list(0, 1) }),
-          caption: 'Correct: a still refers to the array it started with, which now holds 0 and 1.',
+          diagram: graph({ x: ref('x') }, { x: list(0, 1) }),
+          caption: 'Correct: x still refers to the array it started with, which now holds 0 and 1.',
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: ref('a') }, { a: list() }),
-          caption: 'Not correct: this is what you would draw if box = [] repointed a as well.',
+          diagram: graph({ x: ref('x') }, { x: list() }),
+          caption: 'Not correct: this is what you would draw if box = [] repointed x as well.',
           verdict: 'incorrect',
         },
         {
-          diagram: graph({ a: ref('a') }, { a: list(0) }),
+          diagram: graph({ x: ref('x') }, { x: list(0) }),
           caption: {
-            js: 'Not correct: this is what you would draw if archive worked on its own copy of the array, so the push never reached a.',
-            py: 'Not correct: this is what you would draw if archive worked on its own copy of the list, so the append never reached a.',
+            js: 'Not correct: this is what you would draw if archive worked on its own copy of the array, so the push never reached x.',
+            py: 'Not correct: this is what you would draw if archive worked on its own copy of the list, so the append never reached x.',
           },
           verdict: 'incorrect',
         },
@@ -155,22 +155,22 @@ export const functionsLevel: UnnumberedLevel = level(
     write({
       title: { js: 'Call it on the right array', py: 'Call it on the right list' },
       given: {
-        js: lines('function grow(arr) {', '  arr.push(0);', '}', 'let a = [1];', 'let b = [2];', 'let c = b;'),
+        js: lines('function grow(arr) {', '  arr.push(0);', '}', 'let x = [1];', 'let y = [2];', 'let z = y;'),
         ts: lines(
           'function grow(arr: number[]): void {',
           '  arr.push(0);',
           '}',
-          'let a: number[] = [1];',
-          'let b: number[] = [2];',
-          'let c: number[] = b;',
+          'let x: number[] = [1];',
+          'let y: number[] = [2];',
+          'let z: number[] = y;',
         ),
-        py: lines('def grow(arr):', '    arr.append(0)', '', 'a = [1]', 'b = [2]', 'c = b'),
+        py: lines('def grow(arr):', '    arr.append(0)', '', 'x = [1]', 'y = [2]', 'z = y'),
       },
-      js: 'grow(b);',
-      py: 'grow(b)',
+      js: 'grow(y);',
+      py: 'grow(y)',
       expected: graph(
-        { a: ref('a'), b: ref('shared'), c: ref('shared') },
-        { a: list(1), shared: list(2, 0) },
+        { x: ref('x'), y: ref('shared'), z: ref('shared') },
+        { x: list(1), shared: list(2, 0) },
       ),
       hint: {
         js: 'Use grow, and pass it a name that refers to the array that should end up longer. Check which names refer to it.',
@@ -178,14 +178,14 @@ export const functionsLevel: UnnumberedLevel = level(
       },
       hints: [
         {
-          variable: 'a',
+          variable: 'x',
           aliasing: 'shared',
-          message: 'a must stay separate from b and c. grow changes only the container it is passed.',
+          message: 'x must stay separate from y and z. grow changes only the container it is passed.',
         },
         {
-          variable: 'c',
+          variable: 'z',
           aliasing: 'separate',
-          message: 'b and c must still share one container. grow changes the container its parameter refers to, so every name for it sees the change.',
+          message: 'y and z must still share one container. grow changes the container its parameter refers to, so every name for it sees the change.',
         },
       ],
       about: {
@@ -195,48 +195,48 @@ export const functionsLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>grow(b);</code> passes <code>b</code>\'s array to <code>grow</code>. Inside the function, <code>arr</code> refers to that array, and <code>arr.push(0);</code> changes it in place to <code>[2, 0]</code>.</p>',
-            py: '<p><code>grow(b)</code> passes <code>b</code>\'s list to <code>grow</code>. Inside the function, <code>arr</code> refers to that list, and <code>arr.append(0)</code> changes it in place to <code>[2, 0]</code>.</p>',
+            js: '<p><code>grow(y);</code> passes <code>y</code>\'s array to <code>grow</code>. Inside the function, <code>arr</code> refers to that array, and <code>arr.push(0);</code> changes it in place to <code>[2, 0]</code>.</p>',
+            py: '<p><code>grow(y)</code> passes <code>y</code>\'s list to <code>grow</code>. Inside the function, <code>arr</code> refers to that list, and <code>arr.append(0)</code> changes it in place to <code>[2, 0]</code>.</p>',
           },
         },
         {
-          html: '<p><code>c</code> is another name for that same container, so it sees the change too. <code>a</code> was not passed to <code>grow</code>, so it still refers to <code>[1]</code>.</p>',
+          html: '<p><code>z</code> is another name for that same container, so it sees the change too. <code>x</code> was not passed to <code>grow</code>, so it still refers to <code>[1]</code>.</p>',
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('shared'), c: ref('shared') },
-            { a: list(1), shared: list(2, 0) },
+            { x: ref('x'), y: ref('shared'), z: ref('shared') },
+            { x: list(1), shared: list(2, 0) },
           ),
-          caption: 'Correct: b and c share the grown container, and a is unchanged.',
+          caption: 'Correct: y and z share the grown container, and x is unchanged.',
           verdict: 'correct',
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('shared'), c: ref('shared') },
-            { a: list(1, 0), shared: list(2) },
+            { x: ref('x'), y: ref('shared'), z: ref('shared') },
+            { x: list(1, 0), shared: list(2) },
           ),
-          caption: 'Not correct: calling grow(a) changes a instead of b and c.',
+          caption: 'Not correct: calling grow(x) changes x instead of y and z.',
           verdict: 'incorrect',
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b'), c: ref('c') },
-            { a: list(1), b: list(2, 0), c: list(2) },
+            { x: ref('x'), y: ref('y'), z: ref('z') },
+            { x: list(1), y: list(2, 0), z: list(2) },
           ),
-          caption: 'Not correct: c refers to the same container as b, so it cannot be left behind.',
+          caption: 'Not correct: z refers to the same container as y, so it cannot be left behind.',
           verdict: 'incorrect',
         },
         {
-          html: '<p><strong>Also correct:</strong> <code>grow(c)</code>. The function receives the same container whichever of its two names you pass.</p>',
+          html: '<p><strong>Also correct:</strong> <code>grow(z)</code>. The function receives the same container whichever of its two names you pass.</p>',
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> <code>b.push(0);</code> builds the same picture but skips <code>grow</code>. This puzzle checks that <code>grow</code> is called once, with the array <code>b</code> and <code>c</code> share.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>b.append(0)</code> builds the same picture but skips <code>grow</code>. This puzzle checks that <code>grow</code> is called once, with the list <code>b</code> and <code>c</code> share.</p>',
+            js: '<p><strong>Not accepted:</strong> <code>y.push(0);</code> builds the same picture but skips <code>grow</code>. This puzzle checks that <code>grow</code> is called once, with the array <code>y</code> and <code>z</code> share.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>y.append(0)</code> builds the same picture but skips <code>grow</code>. This puzzle checks that <code>grow</code> is called once, with the list <code>y</code> and <code>z</code> share.</p>',
           },
         },
       ],
-      process: { runtime: runtime(call('grow', [before('b')], 1)) },
+      process: { runtime: runtime(call('grow', [before('y')], 1)) },
     }),
     draw({
       title: { js: 'A function that returns a new array', py: 'A function that returns a new list' },
@@ -244,35 +244,35 @@ export const functionsLevel: UnnumberedLevel = level(
         'function withOne(arr) {',
         '  return arr.concat([1]);',
         '}',
-        'let a = [0];',
-        'let b = withOne(a);',
+        'let x = [0];',
+        'let y = withOne(x);',
       ),
       ts: lines(
         'function withOne(arr: number[]): number[] {',
         '  return arr.concat([1]);',
         '}',
-        'let a = [0];',
-        'let b = withOne(a);',
+        'let x = [0];',
+        'let y = withOne(x);',
       ),
       py: lines(
         'def with_one(arr):',
         '    return arr + [1]',
         '',
-        'a = [0]',
-        'b = with_one(a)',
+        'x = [0]',
+        'y = with_one(x)',
       ),
-      expected: graph({ a: ref('a'), b: ref('b') }, { a: list(0), b: list(0, 1) }),
+      expected: graph({ x: ref('x'), y: ref('y') }, { x: list(0), y: list(0, 1) }),
       hint: {
         js: 'Look at what concat does: does it change arr, or build a new array? withOne returns whatever concat gives it.',
         py: 'Look at what + does: does it change arr, or build a new list? with_one returns whatever + gives it.',
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
           message: {
-            js: 'a and b should not share an array. concat builds a new array rather than changing arr, and withOne returns that new one.',
-            py: 'a and b should not share a list. + builds a new list rather than changing arr, and with_one returns that new one.',
+            js: 'x and y should not share an array. concat builds a new array rather than changing arr, and withOne returns that new one.',
+            py: 'x and y should not share a list. + builds a new list rather than changing arr, and with_one returns that new one.',
           },
         },
       ],
@@ -289,20 +289,20 @@ export const functionsLevel: UnnumberedLevel = level(
         },
         {
           html: {
-            js: '<p>The caller assigns that new array to <code>b</code>. <code>a</code> still refers to the original array <code>[0]</code>.</p>',
-            py: '<p>The caller assigns that new list to <code>b</code>. <code>a</code> still refers to the original list <code>[0]</code>.</p>',
+            js: '<p>The caller assigns that new array to <code>y</code>. <code>x</code> still refers to the original array <code>[0]</code>.</p>',
+            py: '<p>The caller assigns that new list to <code>y</code>. <code>x</code> still refers to the original list <code>[0]</code>.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: list(0), b: list(0, 1) }),
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: list(0), y: list(0, 1) }),
           caption: {
-            js: 'Correct: a is unchanged, and b refers to the new array.',
-            py: 'Correct: a is unchanged, and b refers to the new list.',
+            js: 'Correct: x is unchanged, and y refers to the new array.',
+            py: 'Correct: x is unchanged, and y refers to the new list.',
           },
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: list(0, 1) }),
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: list(0, 1) }),
           caption: {
             js: 'Not correct: this is what you would draw if concat changed arr in place and withOne returned arr.',
             py: 'Not correct: this is what you would draw if + changed arr in place and with_one returned arr.',
@@ -497,36 +497,36 @@ export const functionsLevel: UnnumberedLevel = level(
         '  arr.push(1);',
         '  return arr;',
         '}',
-        'let a = [];',
-        'let b = addOne(a);',
+        'let x = [];',
+        'let y = addOne(x);',
       ),
       ts: lines(
         'function addOne(arr: number[]): number[] {',
         '  arr.push(1);',
         '  return arr;',
         '}',
-        'let a: number[] = [];',
-        'let b = addOne(a);',
+        'let x: number[] = [];',
+        'let y = addOne(x);',
       ),
       py: lines(
         'def add_one(arr):',
         '    arr.append(1)',
         '    return arr',
         '',
-        'a = []',
-        'b = add_one(a)',
+        'x = []',
+        'y = add_one(x)',
       ),
-      expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: list(1) }),
+      expected: graph({ x: ref('shared'), y: ref('shared') }, { shared: list(1) }),
       hint: {
         js: 'Follow the reference that return arr hands back. Is it a new array, or one that already exists?',
         py: 'Follow the reference that return arr hands back. Is it a new list, or one that already exists?',
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'separate',
           message:
-            'a and b should share one container. return arr hands back the container arr refers to, which is a\'s, without copying it.',
+            'x and y should share one container. return arr hands back the container arr refers to, which is x\'s, without copying it.',
         },
       ],
       about: {
@@ -536,26 +536,26 @@ export const functionsLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>addOne(a)</code> passes <code>a</code>\'s array into <code>addOne</code>. <code>arr.push(1);</code> changes that array in place.</p>',
-            py: '<p><code>add_one(a)</code> passes <code>a</code>\'s list into <code>add_one</code>. <code>arr.append(1)</code> changes that list in place.</p>',
+            js: '<p><code>addOne(x)</code> passes <code>x</code>\'s array into <code>addOne</code>. <code>arr.push(1);</code> changes that array in place.</p>',
+            py: '<p><code>add_one(x)</code> passes <code>x</code>\'s list into <code>add_one</code>. <code>arr.append(1)</code> changes that list in place.</p>',
           },
         },
         {
           html: {
-            js: '<p>Then <code>return arr;</code> hands back a reference to that same array. Assigning it to <code>b</code> makes <code>b</code> another name for the array <code>a</code> already refers to.</p>',
-            py: '<p>Then <code>return arr</code> hands back a reference to that same list. Assigning it to <code>b</code> makes <code>b</code> another name for the list <code>a</code> already refers to.</p>',
+            js: '<p>Then <code>return arr;</code> hands back a reference to that same array. Assigning it to <code>y</code> makes <code>y</code> another name for the array <code>x</code> already refers to.</p>',
+            py: '<p>Then <code>return arr</code> hands back a reference to that same list. Assigning it to <code>y</code> makes <code>y</code> another name for the list <code>x</code> already refers to.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: list(1) }),
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: list(1) }),
           caption: {
-            js: 'Correct: a and b share one array.',
-            py: 'Correct: a and b share one list.',
+            js: 'Correct: x and y share one array.',
+            py: 'Correct: x and y share one list.',
           },
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: list(1), b: list(1) }),
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: list(1), y: list(1) }),
           caption: 'Not correct: this is what you would draw if return made a copy.',
           verdict: 'incorrect',
         },
@@ -897,20 +897,20 @@ export const functionsLevel: UnnumberedLevel = level(
   [
     draw({
       title: 'A function that changes an alias',
-      js: lines('function mark(o) {', '  o.seen = true;', '}', 'let a = {};', 'let b = a;', 'mark(b);'),
-      ts: lines('function mark(o: { seen?: boolean }): void {', '  o.seen = true;', '}', 'let a: { seen?: boolean } = {};', 'let b = a;', 'mark(b);'),
-      py: lines('def mark(o):', '    o["seen"] = True', '', 'a = {}', 'b = a', 'mark(b)'),
-      expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: dict({ seen: true }) }),
+      js: lines('function mark(o) {', '  o.seen = true;', '}', 'let x = {};', 'let y = x;', 'mark(y);'),
+      ts: lines('function mark(o: { seen?: boolean }): void {', '  o.seen = true;', '}', 'let x: { seen?: boolean } = {};', 'let y = x;', 'mark(y);'),
+      py: lines('def mark(o):', '    o["seen"] = True', '', 'x = {}', 'y = x', 'mark(y)'),
+      expected: graph({ x: ref('shared'), y: ref('shared') }, { shared: dict({ seen: true }) }),
       hint: {
         js: 'Count how many objects exist before mark is called, then follow o.',
         py: 'Count how many dictionaries exist before mark is called, then follow o.',
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'separate',
           message:
-            'a and b should share one container. b = a made them aliases, and mark changes that one container in place.',
+            'x and y should share one container. y = x made them aliases, and mark changes that one container in place.',
         },
       ],
       about: {
@@ -920,34 +920,34 @@ export const functionsLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>let b = a;</code> makes <code>b</code> an alias for <code>a</code>\'s object. When <code>mark(b);</code> runs, the parameter <code>o</code> becomes a third name for that same object.</p>',
-            py: '<p><code>b = a</code> makes <code>b</code> an alias for <code>a</code>\'s dictionary. When <code>mark(b)</code> runs, the parameter <code>o</code> becomes a third name for that same dictionary.</p>',
+            js: '<p><code>let y = x;</code> makes <code>y</code> an alias for <code>x</code>\'s object. When <code>mark(y);</code> runs, the parameter <code>o</code> becomes a third name for that same object.</p>',
+            py: '<p><code>y = x</code> makes <code>y</code> an alias for <code>x</code>\'s dictionary. When <code>mark(y)</code> runs, the parameter <code>o</code> becomes a third name for that same dictionary.</p>',
           },
         },
         {
           html: {
-            js: '<p><code>o.seen = true;</code> changes that shared object in place, so both <code>a</code> and <code>b</code> see <code>seen: true</code>.</p>',
-            py: '<p><code>o["seen"] = True</code> changes that shared dictionary in place, so both <code>a</code> and <code>b</code> see <code>"seen": True</code>.</p>',
+            js: '<p><code>o.seen = true;</code> changes that shared object in place, so both <code>x</code> and <code>y</code> see <code>seen: true</code>.</p>',
+            py: '<p><code>o["seen"] = True</code> changes that shared dictionary in place, so both <code>x</code> and <code>y</code> see <code>"seen": True</code>.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: dict({ seen: true }) }),
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: dict({ seen: true }) }),
           caption: {
-            js: 'Correct: a and b share one object, which now has seen: true.',
-            py: 'Correct: a and b share one dictionary, which now has "seen": True.',
+            js: 'Correct: x and y share one object, which now has seen: true.',
+            py: 'Correct: x and y share one dictionary, which now has "seen": True.',
           },
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: dict({}), b: dict({ seen: true }) }),
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: dict({}), y: dict({ seen: true }) }),
           caption: {
-            js: 'Not correct: b = a does not copy the object, so a sees the change too.',
-            py: 'Not correct: b = a does not copy the dictionary, so a sees the change too.',
+            js: 'Not correct: y = x does not copy the object, so x sees the change too.',
+            py: 'Not correct: y = x does not copy the dictionary, so x sees the change too.',
           },
           verdict: 'incorrect',
         },
         {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: dict({}) }),
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: dict({}) }),
           caption: {
             js: 'Not correct: this is what you would draw if mark worked on its own copy of the object.',
             py: 'Not correct: this is what you would draw if mark worked on its own copy of the dictionary.',
@@ -1092,43 +1092,43 @@ export const functionsLevel: UnnumberedLevel = level(
     write({
       title: 'Tagging in place',
       given: {
-        js: lines('let a = { n: 1 };', 'let b = { n: 2 };'),
+        js: lines('let x = { n: 1 };', 'let y = { n: 2 };'),
         ts: lines(
-          'let a: { n: number; tagged?: boolean } = { n: 1 };',
-          'let b: { n: number; tagged?: boolean } = { n: 2 };',
+          'let x: { n: number; tagged?: boolean } = { n: 1 };',
+          'let y: { n: number; tagged?: boolean } = { n: 2 };',
         ),
-        py: lines('a = {"n": 1}', 'b = {"n": 2}'),
+        py: lines('x = {"n": 1}', 'y = {"n": 2}'),
       },
       then: {
-        js: 'tag(a);',
-        py: 'tag(a)',
+        js: 'tag(x);',
+        py: 'tag(x)',
       },
       js: lines('function tag(o) {', '  o.tagged = true;', '}'),
       ts: lines('function tag(o: { n: number; tagged?: boolean }): void {', '  o.tagged = true;', '}'),
       py: lines('def tag(o):', '    o["tagged"] = True'),
       expected: graph(
-        { a: ref('a'), b: ref('b') },
-        { a: dict({ n: 1, tagged: true }), b: dict({ n: 2 }) },
+        { x: ref('x'), y: ref('y') },
+        { x: dict({ n: 1, tagged: true }), y: dict({ n: 2 }) },
       ),
       constraints: [
         {
           rule:
-            'The boss says tag must tag whichever object it is given. If another programmer updates the code so that tag is called on b instead of a, b must be tagged and a must not be.',
+            'The boss says tag must tag whichever object it is given. If another programmer updates the code so that tag is called on y instead of x, y must be tagged and x must not be.',
           cases: [
             {
-              change: 'tag is called on b instead of a',
+              change: 'tag is called on y instead of x',
               given: {
-                js: lines('let a = { n: 1 };', 'let b = { n: 2 };'),
+                js: lines('let x = { n: 1 };', 'let y = { n: 2 };'),
                 ts: lines(
-                  'let a: { n: number; tagged?: boolean } = { n: 1 };',
-                  'let b: { n: number; tagged?: boolean } = { n: 2 };',
+                  'let x: { n: number; tagged?: boolean } = { n: 1 };',
+                  'let y: { n: number; tagged?: boolean } = { n: 2 };',
                 ),
-                py: lines('a = {"n": 1}', 'b = {"n": 2}'),
+                py: lines('x = {"n": 1}', 'y = {"n": 2}'),
               },
-              then: { js: 'tag(b);', py: 'tag(b)' },
+              then: { js: 'tag(y);', py: 'tag(y)' },
               expected: graph(
-                { a: ref('a'), b: ref('b') },
-                { a: dict({ n: 1 }), b: dict({ n: 2, tagged: true }) },
+                { x: ref('x'), y: ref('y') },
+                { x: dict({ n: 1 }), y: dict({ n: 2, tagged: true }) },
               ),
             },
           ],
@@ -1140,11 +1140,11 @@ export const functionsLevel: UnnumberedLevel = level(
       },
       hints: [
         {
-          variable: 'a',
+          variable: 'x',
           missingKey: 'tagged',
           message: {
-            js: 'a should have the key tagged. Reassigning the parameter to a new object, even a tagged copy, only repoints the parameter. To tag a\'s object, add the key to the object the parameter refers to.',
-            py: 'a should have the key "tagged". Reassigning the parameter to a new dictionary, even a tagged copy, only repoints the parameter. To tag a\'s dictionary, add the key to the dictionary the parameter refers to.',
+            js: 'x should have the key tagged. Reassigning the parameter to a new object, even a tagged copy, only repoints the parameter. To tag x\'s object, add the key to the object the parameter refers to.',
+            py: 'x should have the key "tagged". Reassigning the parameter to a new dictionary, even a tagged copy, only repoints the parameter. To tag x\'s dictionary, add the key to the dictionary the parameter refers to.',
           },
         },
       ],
@@ -1155,26 +1155,26 @@ export const functionsLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p>The code after yours runs <code>tag(a);</code>, so <code>o</code> refers to <code>a</code>\'s object. <code>o.tagged = true;</code> adds the <code>tagged</code> property to that object in place. <code>b</code> was never passed to <code>tag</code>, so it still refers to <code>{ n: 2 }</code>.</p>',
-            py: '<p>The code after yours runs <code>tag(a)</code>, so <code>o</code> refers to <code>a</code>\'s dictionary. <code>o["tagged"] = True</code> adds the <code>"tagged"</code> key to that dictionary in place. <code>b</code> was never passed to <code>tag</code>, so it still refers to <code>{"n": 2}</code>.</p>',
+            js: '<p>The code after yours runs <code>tag(x);</code>, so <code>o</code> refers to <code>x</code>\'s object. <code>o.tagged = true;</code> adds the <code>tagged</code> property to that object in place. <code>y</code> was never passed to <code>tag</code>, so it still refers to <code>{ n: 2 }</code>.</p>',
+            py: '<p>The code after yours runs <code>tag(x)</code>, so <code>o</code> refers to <code>x</code>\'s dictionary. <code>o["tagged"] = True</code> adds the <code>"tagged"</code> key to that dictionary in place. <code>y</code> was never passed to <code>tag</code>, so it still refers to <code>{"n": 2}</code>.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b') },
-            { a: dict({ n: 1, tagged: true }), b: dict({ n: 2 }) },
+            { x: ref('x'), y: ref('y') },
+            { x: dict({ n: 1, tagged: true }), y: dict({ n: 2 }) },
           ),
           caption: {
-            js: 'Correct: a\'s object has tagged: true, and b\'s object is unchanged.',
-            py: 'Correct: a\'s dictionary has "tagged": True, and b\'s dictionary is unchanged.',
+            js: 'Correct: x\'s object has tagged: true, and y\'s object is unchanged.',
+            py: 'Correct: x\'s dictionary has "tagged": True, and y\'s dictionary is unchanged.',
           },
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: dict({ n: 1 }), b: dict({ n: 2 }) }),
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: dict({ n: 1 }), y: dict({ n: 2 }) }),
           caption: {
-            js: 'Not correct: this is what you get if tag builds a tagged copy with o = { ...o, tagged: true }. Only the parameter moves to the copy, so a is untouched.',
-            py: 'Not correct: this is what you get if tag builds a tagged copy with o = dict(o) and then adds the key to that copy. Only the parameter moves to the copy, so a is untouched.',
+            js: 'Not correct: this is what you get if tag builds a tagged copy with o = { ...o, tagged: true }. Only the parameter moves to the copy, so x is untouched.',
+            py: 'Not correct: this is what you get if tag builds a tagged copy with o = dict(o) and then adds the key to that copy. Only the parameter moves to the copy, so x is untouched.',
           },
           verdict: 'incorrect',
         },
@@ -1186,8 +1186,8 @@ export const functionsLevel: UnnumberedLevel = level(
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> <code>a.tagged = true;</code> inside the function builds the right picture but breaks the boss\'s constraint when <code>tag</code> is called on <code>b</code> instead.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>a["tagged"] = True</code> inside the function builds the right picture but breaks the boss\'s constraint when <code>tag</code> is called on <code>b</code> instead.</p>',
+            js: '<p><strong>Not accepted:</strong> <code>x.tagged = true;</code> inside the function builds the right picture but breaks the boss\'s constraint when <code>tag</code> is called on <code>y</code> instead.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>x["tagged"] = True</code> inside the function builds the right picture but breaks the boss\'s constraint when <code>tag</code> is called on <code>y</code> instead.</p>',
           },
         },
       ],
@@ -1200,8 +1200,8 @@ export const functionsLevel: UnnumberedLevel = level(
         '  arr[0] = 9;',
         '  return arr;',
         '}',
-        'let a = [5];',
-        'let b = withNine(a);',
+        'let x = [5];',
+        'let y = withNine(x);',
       ),
       ts: lines(
         'function withNine(arr: number[]): number[] {',
@@ -1209,8 +1209,8 @@ export const functionsLevel: UnnumberedLevel = level(
         '  arr[0] = 9;',
         '  return arr;',
         '}',
-        'let a = [5];',
-        'let b = withNine(a);',
+        'let x = [5];',
+        'let y = withNine(x);',
       ),
       py: lines(
         'def with_nine(arr):',
@@ -1218,20 +1218,20 @@ export const functionsLevel: UnnumberedLevel = level(
         '    arr[0] = 9',
         '    return arr',
         '',
-        'a = [5]',
-        'b = with_nine(a)',
+        'x = [5]',
+        'y = with_nine(x)',
       ),
-      expected: graph({ a: ref('a'), b: ref('b') }, { a: list(5), b: list(9) }),
+      expected: graph({ x: ref('x'), y: ref('y') }, { x: list(5), y: list(9) }),
       hint: {
         js: 'Watch which array arr refers to when arr[0] = 9 runs, and which array return hands back.',
         py: 'Watch which list arr refers to when arr[0] = 9 runs, and which list return hands back.',
       },
       hints: [
         {
-          variable: 'a',
+          variable: 'x',
           value: 9,
           message:
-            'The value 9 is not correct for a. Reassigning arr to a copy points arr at a new container, so arr[0] = 9 changes the copy, not the container a refers to.',
+            'The value 9 is not correct for x. Reassigning arr to a copy points arr at a new container, so arr[0] = 9 changes the copy, not the container x refers to.',
         },
       ],
       about: {
@@ -1241,21 +1241,21 @@ export const functionsLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p>When <code>withNine(a)</code> is called, <code>arr</code> refers to <code>a</code>\'s array <code>[5]</code>. <code>arr = [...arr];</code> builds a copy and repoints <code>arr</code> at it, so <code>a</code> still refers to the original.</p>',
-            py: '<p>When <code>with_nine(a)</code> is called, <code>arr</code> refers to <code>a</code>\'s list <code>[5]</code>. <code>arr = list(arr)</code> builds a copy and repoints <code>arr</code> at it, so <code>a</code> still refers to the original.</p>',
+            js: '<p>When <code>withNine(x)</code> is called, <code>arr</code> refers to <code>x</code>\'s array <code>[5]</code>. <code>arr = [...arr];</code> builds a copy and repoints <code>arr</code> at it, so <code>x</code> still refers to the original.</p>',
+            py: '<p>When <code>with_nine(x)</code> is called, <code>arr</code> refers to <code>x</code>\'s list <code>[5]</code>. <code>arr = list(arr)</code> builds a copy and repoints <code>arr</code> at it, so <code>x</code> still refers to the original.</p>',
           },
         },
         {
-          html: '<p><code>arr[0] = 9</code> changes the copy to <code>[9]</code>, and <code>return arr</code> hands that copy to <code>b</code>.</p>',
+          html: '<p><code>arr[0] = 9</code> changes the copy to <code>[9]</code>, and <code>return arr</code> hands that copy to <code>y</code>.</p>',
         },
         {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: list(5), b: list(9) }),
-          caption: 'Correct: a still refers to [5], and b refers to the changed copy [9].',
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: list(5), y: list(9) }),
+          caption: 'Correct: x still refers to [5], and y refers to the changed copy [9].',
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: list(9) }),
-          caption: 'Not correct: reassigning arr repointed only arr, so the change never reached a.',
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: list(9) }),
+          caption: 'Not correct: reassigning arr repointed only arr, so the change never reached x.',
           verdict: 'incorrect',
         },
         {

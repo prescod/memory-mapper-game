@@ -6,8 +6,8 @@ export const objectsLevel: UnnumberedLevel = level(
   'objects',
   L('Objects', 'Dictionaries'),
   L(
-    'An object is a separate thing in memory, like an array, but its slots are named keys instead of numbers. Each key is an arrow to a value. As with arrays, b = a makes two names share one object, while two literals build two separate objects even when their keys and values match.',
-    'A dictionary is a separate thing in memory, like a list, but its slots are named keys instead of numbers. Each key is an arrow to a value. As with lists, b = a makes two names share one dictionary, while two literals build two separate dictionaries even when their keys and values match.',
+    'An object is a separate thing in memory, like an array, but its slots are named keys instead of numbers. Each key is an arrow to a value. As with arrays, y = x makes two names share one object, while two literals build two separate objects even when their keys and values match.',
+    'A dictionary is a separate thing in memory, like a list, but its slots are named keys instead of numbers. Each key is an arrow to a value. As with lists, y = x makes two names share one dictionary, while two literals build two separate dictionaries even when their keys and values match.',
   ),
   [
     draw({
@@ -298,19 +298,19 @@ export const objectsLevel: UnnumberedLevel = level(
     }),
     draw({
       title: { js: 'Two names, one object', py: 'Two names, one dictionary' },
-      js: lines('let a = { k: 1 };', 'let b = a;'),
-      py: lines('a = {"k": 1}', 'b = a'),
-      expected: graph({ a: ref('shared'), b: ref('shared') }, { shared: dict({ k: 1 }) }),
+      js: lines('let x = { k: 1 };', 'let y = x;'),
+      py: lines('x = {"k": 1}', 'y = x'),
+      expected: graph({ x: ref('shared'), y: ref('shared') }, { shared: dict({ k: 1 }) }),
       hint: {
-        js: 'Only one line builds an object. Look at what b = a copies.',
-        py: 'Only one line builds a dictionary. Look at what b = a copies.',
+        js: 'Only one line builds an object. Look at what y = x copies.',
+        py: 'Only one line builds a dictionary. Look at what y = x copies.',
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'separate',
           message:
-            'b = a copies the reference, not the container. Only the first line builds one, so a and b must point to that same one.',
+            'y = x copies the reference, not the container. Only the first line builds one, so x and y must point to that same one.',
         },
       ],
       about: {
@@ -320,55 +320,55 @@ export const objectsLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>let a = { k: 1 };</code> creates an object in memory. <code>let b = a;</code> copies the reference from <code>a</code> into <code>b</code>. It does <strong>not</strong> create a second object. Both variables now refer to the same object.</p>',
-            py: '<p><code>a = {"k": 1}</code> creates a dictionary in memory. <code>b = a</code> copies the reference from <code>a</code> into <code>b</code>. It does <strong>not</strong> create a second dictionary. Both variables now refer to the same dictionary.</p>',
+            js: '<p><code>let x = { k: 1 };</code> creates an object in memory. <code>let y = x;</code> copies the reference from <code>x</code> into <code>y</code>. It does <strong>not</strong> create a second object. Both variables now refer to the same object.</p>',
+            py: '<p><code>x = {"k": 1}</code> creates a dictionary in memory. <code>y = x</code> copies the reference from <code>x</code> into <code>y</code>. It does <strong>not</strong> create a second dictionary. Both variables now refer to the same dictionary.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: dict({ k: 1 }) }),
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: dict({ k: 1 }) }),
           caption: {
-            js: 'Both a and b point to the same object.',
-            py: 'Both a and b point to the same dictionary.',
+            js: 'Both x and y point to the same object.',
+            py: 'Both x and y point to the same dictionary.',
           },
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: dict({ k: 1 }), b: dict({ k: 1 }) }),
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: dict({ k: 1 }), y: dict({ k: 1 }) }),
           caption: {
-            js: 'Not correct: this is what you get if b = a copied the object. It copies only the reference.',
-            py: 'Not correct: this is what you get if b = a copied the dictionary. It copies only the reference.',
+            js: 'Not correct: this is what you get if y = x copied the object. It copies only the reference.',
+            py: 'Not correct: this is what you get if y = x copied the dictionary. It copies only the reference.',
           },
           verdict: 'incorrect',
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> pointing <code>b</code> at the variable <code>a</code>. Variables can only refer to values, never to other variables; <code>b</code> points to the object itself.</p>',
-            py: '<p><strong>Not accepted:</strong> pointing <code>b</code> at the variable <code>a</code>. Variables can only refer to values, never to other variables; <code>b</code> points to the dictionary itself.</p>',
+            js: '<p><strong>Not accepted:</strong> pointing <code>y</code> at the variable <code>x</code>. Variables can only refer to values, never to other variables; <code>y</code> points to the object itself.</p>',
+            py: '<p><strong>Not accepted:</strong> pointing <code>y</code> at the variable <code>x</code>. Variables can only refer to values, never to other variables; <code>y</code> points to the dictionary itself.</p>',
           },
         },
         {
           html: {
-            js: '<p>When two names refer to the same object, they are called <strong>aliases</strong>. In a later level, you will see that changing the object through <code>b</code> is immediately visible through <code>a</code>.</p>',
-            py: '<p>When two names refer to the same dictionary, they are called <strong>aliases</strong>. In a later level, you will see that changing the dictionary through <code>b</code> is immediately visible through <code>a</code>.</p>',
+            js: '<p>When two names refer to the same object, they are called <strong>aliases</strong>. In a later level, you will see that changing the object through <code>y</code> is immediately visible through <code>x</code>.</p>',
+            py: '<p>When two names refer to the same dictionary, they are called <strong>aliases</strong>. In a later level, you will see that changing the dictionary through <code>y</code> is immediately visible through <code>x</code>.</p>',
           },
         },
       ],
     }),
     draw({
       title: 'Equal but separate',
-      js: lines('let a = { k: 1 };', 'let b = { k: 1 };'),
-      py: lines('a = {"k": 1}', 'b = {"k": 1}'),
-      expected: graph({ a: ref('a'), b: ref('b') }, { a: dict({ k: 1 }), b: dict({ k: 1 }) }),
+      js: lines('let x = { k: 1 };', 'let y = { k: 1 };'),
+      py: lines('x = {"k": 1}', 'y = {"k": 1}'),
+      expected: graph({ x: ref('x'), y: ref('y') }, { x: dict({ k: 1 }), y: dict({ k: 1 }) }),
       hint: {
         js: 'Count how many object literals the code evaluates.',
         py: 'Count how many dictionary literals the code evaluates.',
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
           message:
-            'a and b are built from two separate literals, so they refer to two separate containers in memory, even though their keys and values match.',
+            'x and y are built from two separate literals, so they refer to two separate containers in memory, even though their keys and values match.',
         },
       ],
       about: {
@@ -378,12 +378,12 @@ export const objectsLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p>Each <code>{ k: 1 }</code> literal evaluates to a brand new object in memory. Their keys and values match, but <code>a</code> and <code>b</code> refer to two separate objects.</p>',
-            py: '<p>Each <code>{"k": 1}</code> literal evaluates to a brand new dictionary in memory. Their keys and values match, but <code>a</code> and <code>b</code> refer to two separate dictionaries.</p>',
+            js: '<p>Each <code>{ k: 1 }</code> literal evaluates to a brand new object in memory. Their keys and values match, but <code>x</code> and <code>y</code> refer to two separate objects.</p>',
+            py: '<p>Each <code>{"k": 1}</code> literal evaluates to a brand new dictionary in memory. Their keys and values match, but <code>x</code> and <code>y</code> refer to two separate dictionaries.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: dict({ k: 1 }), b: dict({ k: 1 }) }),
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: dict({ k: 1 }), y: dict({ k: 1 }) }),
           caption: {
             js: 'Two separate objects with matching keys and values.',
             py: 'Two separate dictionaries with matching keys and values.',
@@ -391,7 +391,7 @@ export const objectsLevel: UnnumberedLevel = level(
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: dict({ k: 1 }) }),
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: dict({ k: 1 }) }),
           caption: {
             js: 'Not correct: equal contents do not make one object. Two literals build two objects.',
             py: 'Not correct: equal contents do not make one dictionary. Two literals build two dictionaries.',
@@ -406,8 +406,8 @@ export const objectsLevel: UnnumberedLevel = level(
         },
         {
           diagram: graph(
-            { a: ref('a'), b: ref('b') },
-            { a: dict({ k: ref('one') }), b: dict({ k: ref('one') }), one: scalar(1) },
+            { x: ref('x'), y: ref('y') },
+            { x: dict({ k: ref('one') }), y: dict({ k: ref('one') }), one: scalar(1) },
           ),
           caption: {
             js: 'Also correct: two separate objects whose keys share one 1.',
@@ -417,8 +417,8 @@ export const objectsLevel: UnnumberedLevel = level(
         },
         {
           html: {
-            js: '<p>Compare this with the previous puzzle, <em>Two names, one object</em>. There, <code>b = a</code> copied a reference. Here, two literals were evaluated, so two objects were created.</p>',
-            py: '<p>Compare this with the previous puzzle, <em>Two names, one dictionary</em>. There, <code>b = a</code> copied a reference. Here, two literals were evaluated, so two dictionaries were created.</p>',
+            js: '<p>Compare this with the previous puzzle, <em>Two names, one object</em>. There, <code>y = x</code> copied a reference. Here, two literals were evaluated, so two objects were created.</p>',
+            py: '<p>Compare this with the previous puzzle, <em>Two names, one dictionary</em>. There, <code>y = x</code> copied a reference. Here, two literals were evaluated, so two dictionaries were created.</p>',
           },
         },
       ],
@@ -493,27 +493,27 @@ export const objectsLevel: UnnumberedLevel = level(
     }),
     write({
       title: 'One alone, two together',
-      js: lines('let a = { id: 1 };', 'let b = { id: 2 };', 'let c = b;'),
-      ts: lines('let a: { id: number } = { id: 1 };', 'let b: { id: number } = { id: 2 };', 'let c: { id: number } = b;'),
-      py: lines('a = {"id": 1}', 'b = {"id": 2}', 'c = b'),
+      js: lines('let x = { id: 1 };', 'let y = { id: 2 };', 'let z = y;'),
+      ts: lines('let x: { id: number } = { id: 1 };', 'let y: { id: number } = { id: 2 };', 'let z: { id: number } = y;'),
+      py: lines('x = {"id": 1}', 'y = {"id": 2}', 'z = y'),
       expected: graph(
-        { a: ref('alone'), b: ref('pair'), c: ref('pair') },
+        { x: ref('alone'), y: ref('pair'), z: ref('pair') },
         { alone: dict({ id: 1 }), pair: dict({ id: 2 }) },
       ),
       hint: {
-        js: 'Build two objects, one for a and one for b. Then make c refer to the one b refers to.',
-        py: 'Build two dictionaries, one for a and one for b. Then make c refer to the one b refers to.',
+        js: 'Build two objects, one for x and one for y. Then make z refer to the one y refers to.',
+        py: 'Build two dictionaries, one for x and one for y. Then make z refer to the one y refers to.',
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
-          message: 'a and b must refer to two separate containers: one whose id is 1 and one whose id is 2.',
+          message: 'x and y must refer to two separate containers: one whose id is 1 and one whose id is 2.',
         },
         {
-          variable: 'c',
+          variable: 'z',
           aliasing: 'separate',
-          message: 'c must share the container that b refers to. Assign c from b instead of building a new one.',
+          message: 'z must share the container that y refers to. Assign z from y instead of building a new one.',
         },
       ],
       about: {
@@ -523,36 +523,36 @@ export const objectsLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>a</code> gets its own object with <code>id: 1</code>. <code>b</code> gets a second object with <code>id: 2</code>. Then <code>let c = b;</code> makes <code>c</code> share <code>b</code>\'s object. There are three variables but only two objects.</p>',
-            py: '<p><code>a</code> gets its own dictionary with <code>"id": 1</code>. <code>b</code> gets a second dictionary with <code>"id": 2</code>. Then <code>c = b</code> makes <code>c</code> share <code>b</code>\'s dictionary. There are three variables but only two dictionaries.</p>',
+            js: '<p><code>x</code> gets its own object with <code>id: 1</code>. <code>y</code> gets a second object with <code>id: 2</code>. Then <code>let z = y;</code> makes <code>z</code> share <code>y</code>\'s object. There are three variables but only two objects.</p>',
+            py: '<p><code>x</code> gets its own dictionary with <code>"id": 1</code>. <code>y</code> gets a second dictionary with <code>"id": 2</code>. Then <code>z = y</code> makes <code>z</code> share <code>y</code>\'s dictionary. There are three variables but only two dictionaries.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('alone'), b: ref('pair'), c: ref('pair') },
+            { x: ref('alone'), y: ref('pair'), z: ref('pair') },
             { alone: dict({ id: 1 }), pair: dict({ id: 2 }) },
           ),
           caption: {
-            js: 'a has its own object; b and c share another.',
-            py: 'a has its own dictionary; b and c share another.',
+            js: 'x has its own object; y and z share another.',
+            py: 'x has its own dictionary; y and z share another.',
           },
           verdict: 'correct',
         },
         {
           diagram: graph(
-            { a: ref('alone'), b: ref('b'), c: ref('c') },
-            { alone: dict({ id: 1 }), b: dict({ id: 2 }), c: dict({ id: 2 }) },
+            { x: ref('alone'), y: ref('y'), z: ref('z') },
+            { alone: dict({ id: 1 }), y: dict({ id: 2 }), z: dict({ id: 2 }) },
           ),
           caption: {
-            js: 'Not correct: a second { id: 2 } literal for c builds a third object. c must share b\'s object.',
-            py: 'Not correct: a second {"id": 2} literal for c builds a third dictionary. c must share b\'s dictionary.',
+            js: 'Not correct: a second { id: 2 } literal for z builds a third object. z must share y\'s object.',
+            py: 'Not correct: a second {"id": 2} literal for z builds a third dictionary. z must share y\'s dictionary.',
           },
           verdict: 'incorrect',
         },
         {
           html: {
-            js: '<p><strong>Also correct:</strong> creating <code>b</code> and <code>c</code> before <code>a</code>. The order of independent objects does not matter, as long as <code>c</code> is assigned after <code>b</code> exists.</p>',
-            py: '<p><strong>Also correct:</strong> creating <code>b</code> and <code>c</code> before <code>a</code>. The order of independent dictionaries does not matter, as long as <code>c</code> is assigned after <code>b</code> exists.</p>',
+            js: '<p><strong>Also correct:</strong> creating <code>y</code> and <code>z</code> before <code>x</code>. The order of independent objects does not matter, as long as <code>z</code> is assigned after <code>y</code> exists.</p>',
+            py: '<p><strong>Also correct:</strong> creating <code>y</code> and <code>z</code> before <code>x</code>. The order of independent dictionaries does not matter, as long as <code>z</code> is assigned after <code>y</code> exists.</p>',
           },
         },
       ],
@@ -622,10 +622,10 @@ export const objectsLevel: UnnumberedLevel = level(
     }),
     draw({
       title: 'Two pairs of names',
-      js: lines('let a = { on: true };', 'let b = { on: true };', 'let c = a;', 'let d = b;'),
-      py: lines('a = {"on": True}', 'b = {"on": True}', 'c = a', 'd = b'),
+      js: lines('let x = { on: true };', 'let y = { on: true };', 'let z = x;', 'let d = y;'),
+      py: lines('x = {"on": True}', 'y = {"on": True}', 'z = x', 'd = y'),
       expected: graph(
-        { a: ref('first'), b: ref('second'), c: ref('first'), d: ref('second') },
+        { x: ref('first'), y: ref('second'), z: ref('first'), d: ref('second') },
         { first: dict({ on: true }), second: dict({ on: true }) },
       ),
       hint: {
@@ -634,20 +634,20 @@ export const objectsLevel: UnnumberedLevel = level(
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
           message:
-            'a and b are built from separate literals, so they point to two separate containers even though both have on pointing to true.',
+            'x and y are built from separate literals, so they point to two separate containers even though both have on pointing to true.',
         },
         {
-          variable: 'c',
+          variable: 'z',
           aliasing: 'separate',
-          message: 'c = a copies a reference, so c shares the container that a refers to.',
+          message: 'z = x copies a reference, so z shares the container that x refers to.',
         },
         {
           variable: 'd',
           aliasing: 'separate',
-          message: 'd = b copies a reference, so d shares the container that b refers to.',
+          message: 'd = y copies a reference, so d shares the container that y refers to.',
         },
       ],
       about: {
@@ -657,13 +657,13 @@ export const objectsLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>a</code> and <code>b</code> each evaluate <code>{ on: true }</code>, creating two separate objects in memory. Then <code>c = a</code> makes <code>c</code> an alias for <code>a</code>\'s object, and <code>d = b</code> makes <code>d</code> an alias for <code>b</code>\'s object. Four names point to two objects.</p>',
-            py: '<p><code>a</code> and <code>b</code> each evaluate <code>{"on": True}</code>, creating two separate dictionaries in memory. Then <code>c = a</code> makes <code>c</code> an alias for <code>a</code>\'s dictionary, and <code>d = b</code> makes <code>d</code> an alias for <code>b</code>\'s dictionary. Four names point to two dictionaries.</p>',
+            js: '<p><code>x</code> and <code>y</code> each evaluate <code>{ on: true }</code>, creating two separate objects in memory. Then <code>z = x</code> makes <code>z</code> an alias for <code>x</code>\'s object, and <code>d = y</code> makes <code>d</code> an alias for <code>y</code>\'s object. Four names point to two objects.</p>',
+            py: '<p><code>x</code> and <code>y</code> each evaluate <code>{"on": True}</code>, creating two separate dictionaries in memory. Then <code>z = x</code> makes <code>z</code> an alias for <code>x</code>\'s dictionary, and <code>d = y</code> makes <code>d</code> an alias for <code>y</code>\'s dictionary. Four names point to two dictionaries.</p>',
           },
         },
         {
           diagram: graph(
-            { a: ref('first'), b: ref('second'), c: ref('first'), d: ref('second') },
+            { x: ref('first'), y: ref('second'), z: ref('first'), d: ref('second') },
             { first: dict({ on: true }), second: dict({ on: true }) },
           ),
           caption: {
@@ -674,12 +674,12 @@ export const objectsLevel: UnnumberedLevel = level(
         },
         {
           diagram: graph(
-            { a: ref('all'), b: ref('all'), c: ref('all'), d: ref('all') },
+            { x: ref('all'), y: ref('all'), z: ref('all'), d: ref('all') },
             { all: dict({ on: true }) },
           ),
           caption: {
-            js: 'Not correct: matching contents do not merge objects. a and b come from separate literals.',
-            py: 'Not correct: matching contents do not merge dictionaries. a and b come from separate literals.',
+            js: 'Not correct: matching contents do not merge objects. x and y come from separate literals.',
+            py: 'Not correct: matching contents do not merge dictionaries. x and y come from separate literals.',
           },
           verdict: 'incorrect',
         },

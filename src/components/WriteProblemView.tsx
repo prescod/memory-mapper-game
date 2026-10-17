@@ -122,6 +122,9 @@ export function WriteProblemView({
             debrief={problem.debrief}
             language={language}
             formatCaption={formatProse}
+            solutionCode={[given, problem.solution[language], then]
+              .filter((part) => part !== '')
+              .join('\n')}
           />
         ) : (
           <>

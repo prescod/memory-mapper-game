@@ -10,7 +10,8 @@ import { snapshotJavaScript, snapshotToGraph } from './snapshotJs'
 import { UserCodeError } from './errors'
 import { loadNodePythonSnapshotter } from './testRuntime'
 import { verify } from '../verify/verify'
-import { graph, list, ref } from '../model/builders'
+import { graph, list, pet, ref } from '../model/builders'
+import { withOpaquePrelude } from './opaquePrelude'
 
 const python = await loadNodePythonSnapshotter()
 
@@ -57,6 +58,17 @@ describe('JavaScript snapshots', () => {
     expect(() => snapshotJavaScript(code, ['a'])).toThrow(UserCodeError)
   })
 
+  it('shows a renamed Pet by its new name, shared by every name for it', () => {
+    const code = withOpaquePrelude('javascript', 'let a = Pet("Lucy");\nlet b = a;\nb.name = "Lola";')
+    const actual = snapshotToGraph(snapshotJavaScript(code, ['a', 'b']))
+    expect(verify(actual, graph({ a: ref('p'), b: ref('p') }, { p: pet('Lola') })).errors).toEqual([])
+  })
+
+  it('rejects a Pet whose name is not a string', () => {
+    const code = withOpaquePrelude('javascript', 'let a = Pet("Lucy");\na.name = 3;')
+    expect(() => snapshotJavaScript(code, ['a'])).toThrow("A Pet's name must be a string, but one Pet's name is a number.")
+  })
+
   it('lets errors in the learner code through unchanged', () => {
     expect(() => snapshotJavaScript('let a = missing;', ['a'])).toThrow(ReferenceError)
     expect(() => snapshotJavaScript('let a = ;', ['a'])).toThrow(SyntaxError)
@@ -76,6 +88,11 @@ describe('Python snapshots under MicroPython', () => {
   it('reports values with no picture', () => {
     expect(() => python('a = (1, 2)', ['a'])).toThrow("A variable holds (1, 2), which can't be shown here")
     expect(() => python('a = {1: 2}', ['a'])).toThrow('Use only strings as keys')
+  })
+
+  it('rejects a Pet whose name is not a string', () => {
+    const code = withOpaquePrelude('python', 'a = Pet("Lucy")\na.name = 3')
+    expect(() => python(code, ['a'])).toThrow("A Pet's name must be a string, but one Pet's name is a number.")
   })
 
   it('points at the learner line, not counting starter code', () => {

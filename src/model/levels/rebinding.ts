@@ -15,59 +15,144 @@ export const rebindingLevel: UnnumberedLevel = level(
   'rebinding',
   L('Building New Values', 'Building New Values'),
   L(
-    'Strings never change: methods like toUpperCase() and toLowerCase() build a new string. Growing an array with push changes it in place; combining with concat builds a new array and leaves the old one alone. Setting a variable to null drops one reference; a value nothing refers to is gone for good.',
-    'Strings never change: methods like upper() and lower() build a new string. Growing a list with append changes it in place; combining with + builds a new list and leaves the old one alone. Setting a variable to None drops one reference; a value nothing refers to is gone for good.',
+    'Strings never change: joining with + and methods like toUpperCase() and toLowerCase() build a new string. Growing an array with push changes it in place; combining with concat builds a new array and leaves the old one alone. Setting a variable to null drops one reference; a value nothing refers to is gone for good.',
+    'Strings never change: joining with + and methods like upper() and lower() build a new string. Growing a list with append changes it in place; combining with + builds a new list and leaves the old one alone. Setting a variable to None drops one reference; a value nothing refers to is gone for good.',
   ),
   [
     draw({
-      title: 'Upper- and lower-casing a string',
-      js: lines('let s = "ab";', 'let t = s.toUpperCase();', 'let u = s.toLowerCase();'),
-      py: lines('s = "ab"', 't = s.upper()', 'u = s.lower()'),
-      expected: graph({ s: 'ab', t: 'AB', u: 'ab' }),
-      teaches: ['string.toUpperCase', 'string.toLowerCase'],
-      hint: {
-        js: 's.toUpperCase() builds a new string "AB" for t, and s.toLowerCase() builds a new string "ab" for u. Neither changes the string s refers to.',
-        py: 's.upper() builds a new string "AB" for t, and s.lower() builds a new string "ab" for u. Neither changes the string s refers to.',
-      },
+      title: 'Building a new string',
+      js: lines('let s = "hi";', 'let t = s;', 's = s + "!";'),
+      py: lines('s = "hi"', 't = s', 's = s + "!"'),
+      expected: graph({ s: 'hi!', t: 'hi' }),
+      hint: 'Adding "!" builds a new string. Trace which variable is reassigned to it.',
       hints: [
         {
+          variable: 't',
+          value: 'hi!',
+          message:
+            'The value "hi!" for t is not correct. s = s + "!" builds a new string and moves only s\'s arrow. The string "hi" that t refers to cannot change.',
+        },
+        {
           variable: 's',
-          value: 'AB',
-          message: {
-            js: 's should still refer to "ab". Strings never change in place: string methods like toUpperCase() and toLowerCase() return a new string and leave the original alone.',
-            py: 's should still refer to "ab". Strings never change in place: string methods like upper() and lower() return a new string and leave the original alone.',
-          },
+          value: 'hi',
+          message:
+            'The value "hi" for s is not correct. s = s + "!" builds "hi!" and moves s\'s arrow to that new string.',
+        },
+        {
+          variable: 's',
+          value: '!',
+          message:
+            'The value "!" for s is not correct. s = s + "!" joins the old value of s, "hi", with "!", producing "hi!".',
         },
       ],
-      about: {
-        js: 'Strings are immutable: they can never be changed in place. Methods like toUpperCase() and toLowerCase() build and return a new string, leaving the original string untouched.',
-        py: 'Strings are immutable: they can never be changed in place. Methods like upper() and lower() build and return a new string, leaving the original string untouched.',
-      },
+      tip: '<p>Adding with <code>+</code> joins two strings end to end. This is called <strong>concatenation</strong>, and it produces a new string.</p>',
+      teaches: ['string.concat'],
+      about:
+        'A string cannot be changed in place. Adding to a string builds a new string, and reassigning moves only that one variable\'s arrow to it.',
       debrief: [
         {
           html: {
-            js: '<p><code>let s = "ab";</code> points <code>s</code> at <code>"ab"</code>. When <code>s.toUpperCase()</code> and <code>s.toLowerCase()</code> run, neither modifies <code>"ab"</code>. Instead, each builds a brand-new string: <code>t</code> points to <code>"AB"</code> and <code>u</code> points to <code>"ab"</code>. <code>s</code> still refers to <code>"ab"</code>.</p>',
-            py: '<p><code>s = "ab"</code> points <code>s</code> at <code>"ab"</code>. When <code>s.upper()</code> and <code>s.lower()</code> run, neither modifies <code>"ab"</code>. Instead, each builds a brand-new string: <code>t</code> points to <code>"AB"</code> and <code>u</code> points to <code>"ab"</code>. <code>s</code> still refers to <code>"ab"</code>.</p>',
+            js: '<p>After <code>let t = s;</code> both variables refer to <code>"hi"</code>. Then <code>s = s + "!";</code> does not change that string. It builds a brand new string, <code>"hi!"</code>, and moves only <code>s</code>\'s arrow to it, so <code>t</code> still refers to <code>"hi"</code>.</p>',
+            py: '<p>After <code>t = s</code> both variables refer to <code>"hi"</code>. Then <code>s = s + "!"</code> does not change that string. It builds a brand new string, <code>"hi!"</code>, and moves only <code>s</code>\'s arrow to it, so <code>t</code> still refers to <code>"hi"</code>.</p>',
           },
         },
         {
-          diagram: graph({ s: 'ab', t: 'AB', u: 'ab' }),
-          caption: 'Correct: s keeps "ab" while t refers to the new string "AB" and u refers to "ab".',
+          diagram: graph({ s: 'hi!', t: 'hi' }),
+          caption: 'Correct: s refers to the new "hi!", and t still refers to "hi".',
           verdict: 'correct',
         },
         {
-          diagram: graph({ s: 'AB', t: 'AB', u: 'ab' }),
-          caption: {
-            js: 'Not correct: this is what would happen if toUpperCase() changed "ab" in place.',
-            py: 'Not correct: this is what would happen if upper() changed "ab" in place.',
-          },
+          diagram: graph({ s: 'hi!', t: 'hi!' }),
+          caption: 'Not correct: this is what would happen if strings changed in place.',
           verdict: 'incorrect',
         },
         {
-          html: '<p>No string method in either language ever modifies an existing string in place. Any operation that transforms a string produces a new value.</p>',
+          html: '<p><strong>Also correct:</strong> leaving a second "hi" on the canvas with nothing referring to it, if you first drew s and t with separate strings. As with numbers, unreferenced values are garbage-collected.</p>',
         },
         {
-          html: '<p>This is why, in earlier levels, sharing one string or keeping two separate equal strings never made a difference: nothing can change a string in place, so no program can tell the two pictures apart.</p>',
+          diagram: withGarbage(graph({ s: 'hi!', t: 'hi' }), 'hi'),
+          caption: 'Also correct: an old "hi" left behind with nothing pointing to it.',
+          verdict: 'correct',
+        },
+        {
+          html: {
+            js: '<p><strong>Also correct:</strong> <code>s += "!";</code> is a shorter way to write the last line. It also builds a new string and moves only s\'s arrow.</p>',
+            py: '<p><strong>Also correct:</strong> <code>s += "!"</code> is a shorter way to write the last line. It also builds a new string and moves only s\'s arrow.</p>',
+          },
+        },
+        {
+          html: {
+            js: '<p>Later levels introduce arrays and objects, which can be changed in place. A change made through one name is then seen through every name that shares the array or object. Strings never work that way.</p>',
+            py: '<p>Later levels introduce lists and dictionaries, which can be changed in place. A change made through one name is then seen through every name that shares the list or dictionary. Strings never work that way.</p>',
+          },
+        },
+      ],
+    }),
+    write({
+      title: 'A full name',
+      given: {
+        js: lines('let first = "Ada";', 'let last = "Lovelace";'),
+        ts: lines('let first: string = "Ada";', 'let last: string = "Lovelace";'),
+        py: lines('first = "Ada"', 'last = "Lovelace"'),
+      },
+      js: 'let full = first + " " + last;',
+      ts: 'let full: string = first + " " + last;',
+      py: 'full = first + " " + last',
+      expected: graph({ first: 'Ada', last: 'Lovelace', full: 'Ada Lovelace' }),
+      hint: {
+        js: 'Declare full by joining first, a space " ", and last.',
+        py: 'Assign full by joining first, a space " ", and last.',
+      },
+      hints: [
+        {
+          variable: 'full',
+          value: 'AdaLovelace',
+          message: 'Remember to include a space " " between first and last.',
+        },
+      ],
+      process: {
+        hidden: [
+          {
+            given: {
+              js: lines('let first = "Grace";', 'let last = "Hopper";'),
+              ts: lines('let first: string = "Grace";', 'let last: string = "Hopper";'),
+              py: lines('first = "Grace"', 'last = "Hopper"'),
+            },
+            expected: graph({ first: 'Grace', last: 'Hopper', full: 'Grace Hopper' }),
+          },
+        ],
+      },
+      reliesOn: ['string.concat'],
+      about:
+        'Combining strings with + builds a new string value. It reads the values of existing variables without changing them.',
+      debrief: [
+        {
+          html: {
+            js: '<p><code>let full = first + " " + last;</code> joins the three strings and points <code>full</code> at the new string <code>"Ada Lovelace"</code>. Neither <code>first</code> nor <code>last</code> is changed.</p>',
+            py: '<p><code>full = first + " " + last</code> joins the three strings and points <code>full</code> at the new string <code>"Ada Lovelace"</code>. Neither <code>first</code> nor <code>last</code> is changed.</p>',
+          },
+        },
+        {
+          diagram: graph({ first: 'Ada', last: 'Lovelace', full: 'Ada Lovelace' }),
+          caption: 'first and last unchanged, full refers to the joined string.',
+          verdict: 'correct',
+        },
+        {
+          diagram: graph({ first: 'Ada', last: 'Lovelace', full: 'AdaLovelace' }),
+          caption: 'Not correct: missing the space between first and last.',
+          verdict: 'incorrect',
+        },
+        {
+          html: {
+            js: '<p><strong>Also correct:</strong> a template literal, <code>let full = `${first} ${last}`;</code>, builds the same new string from the same parts.</p>',
+            py: '<p><strong>Also correct:</strong> an f-string, <code>full = f"{first} {last}"</code>, builds the same new string from the same parts.</p>',
+          },
+        },
+        {
+          html: {
+            js: '<p><strong>Not accepted:</strong> <code>let full = "Ada Lovelace";</code> produces the right picture for these names, but retypes the result. The checker also runs your code with other starting names, and a retyped result is wrong for them.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>full = "Ada Lovelace"</code> produces the right picture for these names, but retypes the result. The checker also runs your code with other starting names, and a retyped result is wrong for them.</p>',
+          },
         },
       ],
     }),
@@ -78,7 +163,11 @@ export const rebindingLevel: UnnumberedLevel = level(
       ts: lines('let lo: string = s.toLowerCase();', 'let up: string = s.toUpperCase();'),
       py: lines('lo = s.lower()', 'up = s.upper()'),
       expected: graph({ s: 'Hi', lo: 'hi', up: 'HI' }),
-      reliesOn: ['string.toUpperCase', 'string.toLowerCase'],
+      teaches: ['string.toUpperCase', 'string.toLowerCase'],
+      tip: {
+        js: '<p>String methods such as <code>toUpperCase()</code> and <code>toLowerCase()</code> return a new string. They never change the string they are called on.</p>',
+        py: '<p>String methods such as <code>upper()</code> and <code>lower()</code> return a new string. They never change the string they are called on.</p>',
+      },
       hint: {
         js: 'Declare lo as s.toLowerCase() and up as s.toUpperCase(); s stays "Hi".',
         py: 'Set lo to s.lower() and up to s.upper(); s stays "Hi".',
@@ -144,6 +233,12 @@ export const rebindingLevel: UnnumberedLevel = level(
           verdict: 'incorrect',
         },
         {
+          html: '<p>No string method in either language ever modifies an existing string in place. Any operation that transforms a string produces a new value.</p>',
+        },
+        {
+          html: '<p>This is why sharing one string or keeping two separate equal strings never makes a difference: nothing can change a string in place, so no program can tell the two pictures apart.</p>',
+        },
+        {
           html: '<p><strong>Also correct:</strong> writing the two lines in the other order. Neither call changes <code>s</code>, so each one starts from <code>"Hi"</code>.</p>',
         },
         {
@@ -156,53 +251,263 @@ export const rebindingLevel: UnnumberedLevel = level(
     }),
     draw({
       title: { js: 'Building a new array', py: 'Building a new list' },
-      js: lines('let a = [1];', 'let b = a;', 'a = a.concat([2]);'),
-      py: lines('a = [1]', 'b = a', 'a = a + [2]'),
-      expected: graph({ a: ref('new'), b: ref('old') }, { old: list(1), new: list(1, 2) }),
+      js: lines('let x = [1];', 'let y = x;', 'x = x.concat([2]);'),
+      py: lines('x = [1]', 'y = x', 'x = x + [2]'),
+      expected: graph({ x: ref('new'), y: ref('old') }, { old: list(1), new: list(1, 2) }),
       teaches: ['array.concat'],
       hint: {
-        js: 'After a = a.concat([2]), a points at a new array while b still refers to [1].',
-        py: 'After a = a + [2], a points at a new list while b still refers to [1].',
+        js: 'After x = x.concat([2]), x points at a new array while y still refers to [1].',
+        py: 'After x = x + [2], x points at a new list while y still refers to [1].',
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
           message:
-            'a and b should not share a container. Combining builds a new container for a and leaves the original alone, so b still refers to [1].',
+            'x and y should not share a container. Combining builds a new container for x and leaves the original alone, so y still refers to [1].',
         },
       ],
       about: {
-        js: "Combining arrays with concat creates a brand-new array and leaves the original untouched. Assigning the result back to a moves only a's arrow, while b remains pointing at the original array.",
-        py: "Combining lists with + creates a brand-new list and leaves the original untouched. Assigning the result back to a moves only a's arrow, while b remains pointing at the original list.",
+        js: "Combining arrays with concat creates a brand-new array and leaves the original untouched. Assigning the result back to x moves only x's arrow, while y remains pointing at the original array.",
+        py: "Combining lists with + creates a brand-new list and leaves the original untouched. Assigning the result back to x moves only x's arrow, while y remains pointing at the original list.",
       },
       debrief: [
         {
           html: {
-            js: '<p><code>let b = a;</code> creates an alias: both variables refer to <code>[1]</code>. When <code>a = a.concat([2]);</code> runs, <code>concat</code> does not modify <code>[1]</code> in place. It constructs a new array <code>[1, 2]</code> and rebinds <code>a</code> to it. <code>b</code> continues to refer to <code>[1]</code>.</p>',
-            py: '<p><code>b = a</code> creates an alias: both variables refer to <code>[1]</code>. When <code>a = a + [2]</code> runs, <code>+</code> does not modify <code>[1]</code> in place. It constructs a new list <code>[1, 2]</code> and rebinds <code>a</code> to it. <code>b</code> continues to refer to <code>[1]</code>.</p>',
+            js: '<p><code>let y = x;</code> creates an alias: both variables refer to <code>[1]</code>. When <code>x = x.concat([2]);</code> runs, <code>concat</code> does not modify <code>[1]</code> in place. It constructs a new array <code>[1, 2]</code> and rebinds <code>x</code> to it. <code>y</code> continues to refer to <code>[1]</code>.</p>',
+            py: '<p><code>y = x</code> creates an alias: both variables refer to <code>[1]</code>. When <code>x = x + [2]</code> runs, <code>+</code> does not modify <code>[1]</code> in place. It constructs a new list <code>[1, 2]</code> and rebinds <code>x</code> to it. <code>y</code> continues to refer to <code>[1]</code>.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('new'), b: ref('old') }, { old: list(1), new: list(1, 2) }),
+          diagram: graph({ x: ref('new'), y: ref('old') }, { old: list(1), new: list(1, 2) }),
           caption: {
-            js: 'Correct: a points to the new array [1, 2]; b still refers to [1].',
-            py: 'Correct: a points to the new list [1, 2]; b still refers to [1].',
+            js: 'Correct: x points to the new array [1, 2]; y still refers to [1].',
+            py: 'Correct: x points to the new list [1, 2]; y still refers to [1].',
           },
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: list(1, 2) }),
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: list(1, 2) }),
           caption: {
-            js: 'Not correct: this is what a.push(2) would do. concat builds a new array instead of changing the shared one.',
-            py: 'Not correct: this is what a.append(2) would do. + builds a new list instead of changing the shared one.',
+            js: 'Not correct: this is what x.push(2) would do. concat builds a new array instead of changing the shared one.',
+            py: 'Not correct: this is what x.append(2) would do. + builds a new list instead of changing the shared one.',
           },
           verdict: 'incorrect',
         },
         {
           html: {
-            js: '<p>Contrast this with <code>a.push(2);</code>, which modifies the array in place so that both <code>a</code> and <code>b</code> see the change. <code>concat</code> builds a new array instead.</p>',
-            py: '<p>Contrast this with <code>a.append(2)</code>, which modifies the list in place so that both <code>a</code> and <code>b</code> see the change. <code>+</code> builds a new list instead.</p>',
+            js: '<p>Contrast this with <code>x.push(2);</code>, which modifies the array in place so that both <code>x</code> and <code>y</code> see the change. <code>concat</code> builds a new array instead.</p>',
+            py: '<p>Contrast this with <code>x.append(2)</code>, which modifies the list in place so that both <code>x</code> and <code>y</code> see the change. <code>+</code> builds a new list instead.</p>',
+          },
+        },
+      ],
+    }),
+    write({
+      title: 'Combine without changing the original',
+      given: {
+        js: lines('let x = [1, 2];', 'let y = x;'),
+        ts: lines('let x: number[] = [1, 2];', 'let y: number[] = x;'),
+        py: lines('x = [1, 2]', 'y = x'),
+      },
+      js: 'y = y.concat([3, 4]);',
+      py: 'y = y + [3, 4]',
+      expected: graph({ x: ref('x'), y: ref('y') }, { x: list(1, 2), y: list(1, 2, 3, 4) }),
+      reliesOn: ['array.concat'],
+      hint: {
+        js: 'Use y = y.concat([3, 4]) so y gets a new array and x keeps [1, 2].',
+        py: 'Use y = y + [3, 4] so y gets a new list and x keeps [1, 2].',
+      },
+      hints: [
+        {
+          variable: 'y',
+          aliasing: 'shared',
+          message:
+            'x and y should not share a container. Growing the shared container in place changes what x sees too; combining builds a new container for y and leaves x with [1, 2].',
+        },
+      ],
+      about: {
+        js: 'Combine an array with additional elements to produce a larger array without mutating the original. Using concat builds a new array and leaves the array referenced by x unchanged. The special constraint says y must be built by combining y so it follows whatever x starts with.',
+        py: 'Combine a list with additional elements to produce a larger list without mutating the original. Using + builds a new list and leaves the list referenced by x unchanged. The special constraint says y must be built by combining y so it follows whatever x starts with.',
+      },
+      constraints: [
+        {
+          rule: {
+            js:
+              'The boss says that y must be built by combining y with [3, 4], so if another programmer updates what x starts with, y still receives the combined items and x stays untouched.',
+            py:
+              'The boss says that y must be built by combining y with [3, 4], so if another programmer updates what x starts with, y still receives the combined items and x stays untouched.',
+          },
+          cases: [
+            {
+              change: 'x starts as [5]',
+              given: {
+                js: lines('let x = [5];', 'let y = x;'),
+                ts: lines('let x: number[] = [5];', 'let y: number[] = x;'),
+                py: lines('x = [5]', 'y = x'),
+              },
+              expected: graph({ x: ref('x'), y: ref('y') }, { x: list(5), y: list(5, 3, 4) }),
+            },
+          ],
+        },
+      ],
+      process: {
+        runtime: runtime(
+          sameObject(
+            before('x'),
+            after('x'),
+            'Keep "x" referring to the container it started with, and build the new one for "y".',
+          ),
+        ),
+        source: [combines('y', 'y')],
+      },
+      debrief: [
+        {
+          html: {
+            js: '<p><code>y = y.concat([3, 4]);</code> evaluates <code>y.concat([3, 4])</code>, building a brand-new array <code>[1, 2, 3, 4]</code>, and points <code>y</code> at it. The original array <code>[1, 2]</code> is untouched, so <code>x</code> still refers to it.</p>',
+            py: '<p><code>y = y + [3, 4]</code> evaluates <code>y + [3, 4]</code>, building a brand-new list <code>[1, 2, 3, 4]</code>, and points <code>y</code> at it. The original list <code>[1, 2]</code> is untouched, so <code>x</code> still refers to it.</p>',
+          },
+        },
+        {
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: list(1, 2), y: list(1, 2, 3, 4) }),
+          caption: {
+            js: 'Correct: x keeps [1, 2]; y points to the new array [1, 2, 3, 4].',
+            py: 'Correct: x keeps [1, 2]; y points to the new list [1, 2, 3, 4].',
+          },
+          verdict: 'correct',
+        },
+        {
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: list(1, 2, 3, 4) }),
+          caption: {
+            js: 'Not correct: this is what growing the shared array in place with push would do; x would see the change too.',
+            py: 'Not correct: this is what growing the shared list in place with append would do; x would see the change too.',
+          },
+          verdict: 'incorrect',
+        },
+        {
+          html: {
+            js: '<p><strong>Not accepted:</strong> <code>y.push(3, 4);</code> changes the shared array in place, so <code>x</code> would see <code>[1, 2, 3, 4]</code> too. Typing <code>y = [1, 2, 3, 4];</code> builds the right picture here, but the checker reruns your code from other starting arrays. <code>y = [...y, 3, 4];</code> also builds a new array, but this puzzle practices <code>concat</code>, so the checker asks for it.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>y.extend([3, 4])</code> changes the shared list in place, so <code>x</code> would see <code>[1, 2, 3, 4]</code> too. Typing <code>y = [1, 2, 3, 4]</code> builds the right picture here, but the checker reruns your code from other starting lists.</p>',
+          },
+        },
+      ],
+    }),
+    draw({
+      title: 'In place, then new',
+      js: lines('let x = [10];', 'let y = x;', 'y.push(20);', 'y = y.concat([30]);'),
+      py: lines('x = [10]', 'y = x', 'y.append(20)', 'y = y + [30]'),
+      expected: graph({ x: ref('x'), y: ref('y') }, { x: list(10, 20), y: list(10, 20, 30) }),
+      hint: {
+        js: 'Growing y in place changes the shared array to [10, 20]; combining with [30] gives y a new array [10, 20, 30] and leaves x pointing at [10, 20].',
+        py: 'Growing y in place changes the shared list to [10, 20]; combining with [30] gives y a new list [10, 20, 30] and leaves x pointing at [10, 20].',
+      },
+      hints: [
+        {
+          variable: 'y',
+          aliasing: 'shared',
+          message:
+            "x and y should not share a container. Growing in place changed the shared container, but combining then built a new one for y and moved only y's arrow, so x still refers to [10, 20].",
+        },
+      ],
+      about: {
+        js: 'push changes an array in place, so every alias sees the change; concat builds a new array, so only the variable it is assigned to moves to it.',
+        py: 'append changes a list in place, so every alias sees the change; + builds a new list, so only the variable it is assigned to moves to it.',
+      },
+      debrief: [
+        {
+          html: {
+            js: '<p>Follow the lines in order:</p><ol><li><code>y.push(20);</code> mutates the shared array in place, so both <code>x</code> and <code>y</code> see <code>[10, 20]</code>.</li><li><code>y = y.concat([30]);</code> builds a brand-new array <code>[10, 20, 30]</code> and rebinds only <code>y</code>.</li></ol><p><code>x</code> still refers to the original array, which holds <code>[10, 20]</code>.</p>',
+            py: '<p>Follow the lines in order:</p><ol><li><code>y.append(20)</code> mutates the shared list in place, so both <code>x</code> and <code>y</code> see <code>[10, 20]</code>.</li><li><code>y = y + [30]</code> builds a brand-new list <code>[10, 20, 30]</code> and rebinds only <code>y</code>.</li></ol><p><code>x</code> still refers to the original list, which holds <code>[10, 20]</code>.</p>',
+          },
+        },
+        {
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: list(10, 20), y: list(10, 20, 30) }),
+          caption: {
+            js: 'Correct: x keeps [10, 20]; y refers to the new array [10, 20, 30].',
+            py: 'Correct: x keeps [10, 20]; y refers to the new list [10, 20, 30].',
+          },
+          verdict: 'correct',
+        },
+        {
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: list(10, 20, 30) }),
+          caption: {
+            js: 'Not correct: this is what would happen if concat changed the shared array in place like push.',
+            py: 'Not correct: this is what would happen if + changed the shared list in place like append.',
+          },
+          verdict: 'incorrect',
+        },
+        {
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: list(10), y: list(10, 20, 30) }),
+          caption: {
+            js: 'Not correct: y.push(20) ran while x and y still shared one array, so x sees the 20.',
+            py: 'Not correct: y.append(20) ran while x and y still shared one list, so x sees the 20.',
+          },
+          verdict: 'incorrect',
+        },
+        {
+          html: '<p>Once a variable is rebound to a new container, later operations on that variable cannot affect the old container.</p>',
+        },
+      ],
+    }),
+    write({
+      title: 'Mutate, then rebind',
+      given: {
+        js: lines('let x = [1];', 'let y = x;'),
+        ts: lines('let x: number[] = [1];', 'let y: number[] = x;'),
+        py: lines('x = [1]', 'y = x'),
+      },
+      js: lines('x.push(2);', 'x = [9];'),
+      py: lines('x.append(2)', 'x = [9]'),
+      expected: graph({ x: ref('new'), y: ref('old') }, { old: list(1, 2), new: list(9) }),
+      hint: {
+        js: 'Grow x in place to [1, 2] with push(2), which y sees too, then repoint x to a new array [9]; y keeps [1, 2].',
+        py: 'Grow x in place to [1, 2] with append(2), which y sees too, then repoint x to a new list [9]; y keeps [1, 2].',
+      },
+      hints: [
+        {
+          variable: 'y',
+          aliasing: 'shared',
+          message:
+            "x and y should not share a container. Reassigning x to a new [9] moves only x's arrow; y stays with the original, now [1, 2].",
+        },
+      ],
+      process: { runtime: runtime(sameObject(before('x'), after('y'))) },
+      about: {
+        js: 'Changing an array in place is seen through every alias, but reassigning a name afterward repoints only that name, so the alias stays with the changed original.',
+        py: 'Changing a list in place is seen through every alias, but reassigning a name afterward repoints only that name, so the alias stays with the changed original.',
+      },
+      debrief: [
+        {
+          html: {
+            js: '<p><code>x.push(2);</code> mutates the array in place, so <code>y</code> sees <code>[1, 2]</code>. Then <code>x = [9];</code> builds a new array and rebinds <code>x</code>. <code>y</code> still points to the original array <code>[1, 2]</code>.</p>',
+            py: '<p><code>x.append(2)</code> mutates the list in place, so <code>y</code> sees <code>[1, 2]</code>. Then <code>x = [9]</code> builds a new list and rebinds <code>x</code>. <code>y</code> still points to the original list <code>[1, 2]</code>.</p>',
+          },
+        },
+        {
+          diagram: graph({ x: ref('new'), y: ref('old') }, { old: list(1, 2), new: list(9) }),
+          caption: {
+            js: 'Correct: y keeps the modified array [1, 2]; x refers to [9].',
+            py: 'Correct: y keeps the modified list [1, 2]; x refers to [9].',
+          },
+          verdict: 'correct',
+        },
+        {
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: list(9) }),
+          caption: {
+            js: 'Not correct: x = [9] repoints only x. It does not replace the array y refers to.',
+            py: 'Not correct: x = [9] repoints only x. It does not replace the list y refers to.',
+          },
+          verdict: 'incorrect',
+        },
+        {
+          html: {
+            js: '<p><strong>Also correct:</strong> <code>y.push(2);</code> instead of <code>x.push(2);</code>, since both names refer to the starter array. Pushing through <code>y</code> can even come after <code>x = [9];</code>, because by then <code>y</code> is the only name left on the original.</p>',
+            py: '<p><strong>Also correct:</strong> <code>y.append(2)</code> instead of <code>x.append(2)</code>, since both names refer to the starter list. Appending through <code>y</code> can even come after <code>x = [9]</code>, because by then <code>y</code> is the only name left on the original.</p>',
+          },
+        },
+        {
+          html: {
+            js: '<p><strong>Not accepted:</strong> <code>x = [9];</code> followed by <code>y = [1, 2];</code>. The picture matches, but the checker requires <code>y</code> to end up on the same array that <code>x</code> referred to at the start.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>x = [9]</code> followed by <code>y = [1, 2]</code>. The picture matches, but the checker requires <code>y</code> to end up on the same list that <code>x</code> referred to at the start.</p>',
           },
         },
       ],
@@ -212,6 +517,7 @@ export const rebindingLevel: UnnumberedLevel = level(
       js: lines('let words = ["hi"];', 'let w = words[0];', 'w = w + "!";'),
       py: lines('words = ["hi"]', 'w = words[0]', 'w = w + "!"'),
       expected: graph({ words: ref('words'), w: 'hi!' }, { words: list('hi') }),
+      reliesOn: ['string.concat'],
       hint: {
         js: 'w gets the string from words[0]; adding "!" builds a new string for w, leaving words[0] unchanged.',
         py: 'w gets the string from words[0]; adding "!" builds a new string for w, leaving words[0] unchanged.',
@@ -266,13 +572,13 @@ export const rebindingLevel: UnnumberedLevel = level(
     }),
     draw({
       title: 'Dropping a reference',
-      js: lines('let a = [1];', 'let b = a;', 'a = null;'),
-      py: lines('a = [1]', 'b = a', 'a = None'),
-      expected: graph({ a: null, b: ref('b') }, { b: list(1) }),
+      js: lines('let x = [1];', 'let y = x;', 'x = null;'),
+      py: lines('x = [1]', 'y = x', 'x = None'),
+      expected: graph({ x: null, y: ref('y') }, { y: list(1) }),
       teaches: ['reference.drop'],
       hint: {
-        js: 'Assigning a = null repoints only a; b keeps referring to [1].',
-        py: 'Assigning a = None repoints only a; b keeps referring to [1].',
+        js: 'Assigning x = null repoints only x; y keeps referring to [1].',
+        py: 'Assigning x = None repoints only x; y keeps referring to [1].',
       },
       about: {
         js: "Setting a variable to null moves only that variable's arrow. As long as another variable still refers to the array, the array remains in memory.",
@@ -281,23 +587,23 @@ export const rebindingLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>a = null;</code> removes <code>a</code>\'s reference to <code>[1]</code>. It does not destroy the array or affect <code>b</code>. Because <code>b</code> still refers to <code>[1]</code>, the array stays alive in memory.</p>',
-            py: '<p><code>a = None</code> removes <code>a</code>\'s reference to <code>[1]</code>. It does not destroy the list or affect <code>b</code>. Because <code>b</code> still refers to <code>[1]</code>, the list stays alive in memory.</p>',
+            js: '<p><code>x = null;</code> removes <code>x</code>\'s reference to <code>[1]</code>. It does not destroy the array or affect <code>y</code>. Because <code>y</code> still refers to <code>[1]</code>, the array stays alive in memory.</p>',
+            py: '<p><code>x = None</code> removes <code>x</code>\'s reference to <code>[1]</code>. It does not destroy the list or affect <code>y</code>. Because <code>y</code> still refers to <code>[1]</code>, the list stays alive in memory.</p>',
           },
         },
         {
-          diagram: graph({ a: null, b: ref('b') }, { b: list(1) }),
+          diagram: graph({ x: null, y: ref('y') }, { y: list(1) }),
           caption: {
-            js: 'Correct: a is null, while b still refers to [1].',
-            py: 'Correct: a is None, while b still refers to [1].',
+            js: 'Correct: x is null, while y still refers to [1].',
+            py: 'Correct: x is None, while y still refers to [1].',
           },
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: null, b: null }),
+          diagram: graph({ x: null, y: null }),
           caption: {
-            js: 'Not correct: this is what would happen if a = null destroyed the array. Dropping a leaves b alone.',
-            py: 'Not correct: this is what would happen if a = None destroyed the list. Dropping a leaves b alone.',
+            js: 'Not correct: this is what would happen if x = null destroyed the array. Dropping x leaves y alone.',
+            py: 'Not correct: this is what would happen if x = None destroyed the list. Dropping x leaves y alone.',
           },
           verdict: 'incorrect',
         },
@@ -309,17 +615,17 @@ export const rebindingLevel: UnnumberedLevel = level(
     write({
       title: 'Nobody points here',
       given: {
-        js: lines('let a = { n: 1 };', 'let b = a;'),
-        ts: lines('let a: { n: number } | null = { n: 1 };', 'let b: { n: number } | null = a;'),
-        py: lines('a = {"n": 1}', 'b = a'),
+        js: lines('let x = { n: 1 };', 'let y = x;'),
+        ts: lines('let x: { n: number } | null = { n: 1 };', 'let y: { n: number } | null = x;'),
+        py: lines('x = {"n": 1}', 'y = x'),
       },
-      js: lines('a = null;', 'b = null;'),
-      py: lines('a = None', 'b = None'),
-      expected: graph({ a: null, b: null }),
+      js: lines('x = null;', 'y = null;'),
+      py: lines('x = None', 'y = None'),
+      expected: graph({ x: null, y: null }),
       reliesOn: ['reference.drop'],
       hint: {
-        js: 'Reassign a to null, then b to null.',
-        py: 'Reassign a to None, then b to None.',
+        js: 'Reassign x to null, then y to null.',
+        py: 'Reassign x to None, then y to None.',
       },
       about: {
         js: 'When all variables referring to an object are reassigned to null, no arrows point to that object anymore. It becomes unreachable garbage and can be collected.',
@@ -328,34 +634,34 @@ export const rebindingLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p>Setting <code>a = null;</code> drops the first reference to the object. Setting <code>b = null;</code> drops the second. With no remaining references pointing to <code>{ n: 1 }</code>, the object is unreachable.</p>',
-            py: '<p>Setting <code>a = None</code> drops the first reference to the dictionary. Setting <code>b = None</code> drops the second. With no remaining references pointing to <code>{"n": 1}</code>, the dictionary is unreachable.</p>',
+            js: '<p>Setting <code>x = null;</code> drops the first reference to the object. Setting <code>y = null;</code> drops the second. With no remaining references pointing to <code>{ n: 1 }</code>, the object is unreachable.</p>',
+            py: '<p>Setting <code>x = None</code> drops the first reference to the dictionary. Setting <code>y = None</code> drops the second. With no remaining references pointing to <code>{"n": 1}</code>, the dictionary is unreachable.</p>',
           },
         },
         {
-          diagram: graph({ a: null, b: null }),
+          diagram: graph({ x: null, y: null }),
           caption: {
-            js: 'Correct: both a and b are null.',
-            py: 'Correct: both a and b are None.',
+            js: 'Correct: both x and y are null.',
+            py: 'Correct: both x and y are None.',
           },
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: null, b: ref('b') }, { b: dict({ n: 1 }) }),
+          diagram: graph({ x: null, y: ref('y') }, { y: dict({ n: 1 }) }),
           caption: {
-            js: 'Not correct: dropping only a leaves b still pointing to the object.',
-            py: 'Not correct: dropping only a leaves b still pointing to the dictionary.',
+            js: 'Not correct: dropping only x leaves y still pointing to the object.',
+            py: 'Not correct: dropping only x leaves y still pointing to the dictionary.',
           },
           verdict: 'incorrect',
         },
         {
           html: {
-            js: '<p><strong>Also correct:</strong> dropping <code>b</code> before <code>a</code>, or both at once with <code>a = b = null;</code>.</p>',
-            py: '<p><strong>Also correct:</strong> dropping <code>b</code> before <code>a</code>, or both at once with <code>a = b = None</code>.</p>',
+            js: '<p><strong>Also correct:</strong> dropping <code>y</code> before <code>x</code>, or both at once with <code>x = y = null;</code>.</p>',
+            py: '<p><strong>Also correct:</strong> dropping <code>y</code> before <code>x</code>, or both at once with <code>x = y = None</code>.</p>',
           },
         },
         {
-          diagram: graph({ a: null, b: null }, { old: dict({ n: 1 }) }),
+          diagram: graph({ x: null, y: null }, { old: dict({ n: 1 }) }),
           caption: {
             js: 'Also correct: the unreachable object left on the canvas as garbage.',
             py: 'Also correct: the unreachable dictionary left on the canvas as garbage.',
@@ -367,317 +673,23 @@ export const rebindingLevel: UnnumberedLevel = level(
         },
       ],
     }),
-    write({
-      title: 'Combine without changing the original',
-      given: {
-        js: lines('let a = [1, 2];', 'let b = a;'),
-        ts: lines('let a: number[] = [1, 2];', 'let b: number[] = a;'),
-        py: lines('a = [1, 2]', 'b = a'),
-      },
-      js: 'b = b.concat([3, 4]);',
-      py: 'b = b + [3, 4]',
-      expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1, 2), b: list(1, 2, 3, 4) }),
-      reliesOn: ['array.concat'],
-      hint: {
-        js: 'Use b = b.concat([3, 4]) so b gets a new array and a keeps [1, 2].',
-        py: 'Use b = b + [3, 4] so b gets a new list and a keeps [1, 2].',
-      },
-      hints: [
-        {
-          variable: 'b',
-          aliasing: 'shared',
-          message:
-            'a and b should not share a container. Growing the shared container in place changes what a sees too; combining builds a new container for b and leaves a with [1, 2].',
-        },
-      ],
-      about: {
-        js: 'Combine an array with additional elements to produce a larger array without mutating the original. Using concat builds a new array and leaves the array referenced by a unchanged. The special constraint says b must be built by combining b so it follows whatever a starts with.',
-        py: 'Combine a list with additional elements to produce a larger list without mutating the original. Using + builds a new list and leaves the list referenced by a unchanged. The special constraint says b must be built by combining b so it follows whatever a starts with.',
-      },
-      constraints: [
-        {
-          rule: {
-            js:
-              'The boss says that b must be built by combining b with [3, 4], so if another programmer updates what a starts with, b still receives the combined items and a stays untouched.',
-            py:
-              'The boss says that b must be built by combining b with [3, 4], so if another programmer updates what a starts with, b still receives the combined items and a stays untouched.',
-          },
-          cases: [
-            {
-              change: 'a starts as [5]',
-              given: {
-                js: lines('let a = [5];', 'let b = a;'),
-                ts: lines('let a: number[] = [5];', 'let b: number[] = a;'),
-                py: lines('a = [5]', 'b = a'),
-              },
-              expected: graph({ a: ref('a'), b: ref('b') }, { a: list(5), b: list(5, 3, 4) }),
-            },
-          ],
-        },
-      ],
-      process: {
-        runtime: runtime(
-          sameObject(
-            before('a'),
-            after('a'),
-            'Keep "a" referring to the container it started with, and build the new one for "b".',
-          ),
-        ),
-        source: [combines('b', 'b')],
-      },
-      debrief: [
-        {
-          html: {
-            js: '<p><code>b = b.concat([3, 4]);</code> evaluates <code>b.concat([3, 4])</code>, building a brand-new array <code>[1, 2, 3, 4]</code>, and points <code>b</code> at it. The original array <code>[1, 2]</code> is untouched, so <code>a</code> still refers to it.</p>',
-            py: '<p><code>b = b + [3, 4]</code> evaluates <code>b + [3, 4]</code>, building a brand-new list <code>[1, 2, 3, 4]</code>, and points <code>b</code> at it. The original list <code>[1, 2]</code> is untouched, so <code>a</code> still refers to it.</p>',
-          },
-        },
-        {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: list(1, 2), b: list(1, 2, 3, 4) }),
-          caption: {
-            js: 'Correct: a keeps [1, 2]; b points to the new array [1, 2, 3, 4].',
-            py: 'Correct: a keeps [1, 2]; b points to the new list [1, 2, 3, 4].',
-          },
-          verdict: 'correct',
-        },
-        {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: list(1, 2, 3, 4) }),
-          caption: {
-            js: 'Not correct: this is what growing the shared array in place with push would do; a would see the change too.',
-            py: 'Not correct: this is what growing the shared list in place with append would do; a would see the change too.',
-          },
-          verdict: 'incorrect',
-        },
-        {
-          html: {
-            js: '<p><strong>Not accepted:</strong> <code>b.push(3, 4);</code> changes the shared array in place, so <code>a</code> would see <code>[1, 2, 3, 4]</code> too. Typing <code>b = [1, 2, 3, 4];</code> builds the right picture here, but the checker reruns your code from other starting arrays. <code>b = [...b, 3, 4];</code> also builds a new array, but this puzzle practices <code>concat</code>, so the checker asks for it.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>b.extend([3, 4])</code> changes the shared list in place, so <code>a</code> would see <code>[1, 2, 3, 4]</code> too. Typing <code>b = [1, 2, 3, 4]</code> builds the right picture here, but the checker reruns your code from other starting lists.</p>',
-          },
-        },
-      ],
-    }),
-    draw({
-      title: 'In place, then new',
-      js: lines('let a = [10];', 'let b = a;', 'b.push(20);', 'b = b.concat([30]);'),
-      py: lines('a = [10]', 'b = a', 'b.append(20)', 'b = b + [30]'),
-      expected: graph({ a: ref('a'), b: ref('b') }, { a: list(10, 20), b: list(10, 20, 30) }),
-      hint: {
-        js: 'Growing b in place changes the shared array to [10, 20]; combining with [30] gives b a new array [10, 20, 30] and leaves a pointing at [10, 20].',
-        py: 'Growing b in place changes the shared list to [10, 20]; combining with [30] gives b a new list [10, 20, 30] and leaves a pointing at [10, 20].',
-      },
-      hints: [
-        {
-          variable: 'b',
-          aliasing: 'shared',
-          message:
-            "a and b should not share a container. Growing in place changed the shared container, but combining then built a new one for b and moved only b's arrow, so a still refers to [10, 20].",
-        },
-      ],
-      about: {
-        js: 'push changes an array in place, so every alias sees the change; concat builds a new array, so only the variable it is assigned to moves to it.',
-        py: 'append changes a list in place, so every alias sees the change; + builds a new list, so only the variable it is assigned to moves to it.',
-      },
-      debrief: [
-        {
-          html: {
-            js: '<p>Follow the lines in order:</p><ol><li><code>b.push(20);</code> mutates the shared array in place, so both <code>a</code> and <code>b</code> see <code>[10, 20]</code>.</li><li><code>b = b.concat([30]);</code> builds a brand-new array <code>[10, 20, 30]</code> and rebinds only <code>b</code>.</li></ol><p><code>a</code> still refers to the original array, which holds <code>[10, 20]</code>.</p>',
-            py: '<p>Follow the lines in order:</p><ol><li><code>b.append(20)</code> mutates the shared list in place, so both <code>a</code> and <code>b</code> see <code>[10, 20]</code>.</li><li><code>b = b + [30]</code> builds a brand-new list <code>[10, 20, 30]</code> and rebinds only <code>b</code>.</li></ol><p><code>a</code> still refers to the original list, which holds <code>[10, 20]</code>.</p>',
-          },
-        },
-        {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: list(10, 20), b: list(10, 20, 30) }),
-          caption: {
-            js: 'Correct: a keeps [10, 20]; b refers to the new array [10, 20, 30].',
-            py: 'Correct: a keeps [10, 20]; b refers to the new list [10, 20, 30].',
-          },
-          verdict: 'correct',
-        },
-        {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: list(10, 20, 30) }),
-          caption: {
-            js: 'Not correct: this is what would happen if concat changed the shared array in place like push.',
-            py: 'Not correct: this is what would happen if + changed the shared list in place like append.',
-          },
-          verdict: 'incorrect',
-        },
-        {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: list(10), b: list(10, 20, 30) }),
-          caption: {
-            js: 'Not correct: b.push(20) ran while a and b still shared one array, so a sees the 20.',
-            py: 'Not correct: b.append(20) ran while a and b still shared one list, so a sees the 20.',
-          },
-          verdict: 'incorrect',
-        },
-        {
-          html: '<p>Once a variable is rebound to a new container, later operations on that variable cannot affect the old container.</p>',
-        },
-      ],
-    }),
-    write({
-      title: 'Mutate, then rebind',
-      given: {
-        js: lines('let a = [1];', 'let b = a;'),
-        ts: lines('let a: number[] = [1];', 'let b: number[] = a;'),
-        py: lines('a = [1]', 'b = a'),
-      },
-      js: lines('a.push(2);', 'a = [9];'),
-      py: lines('a.append(2)', 'a = [9]'),
-      expected: graph({ a: ref('new'), b: ref('old') }, { old: list(1, 2), new: list(9) }),
-      hint: {
-        js: 'Grow a in place to [1, 2] with push(2), which b sees too, then repoint a to a new array [9]; b keeps [1, 2].',
-        py: 'Grow a in place to [1, 2] with append(2), which b sees too, then repoint a to a new list [9]; b keeps [1, 2].',
-      },
-      hints: [
-        {
-          variable: 'b',
-          aliasing: 'shared',
-          message:
-            "a and b should not share a container. Reassigning a to a new [9] moves only a's arrow; b stays with the original, now [1, 2].",
-        },
-      ],
-      process: { runtime: runtime(sameObject(before('a'), after('b'))) },
-      about: {
-        js: 'Changing an array in place is seen through every alias, but reassigning a name afterward repoints only that name, so the alias stays with the changed original.',
-        py: 'Changing a list in place is seen through every alias, but reassigning a name afterward repoints only that name, so the alias stays with the changed original.',
-      },
-      debrief: [
-        {
-          html: {
-            js: '<p><code>a.push(2);</code> mutates the array in place, so <code>b</code> sees <code>[1, 2]</code>. Then <code>a = [9];</code> builds a new array and rebinds <code>a</code>. <code>b</code> still points to the original array <code>[1, 2]</code>.</p>',
-            py: '<p><code>a.append(2)</code> mutates the list in place, so <code>b</code> sees <code>[1, 2]</code>. Then <code>a = [9]</code> builds a new list and rebinds <code>a</code>. <code>b</code> still points to the original list <code>[1, 2]</code>.</p>',
-          },
-        },
-        {
-          diagram: graph({ a: ref('new'), b: ref('old') }, { old: list(1, 2), new: list(9) }),
-          caption: {
-            js: 'Correct: b keeps the modified array [1, 2]; a refers to [9].',
-            py: 'Correct: b keeps the modified list [1, 2]; a refers to [9].',
-          },
-          verdict: 'correct',
-        },
-        {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: list(9) }),
-          caption: {
-            js: 'Not correct: a = [9] repoints only a. It does not replace the array b refers to.',
-            py: 'Not correct: a = [9] repoints only a. It does not replace the list b refers to.',
-          },
-          verdict: 'incorrect',
-        },
-        {
-          html: {
-            js: '<p><strong>Also correct:</strong> <code>b.push(2);</code> instead of <code>a.push(2);</code>, since both names refer to the starter array. Pushing through <code>b</code> can even come after <code>a = [9];</code>, because by then <code>b</code> is the only name left on the original.</p>',
-            py: '<p><strong>Also correct:</strong> <code>b.append(2)</code> instead of <code>a.append(2)</code>, since both names refer to the starter list. Appending through <code>b</code> can even come after <code>a = [9]</code>, because by then <code>b</code> is the only name left on the original.</p>',
-          },
-        },
-        {
-          html: {
-            js: '<p><strong>Not accepted:</strong> <code>a = [9];</code> followed by <code>b = [1, 2];</code>. The picture matches, but the checker requires <code>b</code> to end up on the same array that <code>a</code> referred to at the start.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>a = [9]</code> followed by <code>b = [1, 2]</code>. The picture matches, but the checker requires <code>b</code> to end up on the same list that <code>a</code> referred to at the start.</p>',
-          },
-        },
-      ],
-    }),
-    write({
-      title: 'Shout the name, keep the backup',
-      given: {
-        js: lines('let name = "ada";', 'let backup = name;'),
-        ts: lines('let name: string = "ada";', 'let backup: string = name;'),
-        py: lines('name = "ada"', 'backup = name'),
-      },
-      js: 'name = name.toUpperCase();',
-      py: 'name = name.upper()',
-      expected: graph({ name: 'ADA', backup: 'ada' }),
-      reliesOn: ['string.toUpperCase'],
-      hint: {
-        js: 'Reassign name to name.toUpperCase(); strings never change in place, so backup stays "ada".',
-        py: 'Reassign name to name.upper(); strings never change in place, so backup stays "ada".',
-      },
-      hints: [
-        {
-          variable: 'name',
-          value: 'ada',
-          message:
-            'name should refer to "ADA". Strings never change in place, so calling the method by itself leaves name alone; assign its result back to name.',
-        },
-        {
-          variable: 'backup',
-          value: 'ADA',
-          message:
-            'backup should still refer to "ada". Upper-casing name builds a new string and moves only name\'s arrow, so backup needs no change.',
-        },
-      ],
-      about: {
-        js: 'Strings are immutable. Converting name to uppercase builds a new string. Reassigning name moves its arrow to the uppercase string while backup remains pointing to the original lowercase string. The special constraint says name must be converted using string methods so it follows whatever name starts with.',
-        py: 'Strings are immutable. Converting name to uppercase builds a new string. Reassigning name moves its arrow to the uppercase string while backup remains pointing to the original lowercase string. The special constraint says name must be converted using string methods so it follows whatever name starts with.',
-      },
-      constraints: [
-        {
-          rule:
-            'The boss says that name must be converted using string methods, so if another programmer updates what name starts with, name will still become uppercase and backup will stay untouched.',
-          cases: [
-            {
-              change: 'name starts as "bo"',
-              given: {
-                js: lines('let name = "bo";', 'let backup = name;'),
-                ts: lines('let name: string = "bo";', 'let backup: string = name;'),
-                py: lines('name = "bo"', 'backup = name'),
-              },
-              expected: graph({ name: 'BO', backup: 'bo' }),
-            },
-          ],
-        },
-      ],
-      process: {
-        source: [callsMethod('name', 'name', { javascript: 'toUpperCase', python: 'upper' })],
-      },
-      debrief: [
-        {
-          html: {
-            js: '<p><code>name.toUpperCase()</code> builds a new string <code>"ADA"</code>. Assigning that back to <code>name</code> moves only <code>name</code>\'s arrow. Because strings are immutable, the original string was never altered, and <code>backup</code> continues to refer to <code>"ada"</code>.</p>',
-            py: '<p><code>name.upper()</code> builds a new string <code>"ADA"</code>. Assigning that back to <code>name</code> moves only <code>name</code>\'s arrow. Because strings are immutable, the original string was never altered, and <code>backup</code> continues to refer to <code>"ada"</code>.</p>',
-          },
-        },
-        {
-          diagram: graph({ name: 'ADA', backup: 'ada' }),
-          caption: 'Correct: name points to "ADA"; backup still refers to "ada".',
-          verdict: 'correct',
-        },
-        {
-          diagram: graph({ name: 'ADA', backup: 'ADA' }),
-          caption: {
-            js: 'Not correct: this is what would happen if toUpperCase() changed the shared "ada" in place.',
-            py: 'Not correct: this is what would happen if upper() changed the shared "ada" in place.',
-          },
-          verdict: 'incorrect',
-        },
-        {
-          html: {
-            js: '<p><strong>Not accepted:</strong> <code>name = "ADA";</code>. The checker reruns your code from another starting name to make sure you called <code>toUpperCase()</code>.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>name = "ADA"</code>. The checker reruns your code from another starting name to make sure you called <code>upper()</code>.</p>',
-          },
-        },
-        {
-          html: '<p>Whether <code>name</code> and <code>backup</code> started out sharing one <code>"ada"</code> or referring to separate ones makes no difference: nothing can change <code>"ada"</code> in place, so a backup of a string is safe either way.</p>',
-        },
-      ],
-    }),
   ],
   [
     draw({
       title: { js: 'Combine, then grow the new array', py: 'Combine, then grow the new list' },
-      js: lines('let a = [1];', 'let b = a;', 'b = b.concat([2]);', 'b.push(3);'),
-      py: lines('a = [1]', 'b = a', 'b = b + [2]', 'b.append(3)'),
-      expected: graph({ a: ref('a'), b: ref('b') }, { a: list(1), b: list(1, 2, 3) }),
+      js: lines('let x = [1];', 'let y = x;', 'y = y.concat([2]);', 'y.push(3);'),
+      py: lines('x = [1]', 'y = x', 'y = y + [2]', 'y.append(3)'),
+      expected: graph({ x: ref('x'), y: ref('y') }, { x: list(1), y: list(1, 2, 3) }),
       hint: {
-        js: 'After b = b.concat([2]), b points at a new array; growing it to [1, 2, 3] leaves a holding [1].',
-        py: 'After b = b + [2], b points at a new list; growing it to [1, 2, 3] leaves a holding [1].',
+        js: 'After y = y.concat([2]), y points at a new array; growing it to [1, 2, 3] leaves x holding [1].',
+        py: 'After y = y + [2], y points at a new list; growing it to [1, 2, 3] leaves x holding [1].',
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
           message:
-            'a and b should not share a container. Combining built a new container for b first, so the later growth reaches only b; a still refers to [1].',
+            'x and y should not share a container. Combining built a new container for y first, so the later growth reaches only y; x still refers to [1].',
         },
       ],
       about: {
@@ -687,25 +699,25 @@ export const rebindingLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>b = b.concat([2]);</code> builds a brand-new array <code>[1, 2]</code> and rebinds <code>b</code>. From that moment, <code>a</code> and <code>b</code> point to separate arrays. The later <code>b.push(3);</code> mutates only <code>b</code>\'s new array, leaving <code>a</code> referring to <code>[1]</code>.</p>',
-            py: '<p><code>b = b + [2]</code> builds a brand-new list <code>[1, 2]</code> and rebinds <code>b</code>. From that moment, <code>a</code> and <code>b</code> point to separate lists. The later <code>b.append(3)</code> mutates only <code>b</code>\'s new list, leaving <code>a</code> referring to <code>[1]</code>.</p>',
+            js: '<p><code>y = y.concat([2]);</code> builds a brand-new array <code>[1, 2]</code> and rebinds <code>y</code>. From that moment, <code>x</code> and <code>y</code> point to separate arrays. The later <code>y.push(3);</code> mutates only <code>y</code>\'s new array, leaving <code>x</code> referring to <code>[1]</code>.</p>',
+            py: '<p><code>y = y + [2]</code> builds a brand-new list <code>[1, 2]</code> and rebinds <code>y</code>. From that moment, <code>x</code> and <code>y</code> point to separate lists. The later <code>y.append(3)</code> mutates only <code>y</code>\'s new list, leaving <code>x</code> referring to <code>[1]</code>.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: list(1), b: list(1, 2, 3) }),
-          caption: 'Correct: a retains [1], while b refers to [1, 2, 3].',
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: list(1), y: list(1, 2, 3) }),
+          caption: 'Correct: x retains [1], while y refers to [1, 2, 3].',
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: list(1, 2, 3) }),
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: list(1, 2, 3) }),
           caption: {
-            js: 'Not correct: concat creates a new array, so a and b do not share [1, 2, 3].',
-            py: 'Not correct: + creates a new list, so a and b do not share [1, 2, 3].',
+            js: 'Not correct: concat creates a new array, so x and y do not share [1, 2, 3].',
+            py: 'Not correct: + creates a new list, so x and y do not share [1, 2, 3].',
           },
           verdict: 'incorrect',
         },
         {
-          html: '<p>Rebinding breaks the alias. Once <code>b</code> points to a new container, changes made through <code>b</code> can never reach <code>a</code> again. This is the reverse of "In place, then new", where the change in place came first and both names saw it.</p>',
+          html: '<p>Rebinding breaks the alias. Once <code>y</code> points to a new container, changes made through <code>y</code> can never reach <code>x</code> again. This is the reverse of "In place, then new", where the change in place came first and both names saw it.</p>',
         },
       ],
     }),
@@ -775,19 +787,19 @@ export const rebindingLevel: UnnumberedLevel = level(
     write({
       title: 'Let it go',
       given: {
-        js: lines('let a = [1];', 'let b = [a];'),
-        ts: lines('let a: number[] | null = [1];', 'let b: (number[] | null)[] = [a];'),
-        py: lines('a = [1]', 'b = [a]'),
+        js: lines('let x = [1];', 'let y = [x];'),
+        ts: lines('let x: number[] | null = [1];', 'let y: (number[] | null)[] = [x];'),
+        py: lines('x = [1]', 'y = [x]'),
       },
-      js: 'a = null;',
-      py: 'a = None',
-      expected: graph({ a: null, b: ref('b') }, { b: list(ref('inner')), inner: list(1) }),
+      js: 'x = null;',
+      py: 'x = None',
+      expected: graph({ x: null, y: ref('y') }, { y: list(ref('inner')), inner: list(1) }),
       hint: {
-        js: 'Reassign a to null; b still holds a reference to [1] in slot 0.',
-        py: 'Reassign a to None; b still holds a reference to [1] in slot 0.',
+        js: 'Reassign x to null; y still holds a reference to [1] in slot 0.',
+        py: 'Reassign x to None; y still holds a reference to [1] in slot 0.',
       },
       process: {
-        runtime: runtime(sameObject(before('a'), after('b', 0))),
+        runtime: runtime(sameObject(before('x'), after('y', 0))),
       },
       about: {
         js: "Reassigning a variable to null removes only that variable's reference. If a container still holds an arrow to the array, that array remains reachable and alive.",
@@ -796,30 +808,30 @@ export const rebindingLevel: UnnumberedLevel = level(
       debrief: [
         {
           html: {
-            js: '<p><code>a = null;</code> moves only <code>a</code>\'s arrow to <code>null</code>. The array <code>b</code> still holds an arrow to <code>[1]</code> in slot 0. Because that inner array is reachable through <code>b</code>, it remains in memory and is not garbage collected.</p>',
-            py: '<p><code>a = None</code> moves only <code>a</code>\'s arrow to <code>None</code>. The list <code>b</code> still holds an arrow to <code>[1]</code> in slot 0. Because that inner list is reachable through <code>b</code>, it remains in memory and is not garbage collected.</p>',
+            js: '<p><code>x = null;</code> moves only <code>x</code>\'s arrow to <code>null</code>. The array <code>y</code> still holds an arrow to <code>[1]</code> in slot 0. Because that inner array is reachable through <code>y</code>, it remains in memory and is not garbage collected.</p>',
+            py: '<p><code>x = None</code> moves only <code>x</code>\'s arrow to <code>None</code>. The list <code>y</code> still holds an arrow to <code>[1]</code> in slot 0. Because that inner list is reachable through <code>y</code>, it remains in memory and is not garbage collected.</p>',
           },
         },
         {
-          diagram: graph({ a: null, b: ref('b') }, { b: list(ref('inner')), inner: list(1) }),
+          diagram: graph({ x: null, y: ref('y') }, { y: list(ref('inner')), inner: list(1) }),
           caption: {
-            js: 'Correct: a is null, while b[0] still holds the reference to [1].',
-            py: 'Correct: a is None, while b[0] still holds the reference to [1].',
+            js: 'Correct: x is null, while y[0] still holds the reference to [1].',
+            py: 'Correct: x is None, while y[0] still holds the reference to [1].',
           },
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: null, b: ref('b') }, { b: list(null) }),
+          diagram: graph({ x: null, y: ref('y') }, { y: list(null) }),
           caption: {
-            js: 'Not correct: this is what would happen if a = null destroyed the inner array. The slot inside b still refers to it.',
-            py: 'Not correct: this is what would happen if a = None destroyed the inner list. The slot inside b still refers to it.',
+            js: 'Not correct: this is what would happen if x = null destroyed the inner array. The slot inside y still refers to it.',
+            py: 'Not correct: this is what would happen if x = None destroyed the inner list. The slot inside y still refers to it.',
           },
           verdict: 'incorrect',
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> rebuilding <code>b</code> with <code>b = [[1]];</code> before dropping <code>a</code>. The picture matches, but the checker requires <code>b[0]</code> to still be the array <code>a</code> referred to at the start.</p>',
-            py: '<p><strong>Not accepted:</strong> rebuilding <code>b</code> with <code>b = [[1]]</code> before dropping <code>a</code>. The picture matches, but the checker requires <code>b[0]</code> to still be the list <code>a</code> referred to at the start.</p>',
+            js: '<p><strong>Not accepted:</strong> rebuilding <code>y</code> with <code>y = [[1]];</code> before dropping <code>x</code>. The picture matches, but the checker requires <code>y[0]</code> to still be the array <code>x</code> referred to at the start.</p>',
+            py: '<p><strong>Not accepted:</strong> rebuilding <code>y</code> with <code>y = [[1]]</code> before dropping <code>x</code>. The picture matches, but the checker requires <code>y[0]</code> to still be the list <code>x</code> referred to at the start.</p>',
           },
         },
         {
@@ -888,87 +900,87 @@ export const rebindingLevel: UnnumberedLevel = level(
     write({
       title: 'Two ways to grow',
       given: {
-        js: lines('let a = [4];', 'let b = a;'),
-        ts: lines('let a: number[] = [4];', 'let b: number[] = a;'),
-        py: lines('a = [4]', 'b = a'),
+        js: lines('let x = [4];', 'let y = x;'),
+        ts: lines('let x: number[] = [4];', 'let y: number[] = x;'),
+        py: lines('x = [4]', 'y = x'),
       },
-      js: lines('a.push(5);', 'b = b.concat([6]);'),
-      py: lines('a.append(5)', 'b = b + [6]'),
-      expected: graph({ a: ref('a'), b: ref('b') }, { a: list(4, 5), b: list(4, 5, 6) }),
+      js: lines('x.push(5);', 'y = y.concat([6]);'),
+      py: lines('x.append(5)', 'y = y + [6]'),
+      expected: graph({ x: ref('x'), y: ref('y') }, { x: list(4, 5), y: list(4, 5, 6) }),
       hint: {
-        js: 'Grow a in place to [4, 5] with push(5), then assign b a new array using b.concat([6]).',
-        py: 'Grow a in place to [4, 5] with append(5), then assign b a new list using b + [6].',
+        js: 'Grow x in place to [4, 5] with push(5), then assign y a new array using y.concat([6]).',
+        py: 'Grow x in place to [4, 5] with append(5), then assign y a new list using y + [6].',
       },
       hints: [
         {
-          variable: 'b',
+          variable: 'y',
           aliasing: 'shared',
           message:
-            'a and b should not share a container. Grow the shared container in place first, then combine to give b a new container and leave a with [4, 5].',
+            'x and y should not share a container. Grow the shared container in place first, then combine to give y a new container and leave x with [4, 5].',
         },
       ],
       about: {
-        js: 'Growing a shared array in place with push is seen through every alias; combining with concat builds a new array, so only the variable it is assigned to moves to it. The special constraint says b must be built by combining b with [6].',
-        py: 'Growing a shared list in place with append is seen through every alias; combining with + builds a new list, so only the variable it is assigned to moves to it. The special constraint says b must be built by combining b with [6].',
+        js: 'Growing a shared array in place with push is seen through every alias; combining with concat builds a new array, so only the variable it is assigned to moves to it. The special constraint says y must be built by combining y with [6].',
+        py: 'Growing a shared list in place with append is seen through every alias; combining with + builds a new list, so only the variable it is assigned to moves to it. The special constraint says y must be built by combining y with [6].',
       },
       constraints: [
         {
           rule: {
             js:
-              'The boss says that b must be built by combining b with [6], so if another programmer updates what a starts with, a still grows by 5 and b gets the combined items.',
+              'The boss says that y must be built by combining y with [6], so if another programmer updates what x starts with, x still grows by 5 and y gets the combined items.',
             py:
-              'The boss says that b must be built by combining b with [6], so if another programmer updates what a starts with, a still grows by 5 and b gets the combined items.',
+              'The boss says that y must be built by combining y with [6], so if another programmer updates what x starts with, x still grows by 5 and y gets the combined items.',
           },
           cases: [
             {
-              change: 'a starts as [10]',
+              change: 'x starts as [10]',
               given: {
-                js: lines('let a = [10];', 'let b = a;'),
-                ts: lines('let a: number[] = [10];', 'let b: number[] = a;'),
-                py: lines('a = [10]', 'b = a'),
+                js: lines('let x = [10];', 'let y = x;'),
+                ts: lines('let x: number[] = [10];', 'let y: number[] = x;'),
+                py: lines('x = [10]', 'y = x'),
               },
-              expected: graph({ a: ref('a'), b: ref('b') }, { a: list(10, 5), b: list(10, 5, 6) }),
+              expected: graph({ x: ref('x'), y: ref('y') }, { x: list(10, 5), y: list(10, 5, 6) }),
             },
           ],
         },
       ],
       process: {
-        runtime: runtime(preserve('a')),
-        source: [combines('b', 'b')],
+        runtime: runtime(preserve('x')),
+        source: [combines('y', 'y')],
       },
       debrief: [
         {
           html: {
-            js: '<p><code>a.push(5);</code> modifies the shared array in place, so both <code>a</code> and <code>b</code> refer to <code>[4, 5]</code>. Then <code>b = b.concat([6]);</code> constructs a brand-new array <code>[4, 5, 6]</code> and rebinds <code>b</code>. <code>a</code> continues to refer to the original array <code>[4, 5]</code>.</p>',
-            py: '<p><code>a.append(5)</code> modifies the shared list in place, so both <code>a</code> and <code>b</code> refer to <code>[4, 5]</code>. Then <code>b = b + [6]</code> constructs a brand-new list <code>[4, 5, 6]</code> and rebinds <code>b</code>. <code>a</code> continues to refer to the original list <code>[4, 5]</code>.</p>',
+            js: '<p><code>x.push(5);</code> modifies the shared array in place, so both <code>x</code> and <code>y</code> refer to <code>[4, 5]</code>. Then <code>y = y.concat([6]);</code> constructs a brand-new array <code>[4, 5, 6]</code> and rebinds <code>y</code>. <code>x</code> continues to refer to the original array <code>[4, 5]</code>.</p>',
+            py: '<p><code>x.append(5)</code> modifies the shared list in place, so both <code>x</code> and <code>y</code> refer to <code>[4, 5]</code>. Then <code>y = y + [6]</code> constructs a brand-new list <code>[4, 5, 6]</code> and rebinds <code>y</code>. <code>x</code> continues to refer to the original list <code>[4, 5]</code>.</p>',
           },
         },
         {
-          diagram: graph({ a: ref('a'), b: ref('b') }, { a: list(4, 5), b: list(4, 5, 6) }),
+          diagram: graph({ x: ref('x'), y: ref('y') }, { x: list(4, 5), y: list(4, 5, 6) }),
           caption: {
-            js: 'Correct: a remains [4, 5]; b refers to the new array [4, 5, 6].',
-            py: 'Correct: a remains [4, 5]; b refers to the new list [4, 5, 6].',
+            js: 'Correct: x remains [4, 5]; y refers to the new array [4, 5, 6].',
+            py: 'Correct: x remains [4, 5]; y refers to the new list [4, 5, 6].',
           },
           verdict: 'correct',
         },
         {
-          diagram: graph({ a: ref('shared'), b: ref('shared') }, { shared: list(4, 5, 6) }),
+          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: list(4, 5, 6) }),
           caption: {
-            js: 'Not correct: this is what b.push(6) would do, changing the array a refers to as well.',
-            py: 'Not correct: this is what b.append(6) would do, changing the list a refers to as well.',
+            js: 'Not correct: this is what y.push(6) would do, changing the array x refers to as well.',
+            py: 'Not correct: this is what y.append(6) would do, changing the list x refers to as well.',
           },
           verdict: 'incorrect',
         },
         {
           html: {
-            js: '<p><strong>Also correct:</strong> <code>b.push(5);</code> instead of <code>a.push(5);</code>. Before <code>b</code> is rebound, both names refer to the starter array.</p>',
-            py: '<p><strong>Also correct:</strong> <code>b.append(5)</code> instead of <code>a.append(5)</code>. Before <code>b</code> is rebound, both names refer to the starter list.</p>',
+            js: '<p><strong>Also correct:</strong> <code>y.push(5);</code> instead of <code>x.push(5);</code>. Before <code>y</code> is rebound, both names refer to the starter array.</p>',
+            py: '<p><strong>Also correct:</strong> <code>y.append(5)</code> instead of <code>x.append(5)</code>. Before <code>y</code> is rebound, both names refer to the starter list.</p>',
           },
         },
         {
           html: {
-            js: '<p><strong>Not accepted:</strong> <code>a.push(5);</code> followed by <code>b.push(6);</code> leaves both variables sharing <code>[4, 5, 6]</code>. Typing <code>b = [4, 5, 6];</code> matches the picture, but the checker reruns your code from another starting array to make sure you built <code>b</code> with <code>b.concat(...)</code>.</p>',
-            py: '<p><strong>Not accepted:</strong> <code>a.append(5)</code> followed by <code>b.append(6)</code> leaves both variables sharing <code>[4, 5, 6]</code>. Typing <code>b = [4, 5, 6]</code> matches the picture, but the checker reruns your code from another starting list to make sure you built <code>b</code> with <code>b + [...]</code>.</p>',
+            js: '<p><strong>Not accepted:</strong> <code>x.push(5);</code> followed by <code>y.push(6);</code> leaves both variables sharing <code>[4, 5, 6]</code>. Typing <code>y = [4, 5, 6];</code> matches the picture, but the checker reruns your code from another starting array to make sure you built <code>y</code> with <code>y.concat(...)</code>.</p>',
+            py: '<p><strong>Not accepted:</strong> <code>x.append(5)</code> followed by <code>y.append(6)</code> leaves both variables sharing <code>[4, 5, 6]</code>. Typing <code>y = [4, 5, 6]</code> matches the picture, but the checker reruns your code from another starting list to make sure you built <code>y</code> with <code>y + [...]</code>.</p>',
           },
         },
       ],
