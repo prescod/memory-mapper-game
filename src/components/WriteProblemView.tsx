@@ -48,6 +48,8 @@ export function WriteProblemView({
   const [nodes, setNodes, onNodesChange] = useNodesState<MemFlowNode>(picture.nodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState<MemFlowEdge>(picture.edges)
   const [result, setResult] = useState<VerifyResult | null>(null)
+  // Bumped by Reset so the canvas remounts and its view returns to where it started.
+  const [resetCount, setResetCount] = useState(0)
   const [busy, setBusy] = useState(false)
 
   // A check that finishes after the learner has left must not touch state or mark progress.
@@ -90,6 +92,7 @@ export function WriteProblemView({
   }
 
   const reset = () => {
+    setResetCount((count) => count + 1)
     setIsAnswerRevealed(false)
     setResult(null)
     resetProblem(key)
@@ -129,6 +132,7 @@ export function WriteProblemView({
         ) : (
           <>
             <Canvas
+              key={resetCount}
               readOnly
               nodes={nodes}
               edges={edges}

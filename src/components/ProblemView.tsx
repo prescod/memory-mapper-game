@@ -50,6 +50,8 @@ export function ProblemView({
   const [nodes, setNodes, onNodesChange] = useNodesState<MemFlowNode>(draft?.nodes ?? [])
   const [edges, setEdges, onEdgesChange] = useEdgesState<MemFlowEdge>(draft?.edges ?? [])
   const [result, setResult] = useState<VerifyResult | null>(null)
+  // Bumped by Reset so the canvas remounts and its view returns to where it started.
+  const [resetCount, setResetCount] = useState(0)
 
   const latest = useRef({ nodes, edges })
   latest.current = { nodes, edges }
@@ -111,6 +113,7 @@ export function ProblemView({
   }
 
   const reset = () => {
+    setResetCount((count) => count + 1)
     userDraftRef.current = null
     setIsAnswerRevealed(false)
     setNodes([])
@@ -167,6 +170,7 @@ export function ProblemView({
           />
         ) : (
           <Canvas
+            key={resetCount}
             nodes={nodes}
             edges={edges}
             onNodesChange={handleNodesChange}
