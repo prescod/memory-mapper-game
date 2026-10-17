@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { MemFlowNode } from '../canvas/types'
-import { bandForType, defaultPositionForType, freePosition } from './placement'
+import { bandForType, defaultPositionForType, freePosition, revealOffset } from './placement'
 
 const region = { x: 0, y: 0, width: 400, height: 500 }
 
@@ -73,5 +73,20 @@ describe('freePosition', () => {
     const existing = [{ position: { x: 10, y: 20 }, measured: { width: 140, height: 60 } }]
     const placed = freePosition({ x: 10, y: 20 }, existing)
     expect(placed).not.toEqual({ x: 10, y: 20 })
+  })
+})
+
+describe('revealOffset', () => {
+  it('does not move the view when the block is already visible', () => {
+    expect(revealOffset({ x: 12, y: 12 }, 'variable', region)).toEqual({ x: 0, y: 0 })
+  })
+
+  it('shifts only far enough to show a block below the view', () => {
+    // A primitive reserves 80px of height, so its bottom sits at 520: 20 past the view, plus the margin.
+    expect(revealOffset({ x: 12, y: 440 }, 'scalar', region)).toEqual({ x: 0, y: 36 })
+  })
+
+  it('shifts up and left for a block above and before the view', () => {
+    expect(revealOffset({ x: -30, y: -10 }, 'variable', region)).toEqual({ x: -46, y: -26 })
   })
 })

@@ -42,7 +42,7 @@ import {
 import type { Language } from '../model/types'
 import { edgeTypes } from './edges'
 import { nodeTypes } from './nodes'
-import { defaultPositionForType, freePosition } from './placement'
+import { defaultPositionForType, freePosition, revealOffset } from './placement'
 import { HandleHitLayer } from './HandleHitLayer'
 import { HandleVisualLayer } from './HandleVisualLayer'
 import { tapConnection } from './tapConnect'
@@ -158,7 +158,7 @@ function CanvasInner({
     [edgeHitWidth],
   )
   const wrapper = useRef<HTMLDivElement>(null)
-  const { screenToFlowPosition, fitView, deleteElements } = useReactFlow<MemFlowNode, MemFlowEdge>()
+  const { screenToFlowPosition, fitView, deleteElements, getViewport, setViewport } = useReactFlow<MemFlowNode, MemFlowEdge>()
   const nodesMeasured = useNodesInitialized()
   const store = useStoreApi<MemFlowNode, MemFlowEdge>()
   const pending = useStore((state) => state.connectionClickStartHandle)
@@ -313,17 +313,29 @@ function CanvasInner({
     (type: MemNodeType) => {
       const bounds = wrapper.current?.getBoundingClientRect()
       if (!bounds) return
+      // Lay blocks out in the canvas's starting view so the grid stays put however far the view has moved.
+      const home = { x: 8, y: 8, width: bounds.width - 16, height: bounds.height - 16 }
+      const position = defaultPositionForType(type, nodes, home)
+      addNode(type, position)
+      // Pan just far enough to show the new block.
       const topLeft = screenToFlowPosition({ x: bounds.left + 8, y: bounds.top + 8 })
       const bottomRight = screenToFlowPosition({ x: bounds.right - 8, y: bounds.bottom - 8 })
-      const region = {
+      const visible = {
         x: topLeft.x,
         y: topLeft.y,
         width: bottomRight.x - topLeft.x,
         height: bottomRight.y - topLeft.y,
       }
-      addNode(type, defaultPositionForType(type, nodes, region))
+      const offset = revealOffset(position, type, visible)
+      if (offset.x !== 0 || offset.y !== 0) {
+        const viewport = getViewport()
+        void setViewport(
+          { ...viewport, x: viewport.x - offset.x * viewport.zoom, y: viewport.y - offset.y * viewport.zoom },
+          { duration: 250 },
+        )
+      }
     },
-    [addNode, screenToFlowPosition, nodes],
+    [addNode, screenToFlowPosition, nodes, getViewport, setViewport],
   )
 
   const onDragOver = useCallback((event: DragEvent) => {

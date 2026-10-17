@@ -119,3 +119,23 @@ export function freePosition(preferred: XYPosition, existing: Box[], type?: MemN
   }
   return preferred
 }
+
+/** Breathing room left between a revealed block and the edge of the view. */
+const REVEAL_MARGIN = 16
+
+/**
+ * The smallest shift, in flow units, that brings a new block of `type` at
+ * `position` fully inside `region`. Zero on both axes when it is already visible.
+ */
+export function revealOffset(position: XYPosition, type: MemNodeType, region: PlacementRegion): XYPosition {
+  const slot = slotFor(type)
+  const axis = (start: number, size: number, viewStart: number, viewSize: number) => {
+    if (start < viewStart) return start - viewStart - REVEAL_MARGIN
+    const overflow = start + size - (viewStart + viewSize)
+    return overflow > 0 ? overflow + REVEAL_MARGIN : 0
+  }
+  return {
+    x: axis(position.x, slot.width, region.x, region.width),
+    y: axis(position.y, slot.height, region.y, region.height),
+  }
+}
