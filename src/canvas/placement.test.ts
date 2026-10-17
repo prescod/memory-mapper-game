@@ -56,6 +56,14 @@ describe('defaultPositionForType', () => {
   })
 })
 
+describe('primitive placement', () => {
+  it('leaves room for the wide "AUTO: NUMBER" kind dropdown', () => {
+    const first = defaultPositionForType('scalar', [], region)
+    const second = defaultPositionForType('scalar', [node('scalar', first.x, first.y)], region)
+    expect(second.x >= first.x + 167 || second.y >= first.y + 77).toBe(true)
+  })
+})
+
 describe('freePosition', () => {
   it('uses the preferred spot on an empty canvas', () => {
     expect(freePosition({ x: 10, y: 20 }, [])).toEqual({ x: 10, y: 20 })

@@ -337,7 +337,7 @@ function CanvasInner({
       const type = event.dataTransfer.getData(DRAG_MIME) as MemNodeType
       if (!type) return
       const point = screenToFlowPosition({ x: event.clientX, y: event.clientY })
-      addNode(type, freePosition(point, nodes))
+      addNode(type, freePosition(point, nodes, type))
     },
     [addNode, screenToFlowPosition, nodes],
   )

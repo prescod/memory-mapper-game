@@ -2,6 +2,7 @@ import type { XYPosition } from '@xyflow/react'
 import type { MemFlowNode, MemNodeType } from './types'
 
 interface Box {
+  type?: MemNodeType
   position: XYPosition
   measured?: { width?: number; height?: number }
 }
@@ -9,6 +10,15 @@ interface Box {
 /** Size assumed for a block that has not been measured yet, including a little breathing room. */
 const BLOCK = { width: 150, height: 76 }
 const GAP = 10
+
+/**
+ * Room reserved for a primitive. Its kind dropdown reads "AUTO: NUMBER" until a
+ * value is typed, which makes a block about 167px wide and 77px tall (measured in
+ * the browser), wider than the other empty blocks.
+ */
+const PRIMITIVE = { width: 170, height: 80 }
+
+const slotFor = (type: MemNodeType | undefined) => (type === 'scalar' ? PRIMITIVE : BLOCK)
 
 export interface PlacementRegion {
   x: number
@@ -36,26 +46,29 @@ export function bandForType(type: MemNodeType): Band {
   }
 }
 
-const overlaps = (position: XYPosition, box: Box) => {
-  const width = box.measured?.width ?? BLOCK.width
-  const height = box.measured?.height ?? BLOCK.height
+/** Whether a block of `type` at `position` would touch `box` once both have grown to their largest. */
+const overlaps = (position: XYPosition, type: MemNodeType | undefined, box: Box) => {
+  const slot = slotFor(type)
+  const reserved = slotFor(box.type)
+  const width = Math.max(box.measured?.width ?? 0, reserved.width)
+  const height = Math.max(box.measured?.height ?? 0, reserved.height)
   return (
     position.x < box.position.x + width &&
-    position.x + BLOCK.width > box.position.x &&
+    position.x + slot.width > box.position.x &&
     position.y < box.position.y + height &&
-    position.y + BLOCK.height > box.position.y
+    position.y + slot.height > box.position.y
   )
 }
 
-function bandOrigin(band: Band, region: PlacementRegion): { y: number; rowStride: number } {
+function bandOrigin(band: Band, region: PlacementRegion, rowHeight: number): { y: number; rowStride: number } {
   const { y, height } = region
   switch (band) {
     case 'top':
-      return { y: y + 8, rowStride: BLOCK.height + GAP }
+      return { y: y + 8, rowStride: rowHeight + GAP }
     case 'middle':
-      return { y: y + height * 0.36, rowStride: BLOCK.height + GAP }
+      return { y: y + height * 0.36, rowStride: rowHeight + GAP }
     case 'bottom':
-      return { y: y + height * 0.68, rowStride: BLOCK.height + GAP }
+      return { y: y + height * 0.68, rowStride: rowHeight + GAP }
   }
 }
 
@@ -70,17 +83,18 @@ export function defaultPositionForType(
   region: PlacementRegion,
 ): XYPosition {
   const band = bandForType(type)
-  const { y: bandY, rowStride } = bandOrigin(band, region)
-  const usableWidth = Math.max(BLOCK.width, region.width - 24)
-  const columns = Math.max(1, Math.floor(usableWidth / (BLOCK.width + GAP)))
+  const slot = slotFor(type)
+  const { y: bandY, rowStride } = bandOrigin(band, region, slot.height)
+  const usableWidth = Math.max(slot.width, region.width - 24)
+  const columns = Math.max(1, Math.floor(usableWidth / (slot.width + GAP)))
 
   for (let row = 0; row < 12; row++) {
     for (let col = 0; col < columns; col++) {
       const position = {
-        x: region.x + 12 + col * (BLOCK.width + GAP),
+        x: region.x + 12 + col * (slot.width + GAP),
         y: bandY + row * rowStride,
       }
-      if (!nodes.some((node) => overlaps(position, node))) return position
+      if (!nodes.some((node) => overlaps(position, type, node))) return position
     }
   }
 
@@ -90,16 +104,17 @@ export function defaultPositionForType(
 /**
  * Nudge `preferred` to the nearest free cell when dropping a block by hand.
  */
-export function freePosition(preferred: XYPosition, existing: Box[]): XYPosition {
+export function freePosition(preferred: XYPosition, existing: Box[], type?: MemNodeType): XYPosition {
+  const slot = slotFor(type)
   const COLUMN_STEPS = [0, 1, -1, 2, -2]
   const ROW_STEPS = [0, 1, 2, 3, 4, 5, -1, -2]
   for (const column of COLUMN_STEPS) {
     for (const row of ROW_STEPS) {
       const position = {
-        x: preferred.x + column * (BLOCK.width + GAP),
-        y: preferred.y + row * (BLOCK.height + GAP),
+        x: preferred.x + column * (slot.width + GAP),
+        y: preferred.y + row * (slot.height + GAP),
       }
-      if (!existing.some((box) => overlaps(position, box))) return position
+      if (!existing.some((box) => overlaps(position, type, box))) return position
     }
   }
   return preferred
