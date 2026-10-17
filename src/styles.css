@@ -746,6 +746,13 @@ textarea {
   gap: 4px;
 }
 
+.header-fullscreen {
+  min-width: 36px;
+  margin-left: 4px;
+  border: none;
+  background: none;
+}
+
 .header-position {
   min-width: 56px;
   color: var(--muted);
