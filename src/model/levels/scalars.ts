@@ -175,7 +175,7 @@ export const scalarsLevel: UnnumberedLevel = level(
       js: 'let y = x;',
       ts: 'let y: number = x;',
       py: 'y = x',
-      expected: graph({ x: 8, y: 8 }),
+      expected: graph({ x: ref('eight'), y: ref('eight') }, { eight: scalar(8) }),
       constraints: [
         {
           rule:
@@ -184,7 +184,7 @@ export const scalarsLevel: UnnumberedLevel = level(
             {
               change: 'x starts at 3',
               given: { js: 'let x = 3;', ts: 'let x: number = 3;', py: 'x = 3' },
-              expected: graph({ x: 3, y: 3 }),
+              expected: graph({ x: ref('three'), y: ref('three') }, { three: scalar(3) }),
             },
           ],
         },
@@ -215,9 +215,12 @@ export const scalarsLevel: UnnumberedLevel = level(
           },
         },
         {
-          diagram: graph({ x: ref('shared'), y: ref('shared') }, { shared: scalar(8) }),
-          caption: 'This picture, with one shared 8, shows the same memory as the one you matched.',
+          diagram: graph({ x: 8, y: 8 }),
+          caption: 'This picture, with two separate 8s, shows the same memory as the one you matched.',
           verdict: 'correct',
+        },
+        {
+          html: '<p>A number can never be changed in place, so no program can tell one shared 8 from two separate 8s. The two pictures mean the same thing, and the checker accepts either one.</p>',
         },
         {
           diagram: graph({ x: 8, y: 'x' }),
@@ -225,7 +228,7 @@ export const scalarsLevel: UnnumberedLevel = level(
           verdict: 'incorrect',
         },
         {
-          html: "<p><strong>Also correct:</strong> y sharing x's 8, as above, or referring to a separate 8, as in the picture you matched. Numbers cannot change in place, so the two pictures behave the same.</p>",
+          html: "<p><strong>Also correct:</strong> y sharing x's 8, as in the picture you matched, or referring to a separate 8, as above.</p>",
         },
         {
           html: {
