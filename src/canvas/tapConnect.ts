@@ -29,3 +29,25 @@ export function tapConnection(
   }
   return isValidConnection(connection, nodes) ? connection : null
 }
+
+/** How a drag from a handle ended, as React Flow reports it. */
+export interface DragEnd {
+  isValid: boolean | null
+  fromHandle: PendingHandle | null
+}
+
+/**
+ * The reference made by dropping a drag on the body of `targetNodeId`, or null
+ * when React Flow already made one (the drop was near a handle) or the drop
+ * cannot finish one. Dropping back on the starting block is ignored, so a
+ * short wobble off a handle does not make a self-reference.
+ */
+export function dropConnection(
+  end: DragEnd,
+  targetNodeId: string | null,
+  nodes: MemFlowNode[],
+): Connection | null {
+  if (end.isValid || !end.fromHandle || !targetNodeId) return null
+  if (targetNodeId === end.fromHandle.nodeId) return null
+  return tapConnection(end.fromHandle, targetNodeId, nodes)
+}

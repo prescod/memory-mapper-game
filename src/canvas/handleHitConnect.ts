@@ -52,8 +52,9 @@ export function handleHitPointerDown(
     onConnect: (connection) => (state.onConnect as ((c: unknown) => void) | undefined)?.(connection),
     isValidConnection:
       (state.isValidConnection as ((c: unknown) => boolean) | undefined) ?? (() => true),
-    getTransform: () => state.transform as [number, number, number],
-    getFromHandle: () => (state.connection as { fromHandle: unknown }).fromHandle,
+    // Read live state: the connection starts and the view may auto-pan after pointerdown.
+    getTransform: () => store.getState().transform as [number, number, number],
+    getFromHandle: () => (store.getState().connection as { fromHandle: unknown }).fromHandle,
     autoPanSpeed: state.autoPanSpeed,
     dragThreshold: state.connectionDragThreshold,
   } as Parameters<typeof XYHandle.onPointerDown>[1])

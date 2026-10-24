@@ -12,6 +12,7 @@ import {
   type Connection,
   type Edge,
   type NodeMouseHandler,
+  type OnConnectEnd,
   type OnEdgesChange,
   type OnNodesChange,
 } from '@xyflow/react'
@@ -45,7 +46,7 @@ import { nodeTypes } from './nodes'
 import { defaultPositionForType, freePosition, revealOffset } from './placement'
 import { HandleHitLayer } from './HandleHitLayer'
 import { HandleVisualLayer } from './HandleVisualLayer'
-import { tapConnection } from './tapConnect'
+import { dropConnection, tapConnection } from './tapConnect'
 import { DRAG_MIME, Toolbar } from './Toolbar'
 import { useCoarsePointer } from './useCoarsePointer'
 
@@ -162,6 +163,9 @@ function CanvasInner({
   const nodesMeasured = useNodesInitialized()
   const store = useStoreApi<MemFlowNode, MemFlowEdge>()
   const pending = useStore((state) => state.connectionClickStartHandle)
+  const dragFrom = useStore((state) =>
+    state.connection.inProgress ? state.connection.fromHandle : null,
+  )
   const strobingSource = useStore((state) =>
     activeStrobingSource(state.connectionClickStartHandle, state.connection),
   )
@@ -375,6 +379,19 @@ function CanvasInner({
     [nodes],
   )
 
+  // React Flow only finishes a drag near a handle; dropping anywhere on the target block is easier to hit.
+  const onConnectEnd: OnConnectEnd = useCallback(
+    (event, connectionState) => {
+      const point = 'changedTouches' in event ? event.changedTouches[0] : event
+      if (!point) return
+      const below = document.elementFromPoint(point.clientX, point.clientY)
+      const targetNodeId = below?.closest('.react-flow__node')?.getAttribute('data-id') ?? null
+      const connection = dropConnection(connectionState, targetNodeId, nodes)
+      if (connection) onConnect(connection)
+    },
+    [nodes, onConnect],
+  )
+
   const cancelTapConnection = useCallback(() => cancelConnection(), [cancelConnection])
 
   // React Flow only finishes a tap connection on a handle; tapping anywhere on the target block is easier on a phone.
@@ -489,12 +506,16 @@ function CanvasInner({
 
   const displayedNodes = useMemo(
     () =>
-      pending
+      pending || dragFrom
         ? nodes.map((node) =>
-            tapConnection(pending, node.id, nodes) ? { ...node, className: 'connect-target' } : node,
+            (pending
+              ? tapConnection(pending, node.id, nodes)
+              : dropConnection({ isValid: false, fromHandle: dragFrom }, node.id, nodes))
+              ? { ...node, className: 'connect-target' }
+              : node,
           )
         : nodes,
-    [nodes, pending],
+    [nodes, pending, dragFrom],
   )
 
   const displayedEdges = useMemo(
@@ -536,6 +557,7 @@ function CanvasInner({
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
+                onConnectEnd={onConnectEnd}
                 onNodeClick={isReadOnly ? undefined : onNodeClick}
                 onEdgeClick={isReadOnly ? undefined : onEdgeClick}
                 onNodeContextMenu={isReadOnly ? undefined : onNodeContextMenu}
