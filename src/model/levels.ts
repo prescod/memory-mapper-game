@@ -19,6 +19,7 @@ export function formatCurriculumMessages(problem: Problem): (text: string) => st
   const identifiers = identifiersForProblem(problem)
   return (text: string) => wrapCurriculumIdentifiers(text, identifiers)
 }
+import { tutorialLevel } from './levels/tutorial'
 import { scalarsLevel } from './levels/scalars'
 import { identityLevel } from './levels/identity'
 import { arraysLevel } from './levels/arrays'
@@ -50,7 +51,9 @@ export {
   type ConceptDependencyError,
 } from './concepts'
 
+/** Level 0 teaches how to play; the curriculum proper starts at Level 1. */
 const numberedLevels: UnnumberedLevel[] = [
+  tutorialLevel,
   scalarsLevel,
   identityLevel,
   arraysLevel,
@@ -65,7 +68,7 @@ const numberedLevels: UnnumberedLevel[] = [
 
 export const levels: Level[] = numberedLevels.map((entry, index) => ({
   ...entry,
-  number: index + 1,
+  number: index,
 }))
 
 export const problems: Problem[] = levels.flatMap((entry) => entry.problems)

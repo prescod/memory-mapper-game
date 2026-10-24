@@ -11,6 +11,7 @@ import { runCode } from '../run/runCode'
 import { progressKey, useAppStore } from '../store/useAppStore'
 import { buildRunRequest, gradeRun } from '../verify/grade'
 import { CheckBar } from './CheckBar'
+import { CoachCard, useCoach } from './Coach'
 import { CodeEditor } from './CodeEditor'
 import { DebriefView } from './DebriefView'
 import { ProblemHeader } from './ProblemHeader'
@@ -51,6 +52,7 @@ export function WriteProblemView({
   // Bumped by Reset so the canvas remounts and its view returns to where it started.
   const [resetCount, setResetCount] = useState(0)
   const [busy, setBusy] = useState(false)
+  const [hintShown, setHintShown] = useState(false)
 
   // A check that finishes after the learner has left must not touch state or mark progress.
   const mounted = useRef(true)
@@ -108,6 +110,15 @@ export function WriteProblemView({
     toggle: toggleDebrief,
   } = useDebrief(problem, result, language)
   const formatProse = useMemo(() => formatCurriculumMessages(problem), [problem])
+  const coach = useCoach(problem.coach, {
+    nodes: [],
+    edges: [],
+    result,
+    hint: hintShown,
+    answer: isAnswerRevealed,
+    code,
+    language,
+  })
 
   return (
     <div className="problem-screen">
@@ -118,6 +129,7 @@ export function WriteProblemView({
         revealed={revealed}
         language={language}
         focusHeading={focusProblemHeading}
+        coach={<CoachCard coach={coach} problem={problem} language={language} />}
       />
       <main className="workspace">
         {isDebriefOpen && problem.debrief ? (
@@ -178,6 +190,7 @@ export function WriteProblemView({
         successMessage="Correct! Your code builds exactly this picture."
         failureHeading="Not quite:"
         hint={problemHint(problem, language)}
+        onHintChange={setHintShown}
         formatProse={formatProse}
         onRevealAnswer={() => setIsAnswerRevealed((prev) => !prev)}
         isAnswerRevealed={isAnswerRevealed}

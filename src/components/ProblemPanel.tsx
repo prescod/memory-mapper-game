@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { feedbackUrl } from '../feedback'
 import { textIn } from '../model/languages'
 import { curriculumProse, problemAbout, problemTip } from '../model/levels'
@@ -14,6 +14,8 @@ interface ProblemPanelProps {
   revealed: boolean
   language: Language
   focusHeading: boolean
+  /** Tutorial coaching, shown right under the title. */
+  coach?: ReactNode
 }
 
 export function ProblemPanel({
@@ -22,6 +24,7 @@ export function ProblemPanel({
   revealed,
   language,
   focusHeading,
+  coach,
 }: ProblemPanelProps) {
   const heading = useRef<HTMLHeadingElement>(null)
   const summaryRef = useRef<HTMLElement>(null)
@@ -43,6 +46,7 @@ export function ProblemPanel({
           <ProblemTitle problem={problem} level={level} visible={revealed} language={language} />
         </h2>
       </div>
+      {coach}
       {problem.kind === 'draw' && (
         <pre className="code-snippet">
           <code>{problem.code[language]}</code>

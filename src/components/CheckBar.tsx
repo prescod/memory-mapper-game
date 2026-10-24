@@ -16,6 +16,8 @@ interface CheckBarProps {
   failureHeading?: string
   problemId?: string
   hint?: string
+  /** Told whenever the hint is shown or put away. */
+  onHintChange?: (shown: boolean) => void
   /** Wraps variable names in hint and error messages for monospace display. */
   formatProse?: (text: string) => string
   onRevealAnswer?: () => void
@@ -44,6 +46,7 @@ export function CheckBar({
   failureHeading = 'Not quite. Fix the highlighted items:',
   problemId,
   hint,
+  onHintChange,
   formatProse = (text) => text,
   onRevealAnswer,
   isAnswerRevealed = false,
@@ -57,6 +60,10 @@ export function CheckBar({
   useEffect(() => {
     setShowHint(false)
   }, [problemId])
+
+  useEffect(() => {
+    onHintChange?.(showHint)
+  }, [showHint, onHintChange])
 
   // Anything new to show reopens a sheet the learner closed.
   useEffect(() => {
@@ -150,13 +157,18 @@ export function CheckBar({
           </>
         ) : (
           <>
-            <button type="button" className="secondary-button" onClick={onReset} disabled={busy}>
+            <button
+              type="button"
+              className="secondary-button reset-button"
+              onClick={onReset}
+              disabled={busy}
+            >
               Reset
             </button>
             {hint && (
               <button
                 type="button"
-                className="secondary-button"
+                className="secondary-button hint-button"
                 aria-pressed={showHint}
                 onClick={() => setShowHint((prev) => !prev)}
                 disabled={busy}
@@ -167,7 +179,7 @@ export function CheckBar({
             {onRevealAnswer && (
               <button
                 type="button"
-                className="secondary-button"
+                className="secondary-button answer-button"
                 aria-pressed={isAnswerRevealed}
                 onClick={onRevealAnswer}
                 disabled={busy}

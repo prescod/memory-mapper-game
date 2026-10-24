@@ -11,12 +11,15 @@ import { quotedLiteralErrors } from '../canvas/quotedLiteral'
 import { toGraph } from '../verify/toGraph'
 import { verify } from '../verify/verify'
 import { CheckBar } from './CheckBar'
+import { CoachCard, useCoach } from './Coach'
 import { DebriefView } from './DebriefView'
 import { ProblemHeader } from './ProblemHeader'
 import { ProblemPanel } from './ProblemPanel'
 import { useDebrief } from './useDebrief'
 
 const AUTOSAVE_DELAY_MS = 300
+const START_MARGIN = 40
+const START_ARROW_STRETCH = 80
 
 interface ProblemViewProps {
   location: ProblemLocation<DrawProblem>
@@ -47,9 +50,26 @@ export function ProblemView({
   const revealed =
     useAppStore((state) => !problem.challenge || state.completed[key] === true) || isAnswerRevealed
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<MemFlowNode>(draft?.nodes ?? [])
-  const [edges, setEdges, onEdgesChange] = useEdgesState<MemFlowEdge>(draft?.edges ?? [])
+  // A fresh copy each time, so Reset puts back the picture the puzzle started with.
+  const startFlow = () => {
+    if (!problem.start) return { nodes: [] as MemFlowNode[], edges: [] as MemFlowEdge[] }
+    const flow = toFlow(problem.start)
+    // Away from the toolbar, with values lower down so every arrow is long enough to tap.
+    const nodes = flow.nodes.map((node) => ({
+      ...node,
+      position: {
+        x: node.position.x + START_MARGIN,
+        y: node.position.y + START_MARGIN + (node.type === 'variable' ? 0 : START_ARROW_STRETCH),
+      },
+    }))
+    return { nodes, edges: flow.edges }
+  }
+
+  const [initial] = useState(() => draft ?? startFlow())
+  const [nodes, setNodes, onNodesChange] = useNodesState<MemFlowNode>(initial.nodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState<MemFlowEdge>(initial.edges)
   const [result, setResult] = useState<VerifyResult | null>(null)
+  const [hintShown, setHintShown] = useState(false)
   // Bumped by Reset so the canvas remounts and its view returns to where it started.
   const [resetCount, setResetCount] = useState(0)
 
@@ -116,8 +136,9 @@ export function ProblemView({
     setResetCount((count) => count + 1)
     userDraftRef.current = null
     setIsAnswerRevealed(false)
-    setNodes([])
-    setEdges([])
+    const fresh = startFlow()
+    setNodes(fresh.nodes)
+    setEdges(fresh.edges)
     setResult(null)
     resetProblem(key)
   }
@@ -150,6 +171,15 @@ export function ProblemView({
     toggle: toggleDebrief,
   } = useDebrief(problem, result, language)
   const formatProse = useMemo(() => formatCurriculumMessages(problem), [problem])
+  const coach = useCoach(problem.coach, {
+    nodes,
+    edges,
+    result,
+    hint: hintShown,
+    answer: isAnswerRevealed,
+    code: '',
+    language,
+  })
 
   return (
     <div className="problem-screen">
@@ -160,6 +190,7 @@ export function ProblemView({
         revealed={revealed}
         language={language}
         focusHeading={focusProblemHeading}
+        coach={<CoachCard coach={coach} problem={problem} language={language} />}
       />
       <main className="workspace">
         {isDebriefOpen && problem.debrief ? (
@@ -191,6 +222,7 @@ export function ProblemView({
         onNext={() => next && onNavigate(next.id)}
         onBack={() => onNavigate(null)}
         hint={problemHint(problem, language)}
+        onHintChange={setHintShown}
         formatProse={formatProse}
         onRevealAnswer={handleRevealAnswer}
         isAnswerRevealed={isAnswerRevealed}

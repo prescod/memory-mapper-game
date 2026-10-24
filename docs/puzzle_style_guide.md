@@ -68,8 +68,18 @@ Every puzzle is written once as a spec, with JavaScript and Python versions side
 | `process` | no | when needed | Enforces *how* the picture is built |
 | `constraints` | no | when needed | The boss's instructions that the picture cannot show |
 | `opaquePrelude` | Pet levels | Pet levels | Defines `Pet` invisibly before the code runs. A Pet has one changeable field, `name`, which is its label in the picture |
+| `start` | optional | no | A wrong picture already on the canvas, for puzzles about fixing one. Reset puts it back |
+| `coach` | tutorial | tutorial | Step-by-step instructions for the tutorial level (see "The tutorial level", below) |
 | `teaches` | optional | optional | Concept strings introduced by this puzzle (e.g. `'array.push'`, `'string.toUpperCase'`) |
 | `reliesOn` | optional | optional | Concept strings this puzzle requires; checked by CI to ensure strictly earlier teaching order |
+
+### The tutorial level
+
+Level 0 (`tutorial`) teaches the game itself, so it breaks some of the rules above: it has five puzzles and no challenge problems, and its puzzles walk the learner through each interaction with a `coach`.
+
+A coach is a list of steps. Each step has `text` (one or two sentences, HTML), an optional `target` (the part of the screen to ring, such as `add-variable`, `variable-dot`, or `check`), and a `done` condition that finishes it, such as a variable with a given name, an arrow from a variable to a value, a correct check, or typed code. Steps finish in order and never go back. A learner who solves the puzzle another way skips past the step that waits for a correct answer, so a coach never strands anyone. Every coach has exactly one `{ passed: true }` step and ends with an `{ end: true }` step that sends the learner on. Tests check that every step waiting on the canvas or the editor is met by the puzzle's own answer, which catches a misspelled name or value.
+
+Write coach text as an instruction for one action, naming the button in bold. Keep the ideas in `about` and `debrief`, as for any puzzle.
 
 ## What makes an excellent puzzle
 

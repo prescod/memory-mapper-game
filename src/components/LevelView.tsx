@@ -84,7 +84,7 @@ export function LevelView({
 
       <main className="level-screen-body">
         <div className="level-hero">
-          <div className="level-hero-badge">{levelIndex + 1}</div>
+          <div className="level-hero-badge">{level.number}</div>
           <div className="level-hero-info">
             <h1 className="level-hero-title">{textIn(level.title, language)}</h1>
             <p className="level-hero-count">
@@ -127,7 +127,7 @@ export function LevelView({
               className="secondary-button"
               onClick={() => onOpenLevel(prevLevel.id)}
             >
-              ‹ Level {levelIndex}
+              ‹ Level {prevLevel.number}
             </button>
           ) : (
             <span />
@@ -138,7 +138,7 @@ export function LevelView({
               className="secondary-button"
               onClick={() => onOpenLevel(nextLevel.id)}
             >
-              Level {levelIndex + 2} ›
+              Level {nextLevel.number} ›
             </button>
           )}
         </nav>

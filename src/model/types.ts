@@ -133,6 +133,11 @@ export interface DrawProblem {
   challenge: boolean
   code: Record<Language, string>
   expected: MemoryGraph
+  /**
+   * A picture already on the canvas when the puzzle opens, and again after
+   * Reset, for puzzles about fixing a diagram rather than drawing one.
+   */
+  start?: MemoryGraph
   hints?: DiagnosticHint[]
   hint?: Hint
   /**
@@ -142,6 +147,8 @@ export interface DrawProblem {
   tip?: Hint
   about?: Hint
   debrief?: DebriefBlock[]
+  /** See `CoachStep`. */
+  coach?: CoachStep[]
   /**
    * Whether checking this puzzle runs the reference code with the hidden
    * `makeObject` / `make_object` helper defined. Learners only ever see calls
@@ -209,6 +216,8 @@ export interface WriteProblem {
   tip?: Hint
   about?: Hint
   debrief?: DebriefBlock[]
+  /** See `CoachStep`. */
+  coach?: CoachStep[]
   /** See `DrawProblem.opaquePrelude`. */
   opaquePrelude?: boolean
   teaches?: string[]
@@ -216,6 +225,71 @@ export interface WriteProblem {
 }
 
 export type Problem = DrawProblem | WriteProblem
+
+/**
+ * Parts of the problem screen a coach step can point at. The coach rings the
+ * first matching element on screen; see `COACH_TARGETS` for the selectors.
+ */
+export type CoachTarget =
+  | 'add-variable'
+  | 'add-primitive'
+  | 'variable-name'
+  | 'primitive-value'
+  | 'variable-dot'
+  | 'delete'
+  | 'canvas'
+  | 'check'
+  | 'hint'
+  | 'answer'
+  | 'reset'
+  | 'next'
+  | 'code'
+  | 'given'
+  | 'picture'
+
+/**
+ * What finishes a coach step. Steps finish in order and never go back, so a
+ * condition only needs to hold once.
+ *
+ * - `variable`: a variable block exists, named `name` when given.
+ * - `primitive`: a primitive block exists whose typed text is `text` when given.
+ * - `arrow`: the variable named `from` points at a primitive whose text is `to`
+ *   (any arrow at all when both are omitted).
+ * - `noArrowTo`: no variable points at a primitive whose text is `to`.
+ * - `selected`: some block or arrow is selected.
+ * - `checked` / `failed` / `passed`: the learner checked, with any result, a
+ *   wrong one, or a right one.
+ * - `hint` / `answer`: the hint or the answer is showing.
+ * - `typed`: the code editor contains `text` (ignoring spaces), or anything when omitted.
+ * - `read`: the learner tapped the step's own "Got it" button.
+ * - `end`: never finishes; the coach's last words before the learner moves on.
+ */
+export type CoachCondition =
+  | { variable: true; name?: string }
+  | { primitive: true; text?: string }
+  | { arrow: true; from?: string; to?: string }
+  | { noArrowTo: string }
+  | { selected: true }
+  | { checked: true }
+  | { failed: true }
+  | { passed: true }
+  | { hint: true }
+  | { answer: true }
+  | { typed: true; text?: string }
+  | { read: true }
+  | { end: true }
+
+/**
+ * One instruction in a tutorial puzzle's coach: a short note shown above the
+ * puzzle that rings the part of the screen it talks about, and moves on by
+ * itself once the learner has done what it asks.
+ */
+export interface CoachStep {
+  /** HTML; identifiers are wrapped in `<code>` like other curriculum prose. */
+  text: Hint
+  target?: CoachTarget
+  done: CoachCondition
+}
 
 export interface Level {
   /** Curriculum level number (1-based), shown in problem labels such as 9.7. */

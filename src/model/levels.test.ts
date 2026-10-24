@@ -106,8 +106,9 @@ describe('curriculum navigation', () => {
   })
 
   it('numbers levels in curriculum order', () => {
+    expect(levels[0].id).toBe('tutorial')
     levels.forEach((level, index) => {
-      expect(level.number).toBe(index + 1)
+      expect(level.number).toBe(index)
     })
   })
 

@@ -1,5 +1,6 @@
 import type { RuntimeChecks, SourceRule } from '../process'
 import type {
+  CoachStep,
   DebriefBlock,
   DiagnosticHint,
   Hint,
@@ -72,6 +73,9 @@ export const SHARING_LATER =
 export const SHARING_REMINDER =
   '<p>As before, sharing a number or keeping separate copies makes no difference yet.</p>'
 
+/** See `CoachStep`; the text may be spelled per language. */
+export type SpecCoachStep = Omit<CoachStep, 'text'> & { text: SpecHint }
+
 export interface DrawSpec {
   kind: 'draw'
   title: SpecTitle
@@ -79,6 +83,9 @@ export interface DrawSpec {
   py: string
   ts?: string
   expected: MemoryGraph
+  /** See `DrawProblem.start`. */
+  start?: MemoryGraph
+  coach?: SpecCoachStep[]
   hints?: SpecDiagnosticHint[]
   hint?: SpecHint
   /** See `DrawProblem.tip`. */
@@ -97,6 +104,7 @@ export interface WriteSpec {
   given?: { js: string; py: string; ts?: string }
   /** Read-only code that runs after the learner's. */
   then?: { js: string; py: string; ts?: string }
+  coach?: SpecCoachStep[]
   /** Reference answer, in the languages. */
   js: string
   py: string
@@ -159,6 +167,7 @@ export function toProblem(spec: Spec, id: string, challenge: boolean): Problem {
   const tip = spec.tip ? localize(spec.tip) : undefined
   const about = spec.about ? localize(spec.about) : undefined
   const debrief = spec.debrief?.map(toDebriefBlock)
+  const coach = spec.coach?.map((step) => ({ ...step, text: localize(step.text) }))
 
   if (spec.kind === 'draw') {
     return {
@@ -168,11 +177,13 @@ export function toProblem(spec: Spec, id: string, challenge: boolean): Problem {
       challenge,
       code: perLanguage(spec),
       expected: spec.expected,
+      ...(spec.start && { start: spec.start }),
       hints,
       hint,
       ...(tip !== undefined && { tip }),
       about,
       debrief,
+      ...(coach && { coach }),
       ...(spec.opaquePrelude !== undefined && { opaquePrelude: spec.opaquePrelude }),
       ...(spec.teaches && { teaches: spec.teaches }),
       ...(spec.reliesOn && { reliesOn: spec.reliesOn }),
@@ -213,6 +224,7 @@ export function toProblem(spec: Spec, id: string, challenge: boolean): Problem {
     ...(tip !== undefined && { tip }),
     about,
     debrief,
+    ...(coach && { coach }),
     ...(spec.opaquePrelude !== undefined && { opaquePrelude: spec.opaquePrelude }),
     ...(spec.teaches && { teaches: spec.teaches }),
     ...(spec.reliesOn && { reliesOn: spec.reliesOn }),

@@ -287,6 +287,15 @@ export function Home({ onOpenProblem, onOpenLevel }: HomeProps) {
               )}
             </button>
           ) : null}
+          {totalSolved === 0 && (
+            <button
+              type="button"
+              className="text-button home-skip-tutorial"
+              onClick={() => onOpenProblem(levels[1].problems[0].id)}
+            >
+              Skip the tutorial
+            </button>
+          )}
         </div>
         <LanguageToggle prominent />
       </section>
@@ -300,7 +309,7 @@ export function Home({ onOpenProblem, onOpenLevel }: HomeProps) {
         </div>
 
         <ol className="level-cards-list">
-          {levels.map((level, levelIndex) => {
+          {levels.map((level) => {
             const levelSolved = level.problems.filter((problem) =>
               isSolved(problem.id),
             ).length
@@ -318,7 +327,7 @@ export function Home({ onOpenProblem, onOpenLevel }: HomeProps) {
                 >
                   <div className="level-card-main">
                     <span className="level-card-badge">
-                      {isLevelComplete ? '✓' : levelIndex + 1}
+                      {isLevelComplete ? '✓' : level.number}
                     </span>
                     <div className="level-card-info">
                       <h3 className="level-card-title">{textIn(level.title, language)}</h3>

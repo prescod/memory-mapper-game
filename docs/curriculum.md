@@ -6,7 +6,7 @@ Where a level's goals are not yet fully served by its puzzles, a **Gaps** note s
 
 ## The arc
 
-The ten levels build one mental model in stages. Each stage adds one kind of thing to the picture or one way the picture can change.
+Level 0 teaches how to play. The ten levels after it build one mental model in stages. Each stage adds one kind of thing to the picture or one way the picture can change.
 
 1. **Names and values** (Level 1). A variable is a name with an arrow to a value. Assignment moves arrows; it never links variables to each other.
 2. **Identity** (Level 2). Some values are separate things in memory. Two names can refer to the same one, and two equal-looking ones can be separate.
@@ -17,6 +17,30 @@ The ten levels build one mental model in stages. Each stage adds one kind of thi
 7. **Functions** (Level 10). What a function can and cannot do to its caller's variables and containers, and how returned references work.
 
 Every level is taught in both JavaScript and Python with the same pictures. Where the two languages name things differently (array/list, object/dictionary, `push`/`append`, spread/`list()`), the level uses each language's own spelling, and the goal is the same.
+
+---
+
+## Level 0: Getting Started (`tutorial`)
+
+**Big idea.** A variable is a name and a value is a piece of data; assigning points the name at the value with an arrow. Every puzzle is either drawing that picture for some code or writing code for a picture.
+
+**By the end, a learner can:**
+
+- add variable and primitive blocks, name a variable, type a value, and connect them with an arrow, by tapping or dragging;
+- select and delete blocks and arrows, and use Check, Hint, Answer, Reset, and the lesson after a correct answer;
+- tell a string (quoted) from a number (unquoted), and a variable's name from a value;
+- write a line of code for a picture, including after starter code that is already in place.
+
+**Misconceptions it targets:**
+
+- *The value lives inside the name*: the name only points at the value ("Your first variable").
+- *Quotes do not matter*: `"3"` is a string, not the number 3 ("Your first variable", "A word and a number").
+
+**Sets up** everything. Level 1 starts from the picture this level teaches and adds reassignment, assigning from another variable, and special constraints.
+
+**How the level checks it.** Pictures alone. Each puzzle has a `coach`: steps shown above the puzzle that ring the part of the screen they talk about and move on as the learner does what they ask. "Fixing a picture" opens with a wrong picture already on the canvas (`start`).
+
+**Out of scope.** Reassignment, sharing, constraints, and every kind of value but numbers and strings. There are no challenge problems: the level teaches the game, and Level 1 tests the ideas.
 
 ---
 
